@@ -1,2 +1,0 @@
-ninja: Entering directory `C:\Users\Acer\AndroidStudioProjects\BalanceX\opencv\.cxx\Debug\5o396w4h\arm64-v8a'
-ninja: no work to do.

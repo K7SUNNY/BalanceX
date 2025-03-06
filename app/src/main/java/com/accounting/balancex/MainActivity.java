@@ -31,7 +31,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import android.content.SharedPreferences;
 
-
 public class MainActivity extends AppCompatActivity {
     private TextView totalBalanceText, totalCreditText, totalDebitText;
     private FrameLayout graphContainer;
