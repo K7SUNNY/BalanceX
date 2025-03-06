@@ -1,0 +1,11 @@
+<resources>
+    <style name="Base.Theme.BalanceX." parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:popupBackground">#FFFFFF</item>
+    </style>
+    <style name="CustomPopupMenu" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:popupBackground">#FFFFFF</item> <!-- Set white background -->
+    </style>
+</resources>

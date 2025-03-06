@@ -1,0 +1,16 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background">
+        <shape android:shape="rectangle">
+            <corners android:radius="8dp"/>
+            <solid android:color="#E0E0E0"/> <!-- Background color -->
+        </shape>
+    </item>
+    <item android:id="@android:id/progress">
+        <clip android:clipOrientation="vertical" android:gravity="bottom">
+            <shape android:shape="rectangle">
+                <corners android:radius="8dp"/>
+                <solid android:color="#1e90ff"/> <!-- Credit bar color -->
+            </shape>
+        </clip>
+    </item>
+</layer-list>

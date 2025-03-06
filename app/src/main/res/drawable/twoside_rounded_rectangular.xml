@@ -1,0 +1,12 @@
+<!-- res/drawable/rounded_top_corners.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:startColor="#2196F3"
+        android:endColor="#00b7eb"
+        android:angle="90"/> <!-- Gradient -->
+    <corners
+        android:topLeftRadius="16dp"
+        android:topRightRadius="16dp"
+        android:bottomLeftRadius="0dp"
+        android:bottomRightRadius="0dp"/> <!-- Rounded top corners -->
+</shape>

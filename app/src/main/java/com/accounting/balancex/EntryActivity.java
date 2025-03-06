@@ -1,0 +1,770 @@
+package com.accounting.balancex;
+
+import android.Manifest;
+import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.ContactsContract;
+import android.provider.MediaStore;
+import android.provider.Settings;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.*;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import android.widget.Toast;
+import com.googlecode.tesseract.android.TessBaseAPI;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.Normalizer;
+
+
+public class EntryActivity extends AppCompatActivity {
+    private static final int PICK_CONTACT_REQUEST = 1;
+    private static final int CONTACT_PERMISSION_CODE = 101;
+    private static final int STORAGE_PERMISSION_CODE = 102;
+    private EditText amountInput, receiverName, description, utr, comments, categoryInput,transactionId;
+    private CheckBox confirmCheckBox;
+    private TextView dateTextView, clearAllButton; // Removed timeTextView
+    private RadioGroup paymentMethodGroup, transactionTypeGroup;
+    private Button saveButton, addFromContactButton;
+    private Calendar calendar;
+    private static final String FOLDER_NAME = "Accounting";
+    private static final String FILE_NAME = "transactions.json";
+    private LinearLayout navHome, navTransactions, navEntry;
+    private static final int REQUEST_IMAGE_CAPTURE = 103;
+    private static final int REQUEST_IMAGE_PICK = 104;
+    private static final int CAMERA_PERMISSION_CODE = 105;
+    private Button attachReceiptButton;
+    private Uri imageUri;
+    private int memeCounter = 0;
+    private static final String TESS_DATA_PATH = "/tessdata/";
+    private static final String TESS_LANG = "eng+hin+osd";
+    private TessBaseAPI tessBaseAPI;
+    // Declare dialog variable at the top of EntryActivity
+    private AlertDialog loadingDialog;
+    private boolean isReceiptAttached = false;  // Default: No receipt attached
+    private LinearLayout utr_layout, transactionId_layout;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_entry);
+
+        initializeUI();
+        requestStoragePermission();
+        setNavigationListeners();
+        setDateField(); // Setting up the date field
+        copyTessDataFiles(); // Ensure trained data is available
+        initTesseract(); // Now initialize Tesseracts
+
+        attachReceiptButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isReceiptAttached = true;  // ✅ Mark receipt as attached
+
+                showImageSourceDialog();  // ✅ Open camera/gallery for receipt selection
+
+                selectPaymentMethod("UPI");  // ✅ Auto-select UPI
+            }
+        });
+        setupValidationListeners(); // ✅ Call this after initializing views
+        // ✅ Hide UTR & Transaction ID layout at the start
+        utr_layout.setVisibility(View.GONE);
+        transactionId_layout.setVisibility(View.GONE);
+
+        paymentMethodGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                RadioButton selectedPayment = findViewById(checkedId);
+                if (selectedPayment != null) {
+                    String paymentMethod = selectedPayment.getText().toString();
+
+                    if (paymentMethod.equalsIgnoreCase("UPI")) {
+                        showFieldsWithAnimation(utr_layout, transactionId_layout);
+                    } else {
+                        hideFieldsWithAnimation(utr_layout, transactionId_layout);
+                    }
+                }
+            }
+        });
+        clearAllButton.setOnClickListener(v -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("Clear All Fields?")
+                    .setMessage("Are you sure you want to clear all input fields?")
+                    .setPositiveButton("Yes", (dialog, which) -> clearAllFields())
+                    .setNegativeButton("No", null)
+                    .show();
+        });
+
+    }
+    private void initializeUI() {
+        dateTextView = findViewById(R.id.dateTextView);
+        amountInput = findViewById(R.id.amountInput);
+        receiverName = findViewById(R.id.receiverName);
+        description = findViewById(R.id.description);
+        utr = findViewById(R.id.utr);
+        transactionId = findViewById(R.id.transactionId);
+        comments = findViewById(R.id.comments);
+        categoryInput = findViewById(R.id.inputCategory);
+        paymentMethodGroup = findViewById(R.id.paymentMethodGroup);
+        transactionTypeGroup = findViewById(R.id.TransactiontypeGroup);
+        saveButton = findViewById(R.id.saveButton);
+        addFromContactButton = findViewById(R.id.addFromContactButton);
+        confirmCheckBox = findViewById(R.id.confirmCheckBox);
+        navHome = findViewById(R.id.navHome);
+        navTransactions = findViewById(R.id.navTransactions);
+        navEntry = findViewById(R.id.navEntry);
+        utr_layout = findViewById(R.id.utr_layout);
+        transactionId_layout = findViewById(R.id.transactionId_layout);
+        clearAllButton = findViewById(R.id.clearAllButton);
+
+        // Initially disable save button
+        saveButton.setEnabled(false);
+        saveButton.setBackgroundResource(R.drawable.rounded_corner_container_disabled);
+        // Checkbox listener
+        confirmCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                saveButton.setEnabled(true);
+                saveButton.setBackgroundResource(R.drawable.rounded_corner_container_save);
+            } else {
+                saveButton.setEnabled(false);
+                saveButton.setBackgroundResource(R.drawable.rounded_corner_container_disabled);
+            }
+        });
+        // Single click listener for Save button (only calls saveTransaction when checkbox is checked)
+        saveButton.setOnClickListener(v -> {
+            if (confirmCheckBox.isChecked()) {
+                saveTransaction();
+            }else {
+                Log.d("EntryActivity", "Checkbox not checked! Showing Toast...");
+                runOnUiThread(() ->
+                        Toast.makeText(getApplicationContext(), "Please check the checkbox", Toast.LENGTH_SHORT).show()
+                );
+            }
+        });
+        //Add from contact button calling
+        addFromContactButton.setOnClickListener(v -> requestContactPermission());
+        //Attach receipt button calling
+        attachReceiptButton = findViewById(R.id.button_attach_receipt);
+        attachReceiptButton.setOnClickListener(v -> showImageSourceDialog());
+    }
+    private void setNavigationListeners() {
+        navHome.setOnClickListener(v -> startActivity(new Intent(EntryActivity.this, MainActivity.class)));
+        navTransactions.setOnClickListener(v -> startActivity(new Intent(EntryActivity.this, TransactionActivity.class)));
+        navEntry.setOnClickListener(v -> {});
+    }
+    private void setDateField() {
+        calendar = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        dateTextView.setText(sdf.format(calendar.getTime())); // Display the current date by default
+
+        dateTextView.setOnClickListener(v -> {
+            Log.d("EntryActivity", "Date TextView clicked");
+            DatePickerDialog datePickerDialog = new DatePickerDialog(
+                    EntryActivity.this, (view, year, month, dayOfMonth) -> {
+                Log.d("EntryActivity", "Selected date: " + year + "-" + (month + 1) + "-" + dayOfMonth);
+                calendar.set(Calendar.YEAR, year);
+                calendar.set(Calendar.MONTH, month);
+                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                dateTextView.setText(sdf.format(calendar.getTime())); // Update TextView with selected date
+            },
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+            );
+            // Set the maximum date to today's date to prevent future date selection
+            datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+
+            datePickerDialog.show();
+        });
+    }
+    private void requestStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Storage Permission Required")
+                        .setMessage("This app requires access to manage all files on your device. Please grant permission to continue.")
+                        .setPositiveButton("Allow", (dialog, which) -> {
+                            Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                            startActivity(intent);
+                        })
+                        .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                        .show();
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Storage Permission Required")
+                        .setMessage("This app needs storage access to save your transactions. Please grant permission.")
+                        .setPositiveButton("Allow", (dialog, which) -> {
+                            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
+                        })
+                        .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                        .show();
+            }
+        }
+    }
+    private void requestContactPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, CONTACT_PERMISSION_CODE);
+        } else {
+            openContactPicker();
+        }
+    }
+    private void openContactPicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+        startActivityForResult(intent, PICK_CONTACT_REQUEST);
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_CONTACT_REQUEST && resultCode == RESULT_OK) {
+            if (data != null) {
+                Uri contactUri = data.getData();
+                String[] projection = new String[]{ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME};
+                try (Cursor cursor = getContentResolver().query(contactUri, projection, null, null, null)) {
+                    if (cursor != null && cursor.moveToFirst()) {
+                        String contactName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                        receiverName.setText(contactName);
+                    }
+                }
+            }
+        }
+        //upi receipt scanner section
+        if (requestCode == 104 && resultCode == RESULT_OK) {
+            try {
+                Uri imageUri = data.getData();
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+                if (bitmap != null) {
+                    processImage(bitmap); // Process OCR
+                } else {
+                    Log.e("Tesseract", "Bitmap is null, cannot process image.");
+                }
+            } catch (Exception e) {
+                Log.e("Tesseract", "Error processing image: " + e.getMessage());
+            }
+        }
+    }
+    private void saveTransaction() {
+        String selectedDate = dateTextView.getText().toString();
+        String formattedDate = new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(calendar.getTime()); // Use selected date
+        boolean isValid = true; // Flag to check validation
+
+        if (amountInput.getText().toString().isEmpty()) {
+            amountInput.setBackgroundResource(R.drawable.red_outline); // Add red outline
+            isValid = false;
+        } else {
+            amountInput.setBackgroundResource(0); // Remove outline if fixed
+        }
+
+        if (receiverName.getText().toString().isEmpty()) {
+            receiverName.setBackgroundResource(R.drawable.red_outline);
+            isValid = false;
+        } else {
+            receiverName.setBackgroundResource(0);
+        }
+
+        int selectedTypeId = transactionTypeGroup.getCheckedRadioButtonId();
+        if (selectedTypeId == -1) {
+            transactionTypeGroup.setBackgroundResource(R.drawable.red_outline);
+            isValid = false;
+        } else {
+            transactionTypeGroup.setBackgroundResource(0);
+        }
+
+        int selectedPaymentId = paymentMethodGroup.getCheckedRadioButtonId();
+        if (selectedPaymentId == -1) {
+            paymentMethodGroup.setBackgroundResource(R.drawable.red_outline);
+            isValid = false;
+        } else {
+            paymentMethodGroup.setBackgroundResource(0);
+        }
+
+        if (!isValid) {
+            showGifOverlay();//funny memes
+            Toast.makeText(this, "Please fill all required fields!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        RadioButton selectedTransactionType = findViewById(selectedTypeId);
+        String transactionType = selectedTransactionType.getText().toString();
+        RadioButton selectedPaymentMethod = findViewById(selectedPaymentId);
+        String paymentMethod = selectedPaymentMethod.getText().toString();
+        File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), FOLDER_NAME);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+        File file = new File(directory, FILE_NAME);
+        JSONArray transactionsArray = new JSONArray();
+        int entryCounter = 1;
+        try {
+            if (file.exists()) {
+                String content = null;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+                }
+                transactionsArray = new JSONArray(content);
+
+                // Find the last transaction's entry ID for the selected date
+                for (int i = transactionsArray.length() - 1; i >= 0; i--) {
+                    JSONObject obj = transactionsArray.getJSONObject(i);
+                    if (obj.has("entryId") && obj.getString("entryId").startsWith(formattedDate)) {
+                        entryCounter = Integer.parseInt(obj.getString("entryId").substring(8)) + 1;
+                        break;
+                    }
+                }
+            }
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+        String entryId = formattedDate + String.format("%06d", entryCounter);
+        JSONObject transaction = new JSONObject();
+        try {
+            transaction.put("entryId", entryId);
+            transaction.put("date", selectedDate);
+            transaction.put("amount", amountInput.getText().toString());
+            transaction.put("receiver", receiverName.getText().toString());
+            transaction.put("description", description.getText().toString());
+            transaction.put("utr", utr.getText().toString());
+            transaction.put("transactionId", transactionId.getText().toString());
+            transaction.put("comments", comments.getText().toString());
+            transaction.put("category", categoryInput.getText().toString());
+            transaction.put("textType", transactionType);
+            transaction.put("paymentMethod", paymentMethod);
+            // Only save UTR & Transaction ID if UPI is selected
+            if (paymentMethod.equalsIgnoreCase("UPI")) {
+                transaction.put("utr", utr.getText().toString());
+                transaction.put("transactionId", transactionId.getText().toString());
+            }
+            transactionsArray.put(transaction);
+            try (FileWriter writer = new FileWriter(file)) {
+                writer.write(transactionsArray.toString(4));
+            }
+            Toast.makeText(this, "Transaction saved successfully!", Toast.LENGTH_SHORT).show();
+        } catch (JSONException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private void setupValidationListeners() {
+        amountInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                amountInput.setBackgroundResource(R.drawable.rounded_input_background); // ✅ Reset background
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        receiverName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                receiverName.setBackgroundResource(R.drawable.rounded_input_background); // ✅ Reset background
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        transactionTypeGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (checkedId != -1) { // ✅ Only reset if an option is selected
+                    transactionTypeGroup.setBackgroundResource(0);
+                }
+            }
+        });
+
+        paymentMethodGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (checkedId != -1) { // ✅ Only reset if an option is selected
+                    paymentMethodGroup.setBackgroundResource(0);
+                }
+            }
+        });
+    }
+    private void showFieldsWithAnimation(View... views) {
+        for (View view : views) {
+            if (view.getVisibility() == View.GONE) {  // Ensure it doesn't reanimate when already visible
+                view.setVisibility(View.VISIBLE);
+                view.setAlpha(0f);
+                view.setScaleX(0.8f);
+                view.setScaleY(0.8f);
+                view.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(300).start();
+            }
+        }
+    }
+
+    private void hideFieldsWithAnimation(View... views) {
+        for (View view : views) {
+            if (view.getVisibility() == View.VISIBLE) {  // Only animate if it's currently visible
+                view.animate()
+                        .alpha(0f)
+                        .scaleX(0.8f)
+                        .scaleY(0.8f)
+                        .setDuration(300)
+                        .withEndAction(() -> view.setVisibility(View.GONE))
+                        .start();
+            }
+        }
+    }
+    private void showGifOverlay() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_Translucent_NoTitleBar);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_gif_overlay, null);
+        VideoView memeVideoView = dialogView.findViewById(R.id.gifImageView);
+        TextView memeTextView = dialogView.findViewById(R.id.screamTextView);
+        int memeResId;
+        String memeText;
+        switch (memeCounter) {
+            case 0:
+                memeResId = R.raw.warning_gif;
+                memeText = "FILL OUT THE FORMMMMM FIRST!!!!!!!!!! 😡😂";
+                break;
+            case 1:
+                memeResId = R.raw.seriously_bro;
+                memeText = "Seriously, bro?";
+                break;
+            case 2:
+                memeResId = R.raw.not_doing_this;
+                memeText = "I-I am not doing that.";
+                break;
+            case 3:
+                memeResId = R.raw.stop_it;
+                memeText = "Stop it, seriously stop it.";
+                break;
+            default:
+                memeResId = R.raw.i_am_not_saving_this;
+                memeText = "Nah, I am not saving that.";
+                break;
+        }
+        if (memeCounter < 4) memeCounter++; // Cycle through first 4, then always show the last one
+        memeVideoView.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + memeResId));
+        memeVideoView.start();
+        memeTextView.setText(memeText);
+        AlertDialog gifDialog = builder.setView(dialogView).create();
+        gifDialog.show();
+        // Play sound effect
+        MediaPlayer mediaPlayer = MediaPlayer.create(this, R.raw.drop);
+        mediaPlayer.start();
+        mediaPlayer.setOnCompletionListener(mp -> mp.release());
+        // Auto-dismiss after 2.5 seconds
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            gifDialog.dismiss();
+            mediaPlayer.release();
+        }, 2500);
+    }
+    // UPI receipt scanner sections
+    private void button_attach_receipt() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_CODE);
+            Toast.makeText(this, "Camera permission requested!", Toast.LENGTH_SHORT).show();
+        } else {
+            showImageSourceDialog();
+        }
+    }
+    //tesseract
+    private void initTesseract() {
+        tessBaseAPI = new TessBaseAPI(); // Initialize the object
+        File tessDir = getFilesDir();
+        String tessPath = tessDir.getAbsolutePath(); // Internal storage path
+
+        // Copy tessdata from assets if it doesn't exist
+        File trainedData = new File(tessPath + "/tessdata/eng.traineddata");
+        if (!trainedData.exists()) {
+            copyTessDataFromAssets();
+        }
+
+        if (tessBaseAPI.init(tessPath, "eng", TessBaseAPI.OEM_DEFAULT)) {
+            Log.d("Tesseract", "Tesseract initialized successfully");
+        } else {
+            Log.e("Tesseract", "Tesseract initialization failed!");
+            tessBaseAPI = null; // Set to null if initialization fails
+        }
+    }
+    private void copyTessDataFromAssets() {
+        try {
+            AssetManager assetManager = getAssets();
+            InputStream in = assetManager.open("tessdata/eng.traineddata");
+            File tessDir = new File(getFilesDir(), "tessdata");
+            if (!tessDir.exists()) {
+                tessDir.mkdirs();
+            }
+            File outFile = new File(tessDir, "eng.traineddata");
+            OutputStream out = new FileOutputStream(outFile);
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            in.close();
+            out.flush();
+            out.close();
+        } catch (IOException e) {
+            Log.e("Tesseract", "Error copying tessdata: " + e.getMessage());
+        }
+    }
+    private void copyTessDataFiles() {
+        File tessDir = new File(getFilesDir(), "tessdata");
+        if (!tessDir.exists()) {
+            tessDir.mkdirs(); // Create tessdata folder if it doesn't exist
+        }
+        String[] languages = {"eng", "hin", "osd"}; // Required languages
+
+        for (String lang : languages) {
+            File trainedDataFile = new File(tessDir, lang + ".traineddata");
+
+            if (!trainedDataFile.exists()) { // Copy only if missing
+                try (InputStream in = getAssets().open("tessdata/" + lang + ".traineddata");
+                     OutputStream out = new FileOutputStream(trainedDataFile)) {
+
+                    byte[] buffer = new byte[1024];
+                    int read;
+                    while ((read = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, read);
+                    }
+                    out.flush();
+                    Log.d("Tesseract", lang + ".traineddata copied successfully!");
+
+                } catch (IOException e) {
+                    Log.e("Tesseract", "Failed to copy " + lang + ".traineddata: " + e.getMessage());
+                }
+            } else {
+                Log.d("Tesseract", lang + ".traineddata already exists, skipping copy.");
+            }
+        }
+    }
+    private void showImageSourceDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Attach Receipt")
+                .setItems(new String[]{"Capture Photo", "Choose from Gallery"}, (dialog, which) -> {
+                    if (which == 0) {
+                        captureImageFromCamera();
+                    } else {
+                        pickImageFromGallery();
+                    }
+                })
+                .show();
+    }
+    private void captureImageFromCamera() {
+        Intent takePictureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            Toast.makeText(this, "Camera opened!", Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void pickImageFromGallery() {
+        Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(pickIntent, REQUEST_IMAGE_PICK);
+        Toast.makeText(this, "Gallery opened!", Toast.LENGTH_SHORT).show();
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CAMERA_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                showImageSourceDialog();
+            } else {
+                Toast.makeText(this, "Camera permission denied!", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void processImage(Bitmap bitmap) {
+        showLoadingDialog(); // Show loading animation
+
+        new Thread(() -> {
+            if (tessBaseAPI == null) {
+                Log.e("Tesseract", "TessBaseAPI is null! Re-initializing...");
+                initTesseract();
+            }
+
+            if (tessBaseAPI != null) {
+                tessBaseAPI.setImage(bitmap);
+                String extractedText = tessBaseAPI.getUTF8Text();
+                Log.d("Tesseract", "Extracted Text: " + extractedText);
+
+                runOnUiThread(() -> {
+                    dismissLoadingDialog(); // Hide loading animation
+                    populateForm(extractedText); // Fill the form with extracted text
+                });
+            } else {
+                Log.e("Tesseract", "Failed to initialize Tesseract API.");
+                runOnUiThread(this::dismissLoadingDialog); // Hide loading animation if OCR fails
+            }
+        }).start();
+    }
+    private void showLoadingDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_loading, null);
+        builder.setView(dialogView);
+        builder.setCancelable(false); // Prevent user from closing it manually
+        loadingDialog = builder.create();
+        loadingDialog.show();
+    }
+    private void dismissLoadingDialog() {
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
+    }
+    private void populateForm(String text) {
+        text = Normalizer.normalize(text, Normalizer.Form.NFC);
+
+        Pattern amountPattern = Pattern.compile("(?:Rs|INR|Amount|€|₹|¥|§|\\$)\\s*[:₹]?[\\s]*([0-9]+(?:[.,][0-9]+)?)");
+        Pattern utrPattern = Pattern.compile("(UTR: |UPI transaction ID: |UPI transaction ID|UPI Ref ID:|UPI Ref ID)[:\\s]*([A-Za-z0-9]+)");
+        Pattern transactionIdPattern = Pattern.compile("Transaction ID\\s*([A-Za-z0-9]+)");
+        Pattern datePattern = Pattern.compile("(\\d{2} [A-Za-z]{3,10} \\d{4})");
+        Pattern receiverPattern = Pattern.compile("(to|To|Paid to|From|receiver|To:|Paid To:|Received from|From:|Received From:)[:\\s]*([A-Za-z ]+)");
+        //Matching time
+        Matcher amountMatcher = amountPattern.matcher(text);
+        Matcher utrMatcher = utrPattern.matcher(text);
+        Matcher transactionIdMatcher = transactionIdPattern.matcher(text);
+        Matcher dateMatcher = datePattern.matcher(text);
+        Matcher receiverMatcher = receiverPattern.matcher(text);
+        if (amountMatcher.find()) {
+            String amount = amountMatcher.group(1).replaceAll(",", ""); // Remove commas
+            amountInput.setText(amount);
+        }
+        if (utrMatcher.find()) {
+            utr.setText(utrMatcher.group(2));
+        }
+        if (dateMatcher.find()) {
+            String extractedDate = dateMatcher.group(1);
+            String formattedDate = formatDate(extractedDate);
+            dateTextView.setText(formattedDate);
+
+            // Update calendar instance
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+                Date parsedDate = sdf.parse(formattedDate);
+                if (parsedDate != null) {
+                    calendar.setTime(parsedDate); // Ensure calendar is updated
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+        if (receiverMatcher.find()) {
+            receiverName.setText(receiverMatcher.group(2));
+        }
+        if (transactionIdMatcher.find()) {
+            ((EditText) findViewById(R.id.transactionId)).setText(transactionIdMatcher.group(1));
+        }
+        // Auto-select Payment Method (If user selects "Attach Receipt", it's UPI)
+        if (isReceiptAttached) {
+            selectPaymentMethod("UPI");
+        }
+        // Auto-select Transaction Type
+        if (text.contains("Paid to")) {
+            selectTransactionType("Debit");
+        } else if (text.contains("Received from") || text.contains("From")) {
+            selectTransactionType("Credit");
+        }
+
+        Log.d("Tesseract", "Form updated with extracted data.");
+    }
+        // Function to auto-select a payment method in RadioGroup
+    private void selectPaymentMethod(String method) {
+        for (int i = 0; i < paymentMethodGroup.getChildCount(); i++) {
+            View view = paymentMethodGroup.getChildAt(i);
+                if (view instanceof RadioButton) {
+                    RadioButton radioButton = (RadioButton) view;
+                    if (radioButton.getText().toString().equalsIgnoreCase(method)) {
+                        radioButton.setChecked(true);
+                        break;
+                    }
+                }
+            }
+        }
+    // Function to auto-select a transaction type in RadioGroup
+    private void selectTransactionType(String type) {
+        for (int i = 0; i < transactionTypeGroup.getChildCount(); i++) {
+            View view = transactionTypeGroup.getChildAt(i);
+            if (view instanceof RadioButton) {
+                RadioButton radioButton = (RadioButton) view;
+                if (radioButton.getText().toString().equalsIgnoreCase(type)) {
+                    radioButton.setChecked(true);
+                    break;
+                }
+            }
+        }
+    }
+    private String formatDate(String extractedDate) {
+        SimpleDateFormat inputFormatShort = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH); // e.g., 02 Mar 2025
+        SimpleDateFormat inputFormatFull = new SimpleDateFormat("dd MMMM yyyy", Locale.ENGLISH); // e.g., 02 March 2025
+        SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH); // Desired format
+        try {
+            Date date;
+            if (extractedDate.matches("\\d{2} [A-Za-z]{3} \\d{4}")) { // Short month format
+                date = inputFormatShort.parse(extractedDate);
+            } else if (extractedDate.matches("\\d{2} [A-Za-z]+ \\d{4}")) { // Full month format
+                date = inputFormatFull.parse(extractedDate);
+            } else {
+                return extractedDate; // If format doesn't match, return original
+            }
+            return outputFormat.format(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return extractedDate; // Return original if parsing fails
+        }
+    }
+    //clear all
+    //clear all
+    private void clearAllFields() {
+        amountInput.setText("");
+        receiverName.setText("");
+        description.setText("");
+        utr.setText("");
+        transactionId.setText("");
+        comments.setText("");
+        categoryInput.setText("");
+
+        // Reset the date field to today’s date
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        calendar = Calendar.getInstance();
+        dateTextView.setText(sdf.format(calendar.getTime()));
+
+        // Uncheck selected radio buttons
+        transactionTypeGroup.clearCheck();
+        paymentMethodGroup.clearCheck();
+
+        Toast.makeText(this, "All fields cleared!", Toast.LENGTH_SHORT).show();
+    }
+}
