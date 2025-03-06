@@ -40,5 +40,7 @@ dependencies {
     implementation 'com.jjoe64:graphview:4.2.2'
     implementation 'com.rmtheis:tess-two:9.1.0'
     implementation 'com.google.code.gson:gson:2.12.1'
+    implementation 'com.airbnb.android:lottie:6.0.0'
+
 
 }
