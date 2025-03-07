@@ -8,13 +8,10 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
@@ -69,7 +66,6 @@ public class EntryActivity extends AppCompatActivity {
     private static final int CAMERA_PERMISSION_CODE = 105;
     private Button attachReceiptButton;
     private Uri imageUri;
-    private int memeCounter = 0;
     private static final String TESS_DATA_PATH = "/tessdata/";
     private static final String TESS_LANG = "eng+hin+osd";
     private TessBaseAPI tessBaseAPI;
@@ -314,7 +310,6 @@ public class EntryActivity extends AppCompatActivity {
         }
 
         if (!isValid) {
-            showGifOverlay();//funny memes
             Toast.makeText(this, "Please fill all required fields!", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -444,52 +439,7 @@ public class EntryActivity extends AppCompatActivity {
             }
         }
     }
-    private void showGifOverlay() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_Translucent_NoTitleBar);
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_gif_overlay, null);
-        VideoView memeVideoView = dialogView.findViewById(R.id.gifImageView);
-        TextView memeTextView = dialogView.findViewById(R.id.screamTextView);
-        int memeResId;
-        String memeText;
-        switch (memeCounter) {
-            case 0:
-                memeResId = R.raw.warning_gif;
-                memeText = "FILL OUT THE FORMMMMM FIRST!!!!!!!!!! 😡😂";
-                break;
-            case 1:
-                memeResId = R.raw.seriously_bro;
-                memeText = "Seriously, bro?";
-                break;
-            case 2:
-                memeResId = R.raw.not_doing_this;
-                memeText = "I-I am not doing that.";
-                break;
-            case 3:
-                memeResId = R.raw.stop_it;
-                memeText = "Stop it, seriously stop it.";
-                break;
-            default:
-                memeResId = R.raw.i_am_not_saving_this;
-                memeText = "Nah, I am not saving that.";
-                break;
-        }
-        if (memeCounter < 4) memeCounter++; // Cycle through first 4, then always show the last one
-        memeVideoView.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + memeResId));
-        memeVideoView.start();
-        memeTextView.setText(memeText);
-        AlertDialog gifDialog = builder.setView(dialogView).create();
-        gifDialog.show();
-        // Play sound effect
-        MediaPlayer mediaPlayer = MediaPlayer.create(this, R.raw.drop);
-        mediaPlayer.start();
-        mediaPlayer.setOnCompletionListener(mp -> mp.release());
-        // Auto-dismiss after 2.5 seconds
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            gifDialog.dismiss();
-            mediaPlayer.release();
-        }, 2500);
-    }
+
     // UPI receipt scanner sections
     private void button_attach_receipt() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
