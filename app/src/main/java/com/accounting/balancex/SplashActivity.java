@@ -46,9 +46,12 @@ public class SplashActivity extends AppCompatActivity {
 
         // Move to MainActivity after animations
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            startActivity(new Intent(SplashActivity.this, MainActivity.class));
-            finish();
-        }, 3500); // Total animation time
+            if (!isFinishing()) { // Only start MainActivity if SplashActivity is still active
+                startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                finish();
+            }
+        }, 3000); // Your splash delay
+        // Total animation time
 
         // Find the version TextView
         TextView versionView = findViewById(R.id.version_view);

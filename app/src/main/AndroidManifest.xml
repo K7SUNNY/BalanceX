@@ -55,31 +55,36 @@
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
-            android:windowNoTitle="true">
+            android:windowNoTitle="true"
+            android:windowSoftInputMode="adjustPan">
         </activity>
         <!-- Transaction Page -->
         <activity
             android:name=".TransactionActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
-            android:windowNoTitle="true" />
+            android:windowNoTitle="true"
+            android:windowSoftInputMode="adjustPan"/>
         <!-- Entry Page -->
         <activity
             android:name=".EntryActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
-            android:windowNoTitle="true" />
+            android:windowNoTitle="true"
+            android:windowSoftInputMode="adjustPan"/>
 
         <activity
             android:name=".TransactionDetailsActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
-            android:windowNoTitle="true" />
+            android:windowNoTitle="true"
+            android:windowSoftInputMode="adjustPan"/>
         <activity
             android:name=".NotificationActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
-            android:windowNoTitle="true" />
+            android:windowNoTitle="true"
+            android:windowSoftInputMode="adjustPan"/>
     </application>
 
 </manifest>

@@ -95,7 +95,7 @@ public class EntryActivity extends AppCompatActivity {
             public void onClick(View v) {
                 isReceiptAttached = true;  // ✅ Mark receipt as attached
 
-                showImageSourceDialog();  // ✅ Open camera/gallery for receipt selection
+                button_attach_receipt();  // ✅ Open camera/gallery for receipt selection
 
                 selectPaymentMethod("UPI");  // ✅ Auto-select UPI
             }
