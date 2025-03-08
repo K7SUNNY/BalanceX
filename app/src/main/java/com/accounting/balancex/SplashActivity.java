@@ -40,7 +40,7 @@ public class SplashActivity extends AppCompatActivity {
                 appName.setVisibility(TextView.INVISIBLE);
                 appSlogan.setVisibility(TextView.VISIBLE);
                 appSlogan.startAnimation(sloganFadeIn);
-            }, 50); // Delay slightly to match slide-out duration
+            }, 300); // Delay slightly to match slide-out duration
 
         }, 1000); // Delay before sliding (same as fade-in duration)
 

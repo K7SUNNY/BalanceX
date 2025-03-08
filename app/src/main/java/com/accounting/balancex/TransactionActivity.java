@@ -1,10 +1,13 @@
 package com.accounting.balancex;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,7 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
+import android.widget.Toast;
 
 public class TransactionActivity extends AppCompatActivity {
 
@@ -92,9 +95,20 @@ public class TransactionActivity extends AppCompatActivity {
             }
         });
 
-        navHome.setOnClickListener(v -> startActivity(new Intent(TransactionActivity.this, MainActivity.class)));
-        navTransactions.setOnClickListener(v -> {}); // No action needed
-        navEntry.setOnClickListener(v -> startActivity(new Intent(TransactionActivity.this, EntryActivity.class)));
+        navHome.setOnClickListener(v -> {
+            vibrateDevice();
+            startActivity(new Intent(TransactionActivity.this, MainActivity.class));
+        });
+
+        navTransactions.setOnClickListener(v -> {
+            vibrateDevice();
+            Toast.makeText(TransactionActivity.this, "Already on Transactions Page", Toast.LENGTH_SHORT).show();
+        });
+
+        navEntry.setOnClickListener(v -> {
+            vibrateDevice();
+            startActivity(new Intent(TransactionActivity.this, EntryActivity.class));
+        });
 
         filterByDateTextView.setOnClickListener(v -> showFilterPopup(v));
 
@@ -265,6 +279,26 @@ public class TransactionActivity extends AppCompatActivity {
                 Collections.sort(filteredList, (t1, t2) -> Long.compare(t2.getEntryId(), t1.getEntryId()));
             }
             adapter.notifyDataSetChanged();
+
+            // Animation for recyclerView items after sorting
+            recyclerView.post(() -> {
+                for (int i = 0; i < recyclerView.getChildCount(); i++) {
+                    View child = recyclerView.getChildAt(i);
+                    if (child != null) {
+                        child.setTranslationY(200f);
+                        child.setAlpha(0f);
+
+                        child.animate()
+                                .translationY(0f)
+                                .alpha(1f)
+                                .setStartDelay(i * 150L)
+                                .setDuration(500)
+                                .setInterpolator(new DecelerateInterpolator())
+                                .start();
+                    }
+                }
+            });
+
         } else {
             Log.e("TransactionDebug", "Sorting skipped: entryId missing.");
         }
@@ -291,5 +325,15 @@ public class TransactionActivity extends AppCompatActivity {
             // Stop refresh animation
             swipeRefreshLayout.setRefreshing(false);
         }, 1500); // Delay to make it smooth
+    }
+    public void vibrateDevice() {
+        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator != null && vibrator.hasVibrator()) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(30); // Deprecated in API 26+, but works for older versions
+            }
+        }
     }
 }

@@ -40,15 +40,21 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
         if (transaction.getTransactionType().equalsIgnoreCase("Credit")) {
             holder.textType.setText("Credit");
             holder.textType.setTextColor(context.getResources().getColor(R.color.green));
+            holder.textType.setBackgroundResource(R.drawable.bg_credit);
         } else {
             holder.textType.setText("Debit");
             holder.textType.setTextColor(context.getResources().getColor(R.color.red));
+            holder.textType.setBackgroundResource(R.drawable.bg_debit);
         }
 
         holder.textUTR.setText(transaction.getUtr());
         holder.textPaymentMethod.setText(transaction.getPaymentMethod());
 
-        holder.textReceiver.setText(transaction.getReceiverName());
+        String receiverName = transaction.getReceiverName();
+        if (receiverName.length() > 10) {
+            receiverName = receiverName.substring(0, 10) + "...";
+        }
+        holder.textReceiver.setText(receiverName);
         holder.textAmount.setText("₹" + transaction.getAmount());
         holder.textDate.setText(transaction.getDate());
 

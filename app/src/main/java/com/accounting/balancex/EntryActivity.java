@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
@@ -14,6 +15,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
@@ -221,9 +224,21 @@ public class EntryActivity extends AppCompatActivity {
         attachReceiptButton.setOnClickListener(v -> showImageSourceDialog());
     }
     private void setNavigationListeners() {
-        navHome.setOnClickListener(v -> startActivity(new Intent(EntryActivity.this, MainActivity.class)));
-        navTransactions.setOnClickListener(v -> startActivity(new Intent(EntryActivity.this, TransactionActivity.class)));
-        navEntry.setOnClickListener(v -> {});
+        navHome.setOnClickListener(v -> {
+            vibrateDevice();
+            startActivity(new Intent(EntryActivity.this, MainActivity.class));
+        });
+
+        navTransactions.setOnClickListener(v -> {
+            vibrateDevice();
+            startActivity(new Intent(EntryActivity.this, TransactionActivity.class));
+        });
+
+        navEntry.setOnClickListener(v -> {
+            vibrateDevice();
+            Toast.makeText(EntryActivity.this, "Already on Entry Page", Toast.LENGTH_SHORT).show();
+        });
+
     }
     private void setDateField() {
         calendar = Calendar.getInstance();
@@ -400,7 +415,7 @@ public class EntryActivity extends AppCompatActivity {
             transaction.put("entryId", entryId);
             transaction.put("date", selectedDate);
             transaction.put("amount", amountInput.getText().toString());
-            transaction.put("receiver", receiverName.getText().toString());
+            transaction.put("receiver", receiverName.getText().toString().trim());
             transaction.put("description", description.getText().toString());
             transaction.put("utr", utr.getText().toString());
             transaction.put("transactionId", transactionId.getText().toString());
@@ -769,5 +784,15 @@ public class EntryActivity extends AppCompatActivity {
         paymentMethodGroup.clearCheck();
 
         Toast.makeText(this, "All fields cleared!", Toast.LENGTH_SHORT).show();
+    }
+    public void vibrateDevice() {
+        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator != null && vibrator.hasVibrator()) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(30); // Deprecated in API 26+, but works for older versions
+            }
+        }
     }
 }

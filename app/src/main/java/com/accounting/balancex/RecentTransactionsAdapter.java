@@ -33,7 +33,11 @@ public class RecentTransactionsAdapter extends RecyclerView.Adapter<RecentTransa
     public void onBindViewHolder(@NonNull RecentTransactionViewHolder holder, int position) {
         RecentTransactionModel transaction = recentTransactions.get(position);
 
-        holder.textViewReceiver.setText(transaction.getReceiver());
+        String textViewReceiver = transaction.getReceiver();
+        if (textViewReceiver != null && textViewReceiver.length() > 5) {
+            textViewReceiver = textViewReceiver.substring(0, 5) + "...";
+        }
+        holder.textViewReceiver.setText(textViewReceiver);
         holder.textViewDate.setText(transaction.getDate());
         holder.textViewAmount.setText("₹" + transaction.getAmount());
         holder.textViewType.setText(transaction.getType());

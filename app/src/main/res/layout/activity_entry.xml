@@ -64,7 +64,7 @@
                                 android:background="@drawable/rounded_corner_container_save"
                                 android:backgroundTint="#00a1ff"
                                 android:gravity="center"
-                                android:padding="5dp"
+                                android:padding="8dp"
                                 android:text="Show most used"
                                 android:textColor="@android:color/white"
                                 android:textStyle="bold" />

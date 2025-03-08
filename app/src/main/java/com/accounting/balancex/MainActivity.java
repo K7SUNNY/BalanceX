@@ -30,6 +30,10 @@ import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import android.content.SharedPreferences;
+import android.widget.Toast;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.content.Context;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -49,7 +53,8 @@ public class MainActivity extends AppCompatActivity {
     private long appInstallTime;
     private List<RecentTransactionModel> recentTransactions;
     private RecentTransactionsAdapter adapter;
-
+    private long backPressedTime = 0;
+    private TextView seeAllButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,8 +72,20 @@ public class MainActivity extends AppCompatActivity {
 
         loadTransactionData();
 
-        navTransactions.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, TransactionActivity.class)));
-        navEntry.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, EntryActivity.class)));
+        navTransactions.setOnClickListener(v -> {
+            vibrateDevice();
+            startActivity(new Intent(MainActivity.this, TransactionActivity.class));
+        });
+
+        navEntry.setOnClickListener(v -> {
+            vibrateDevice();
+            startActivity(new Intent(MainActivity.this, EntryActivity.class));
+        });
+
+        navHome.setOnClickListener(v -> {
+            vibrateDevice();
+            Toast.makeText(MainActivity.this, "Already on Home Page", Toast.LENGTH_SHORT).show();
+        });
 
         slideMenu = findViewById(R.id.slideMenu);
         ImageView menuButton = findViewById(R.id.imageslidemenu_mainpage);
@@ -124,6 +141,25 @@ public class MainActivity extends AppCompatActivity {
 
         // Load transactions from storage
         loadRecentTransactions();
+
+        //sea all
+        seeAllButton = findViewById(R.id.seeAllButton);
+        seeAllButton.setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, TransactionActivity.class);
+            startActivity(intent);
+        });
+
+        Log.d("BalanceXApplication", "Application Created!");
+    }
+    @Override
+    public void onBackPressed() {
+        if (backPressedTime + 2000 > System.currentTimeMillis()) {
+            super.onBackPressed();
+            finishAffinity(); // Exit the app
+        } else {
+            Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show();
+        }
+        backPressedTime = System.currentTimeMillis();
     }
 
     private void loadTransactionData() {
@@ -300,6 +336,17 @@ public class MainActivity extends AppCompatActivity {
 
         } catch (Exception e) {
             Log.e("LoadTransactions", "Error parsing JSON", e);
+        }
+    }
+    //vibrate device
+    public void vibrateDevice() {
+        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator != null && vibrator.hasVibrator()) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(30); // Deprecated in API 26+, but works for older versions
+            }
         }
     }
 }
