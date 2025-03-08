@@ -161,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
         }
         backPressedTime = System.currentTimeMillis();
     }
-
+    //load transaction from file
     private void loadTransactionData() {
         try {
             File file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");

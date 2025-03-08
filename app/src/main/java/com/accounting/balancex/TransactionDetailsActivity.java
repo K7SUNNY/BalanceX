@@ -17,7 +17,7 @@ public class    TransactionDetailsActivity extends AppCompatActivity {
     private TransactionAdapter adapter;
     private List<Transaction> personTransactions;
     private String receiverName;
-
+//transaction details page
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

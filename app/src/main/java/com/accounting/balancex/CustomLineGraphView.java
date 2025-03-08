@@ -6,7 +6,7 @@ import android.util.AttributeSet;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
-
+//not working right now
 public class CustomLineGraphView extends GraphView {
 
     private LineGraphSeries<DataPoint> series;

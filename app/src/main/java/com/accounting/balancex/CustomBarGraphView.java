@@ -60,7 +60,7 @@ public class CustomBarGraphView extends View {
         creditTransactions = Arrays.asList(year_new_value1c, year_new_value2c, year_new_value3c, year_new_value4c);
         debitTransactions = Arrays.asList(3, 4, 5, 6);
     }
-
+    //draw graph
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);

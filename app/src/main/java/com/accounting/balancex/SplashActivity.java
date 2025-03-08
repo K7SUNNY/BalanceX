@@ -56,7 +56,7 @@ public class SplashActivity extends AppCompatActivity {
         // Find the version TextView
         TextView versionView = findViewById(R.id.version_view);
 
-        // Get the app version dynamically
+        // Get the app version dynamically( automatically from build.gradle)
         try {
             PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             String version = pInfo.versionName;

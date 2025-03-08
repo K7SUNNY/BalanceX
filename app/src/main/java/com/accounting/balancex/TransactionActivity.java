@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import android.widget.Toast;
-
+//History page
 public class TransactionActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;

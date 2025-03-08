@@ -11,7 +11,7 @@ public class Transaction {
     private String paymentMethod;
     private String textType;
     private long entryId;
-
+        //
     // Constructor
     public Transaction(String date, String amount, String receiver, String description,
                        String utr, String comments, String category,

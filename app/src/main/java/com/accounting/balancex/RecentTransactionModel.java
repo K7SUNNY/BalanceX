@@ -1,5 +1,5 @@
 package com.accounting.balancex;
-
+//MainActivity recent transaction handler class( model)
 public class RecentTransactionModel {
     private String receiver;
     private String date;

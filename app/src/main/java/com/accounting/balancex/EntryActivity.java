@@ -662,6 +662,7 @@ public class EntryActivity extends AppCompatActivity {
             loadingDialog.dismiss();
         }
     }
+    //fills form automatically from images
     private void populateForm(String text) {
         text = Normalizer.normalize(text, Normalizer.Form.NFC);
 

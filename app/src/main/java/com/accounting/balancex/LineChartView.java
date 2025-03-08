@@ -16,7 +16,7 @@ public class LineChartView extends View {
         super(context, attrs);
         init();
     }
-
+    // i don't know why this file is here
     private void init() {
         // Line paint (Blue)
         linePaint = new Paint();
