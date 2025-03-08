@@ -4,18 +4,20 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.OvershootInterpolator;
 import android.widget.LinearLayout;
+import android.widget.SearchView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -27,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+
 public class TransactionActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
@@ -34,9 +37,12 @@ public class TransactionActivity extends AppCompatActivity {
     private List<Transaction> transactionList;
     private List<Transaction> filteredList;
     private TextView textAll, textCredits, textDebits;
-    private EditText searchBox;
+    private SearchView searchBox;
     private LinearLayout navHome, navTransactions, navEntry;
     private TextView filterByDateTextView;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private String currentFilterType = "All"; // Default to All
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +56,7 @@ public class TransactionActivity extends AppCompatActivity {
         textCredits = findViewById(R.id.textCredits);
         textDebits = findViewById(R.id.textDebits);
         searchBox = findViewById(R.id.searchBox);
+        filterByDateTextView = findViewById(R.id.filter_by_date);
 
         navHome = findViewById(R.id.navHome);
         navTransactions = findViewById(R.id.navTransactions);
@@ -57,6 +64,8 @@ public class TransactionActivity extends AppCompatActivity {
 
         transactionList = new ArrayList<>();
         filteredList = new ArrayList<>();
+
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
 
         loadTransactionsFromFile();
 
@@ -69,35 +78,31 @@ public class TransactionActivity extends AppCompatActivity {
         textCredits.setOnClickListener(v -> filterTransactions("Credit"));
         textDebits.setOnClickListener(v -> filterTransactions("Debit"));
 
-        searchBox.addTextChangedListener(new TextWatcher() {
+        searchBox.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            public boolean onQueryTextSubmit(String query) {
+                searchTransaction(query);
+                return true;
             }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                searchTransaction(s.toString());
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
+            public boolean onQueryTextChange(String newText) {
+                searchTransaction(newText);
+                return true;
             }
         });
 
         navHome.setOnClickListener(v -> startActivity(new Intent(TransactionActivity.this, MainActivity.class)));
-        navTransactions.setOnClickListener(v -> {
-        });
+        navTransactions.setOnClickListener(v -> {}); // No action needed
         navEntry.setOnClickListener(v -> startActivity(new Intent(TransactionActivity.this, EntryActivity.class)));
 
-        filterByDateTextView = findViewById(R.id.filter_by_date);
-        filterByDateTextView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showFilterPopup(v);
-            }
+        filterByDateTextView.setOnClickListener(v -> showFilterPopup(v));
+
+        // Pull-to-Refresh Listener
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            refreshTransactionList();
         });
     }
-
     private void showFilterPopup(View v) {
         PopupMenu popupMenu = new PopupMenu(TransactionActivity.this, v);
         // Inflate the menu with sorting options
@@ -122,11 +127,20 @@ public class TransactionActivity extends AppCompatActivity {
 
     private void loadTransactionsFromFile() {
         transactionList.clear(); // Clear existing transactions
+
+        TextView loadingText = findViewById(R.id.loadingText);
+        TextView textNoTransactions = findViewById(R.id.noTransactionsText);
+        recyclerView.setVisibility(View.GONE);
+        loadingText.setVisibility(View.VISIBLE);
+        textNoTransactions.setVisibility(View.GONE);
+
         File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
                 "Accounting/transactions.json");
 
         if (!file.exists()) {
             Log.e("TransactionDebug", "File not found: " + file.getAbsolutePath());
+            loadingText.setVisibility(View.GONE);
+            textNoTransactions.setVisibility(View.VISIBLE);
             return;
         }
 
@@ -159,57 +173,90 @@ public class TransactionActivity extends AppCompatActivity {
                 ));
             }
 
-            // Sort the transactions by date in descending order (newest first)
+            // Sort transactions by date (newest first)
             Collections.sort(transactionList, (t1, t2) -> Long.compare(t2.getEntryId(), t1.getEntryId()));
 
-            // Notify adapter to update UI
-            adapter.notifyDataSetChanged();
-
-
             runOnUiThread(() -> {
-                filteredList.clear();
-                filteredList.addAll(transactionList);
+                // Apply the last selected filter type
+                filterTransactions(currentFilterType);
 
-                if (adapter == null) {
-                    adapter = new TransactionAdapter(this, filteredList);
-                    recyclerView.setAdapter(adapter);
-                } else {
-                    adapter.notifyDataSetChanged();
-                }
+                // Hide loading message
+                loadingText.setVisibility(View.GONE);
             });
 
         } catch (Exception e) {
             Log.e("TransactionDebug", "Error loading transactions", e);
+            loadingText.setVisibility(View.GONE);
+            textNoTransactions.setVisibility(View.VISIBLE);
         }
 
         Log.d("TransactionDebug", "Loaded Transactions: " + transactionList.size());
     }
-
     private void filterTransactions(String type) {
-        // Set the selected type to the current section
-        String selectedType = type;
+        currentFilterType = type; // Store the selected type
         filteredList.clear();
 
-        // Filter based on the selected section type
-        if (selectedType.equals("All")) {
+        if (type.equals("All")) {
             filteredList.addAll(transactionList);
         } else {
             for (Transaction t : transactionList) {
-                if (t.getTransactionType().equals(selectedType)) {
+                if (t.getTransactionType().equals(type)) {
                     filteredList.add(t);
                 }
             }
         }
 
-        // Update the adapter with filtered results
         adapter.updateList(filteredList);
 
-        // Update the colors for the section titles
-        textAll.setTextColor(selectedType.equals("All") ? Color.parseColor("#1e90ff") : Color.BLACK);
-        textCredits.setTextColor(selectedType.equals("Credit") ? Color.parseColor("#1e90ff") : Color.BLACK);
-        textDebits.setTextColor(selectedType.equals("Debit") ? Color.parseColor("#1e90ff") : Color.BLACK);
-    }
+        TextView textNoTransactions = findViewById(R.id.noTransactionsText);
+        if (filteredList.isEmpty()) {
+            textNoTransactions.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            textNoTransactions.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
 
+        recyclerView.post(() -> {
+            for (int i = 0; i < recyclerView.getChildCount(); i++) {
+                View child = recyclerView.getChildAt(i);
+                if (child != null) {
+                    child.setTranslationY(200f);
+                    child.setAlpha(0f);
+
+                    child.animate()
+                            .translationY(0f)
+                            .alpha(1f)
+                            .setStartDelay(i * 150L)
+                            .setDuration(500)
+                            .setInterpolator(new DecelerateInterpolator())
+                            .start();
+                }
+            }
+        });
+        // Animate category selection with a subtle scale effect
+        animateSelection(textAll, type.equals("All"));
+        animateSelection(textCredits, type.equals("Credit"));
+        animateSelection(textDebits, type.equals("Debit"));
+    }
+    // Helper method to apply smooth text size and scaling animation
+    private void animateSelection(TextView textView, boolean isSelected) {
+        float scaleFactor = isSelected ? 1.1f : 1f;
+        long duration = isSelected ? 300 : 250;
+
+        textView.animate()
+                .scaleX(scaleFactor)
+                .scaleY(scaleFactor)
+                .setDuration(duration)
+                .setInterpolator(new OvershootInterpolator()) // Smooth effect
+                .start();
+
+        textView.setPadding(isSelected ? 10 : 5, 5, isSelected ? 10 : 5, 5); // Adjust padding instead of text size
+
+        // Keep background size fixed while changing color
+        textView.setTextColor(isSelected ? Color.parseColor("#1e90ff") : Color.BLACK);
+        textView.setBackgroundResource(isSelected ? R.drawable.selected_title : android.R.color.transparent);
+    }
     private void sortTransactions(boolean isOldestToNewest) {
         if (!filteredList.isEmpty() && filteredList.get(0).getEntryId() != 0) { // Check if entryId exists
             if (isOldestToNewest) {
@@ -233,5 +280,16 @@ public class TransactionActivity extends AppCompatActivity {
         }
 
         adapter.updateList(searchResults);
+    }
+    // Refresh Transactions
+    private void refreshTransactionList() {
+        // Simulating a small delay for a natural feel
+        new Handler().postDelayed(() -> {
+            // Reload transactions (Use your existing method)
+            loadTransactionsFromFile();
+
+            // Stop refresh animation
+            swipeRefreshLayout.setRefreshing(false);
+        }, 1500); // Delay to make it smooth
     }
 }

@@ -8,4 +8,7 @@
     <style name="CustomPopupMenu" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:popupBackground">#FFFFFF</item> <!-- Set white background -->
     </style>
+    <style name="CustomSearchView" parent="Theme.MaterialComponents.Light">
+        <item name="android:textColorHint">#C5C5C5</item> <!-- Hint text color -->
+    </style>
 </resources>

@@ -3,6 +3,7 @@ package com.accounting.balancex;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
@@ -12,6 +13,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
@@ -73,6 +75,7 @@ public class EntryActivity extends AppCompatActivity {
     private AlertDialog loadingDialog;
     private boolean isReceiptAttached = false;  // Default: No receipt attached
     private LinearLayout utr_layout, transactionId_layout;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -160,17 +163,57 @@ public class EntryActivity extends AppCompatActivity {
                 saveButton.setBackgroundResource(R.drawable.rounded_corner_container_disabled);
             }
         });
-        // Single click listener for Save button (only calls saveTransaction when checkbox is checked)
         saveButton.setOnClickListener(v -> {
-            if (confirmCheckBox.isChecked()) {
-                saveTransaction();
-            }else {
+            if (!confirmCheckBox.isChecked()) {
                 Log.d("EntryActivity", "Checkbox not checked! Showing Toast...");
                 runOnUiThread(() ->
                         Toast.makeText(getApplicationContext(), "Please check the checkbox", Toast.LENGTH_SHORT).show()
                 );
+                return;
             }
+
+            // Validate required fields before showing the dialog
+            boolean isValid = true;
+            if (amountInput.getText().toString().isEmpty()) {
+                amountInput.setBackgroundResource(R.drawable.red_outline);
+                isValid = false;
+            } else {
+                amountInput.setBackgroundResource(R.drawable.rounded_input_background);
+            }
+
+            if (receiverName.getText().toString().isEmpty()) {
+                receiverName.setBackgroundResource(R.drawable.red_outline);
+                isValid = false;
+            } else {
+                receiverName.setBackgroundResource(R.drawable.rounded_input_background);
+            }
+
+            int selectedTypeId = transactionTypeGroup.getCheckedRadioButtonId();
+            if (selectedTypeId == -1) {
+                transactionTypeGroup.setBackgroundResource(R.drawable.red_outline);
+                isValid = false;
+            } else {
+                transactionTypeGroup.setBackgroundResource(0);
+            }
+
+            int selectedPaymentId = paymentMethodGroup.getCheckedRadioButtonId();
+            if (selectedPaymentId == -1) {
+                paymentMethodGroup.setBackgroundResource(R.drawable.red_outline);
+                isValid = false;
+            } else {
+                paymentMethodGroup.setBackgroundResource(0);
+            }
+
+            if (!isValid) {
+                Toast.makeText(this, "Please fill all required fields!", Toast.LENGTH_SHORT).show();
+                return;  // Stop execution if fields are missing
+            }
+
+            // Now that everything is valid, show the saving dialog and proceed
+            showSavingDialog();
+            new Handler().postDelayed(this::saveTransaction, 1500);
         });
+
         //Add from contact button calling
         addFromContactButton.setOnClickListener(v -> requestContactPermission());
         //Attach receipt button calling
@@ -274,6 +317,12 @@ public class EntryActivity extends AppCompatActivity {
             }
         }
     }
+    private void showSavingDialog() {
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Please wait, transaction being saved...");
+        progressDialog.setCancelable(false); // Prevent dismissal
+        progressDialog.show();
+    }
     private void saveTransaction() {
         String selectedDate = dateTextView.getText().toString();
         String formattedDate = new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(calendar.getTime()); // Use selected date
@@ -283,14 +332,14 @@ public class EntryActivity extends AppCompatActivity {
             amountInput.setBackgroundResource(R.drawable.red_outline); // Add red outline
             isValid = false;
         } else {
-            amountInput.setBackgroundResource(0); // Remove outline if fixed
+            amountInput.setBackgroundResource(R.drawable.rounded_input_background); // Remove outline if fixed
         }
 
         if (receiverName.getText().toString().isEmpty()) {
             receiverName.setBackgroundResource(R.drawable.red_outline);
             isValid = false;
         } else {
-            receiverName.setBackgroundResource(0);
+            receiverName.setBackgroundResource(R.drawable.rounded_input_background);
         }
 
         int selectedTypeId = transactionTypeGroup.getCheckedRadioButtonId();
@@ -371,6 +420,10 @@ public class EntryActivity extends AppCompatActivity {
             Toast.makeText(this, "Transaction saved successfully!", Toast.LENGTH_SHORT).show();
         } catch (JSONException | IOException e) {
             e.printStackTrace();
+        }
+        // Dismiss the dialog after saving
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
         }
     }
     private void setupValidationListeners() {

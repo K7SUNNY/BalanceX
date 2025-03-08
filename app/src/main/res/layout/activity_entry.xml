@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="#d3d3d3 ">
+        android:background="#e5e4e2">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -83,7 +83,7 @@
                                 android:textColor="#00a1ff"
                                 android:textStyle="bold"
                                 android:textSize="15dp"
-                                android:gravity="center"/>
+                                android:gravity="center" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -552,7 +552,5 @@
                     android:textColor="@android:color/white" />
             </LinearLayout>
         </LinearLayout>
-
     </LinearLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
