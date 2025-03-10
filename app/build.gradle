@@ -28,7 +28,6 @@ android {
 }
 
 dependencies {
-
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
@@ -40,6 +39,4 @@ dependencies {
     implementation 'com.rmtheis:tess-two:9.1.0'
     implementation 'com.google.code.gson:gson:2.12.1'
     implementation 'com.airbnb.android:lottie:6.0.0'
-
-
 }
