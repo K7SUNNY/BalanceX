@@ -11,16 +11,18 @@ public class Transaction {
     private String paymentMethod;
     private String textType;
     private long entryId;
+    private String transactionId;
         //
     // Constructor
     public Transaction(String date, String amount, String receiver, String description,
-                       String utr, String comments, String category,
+                       String utr, String comments, String category,String transactionId,
                        String paymentMethod, String transactionType, long entryId) {
         this.date = date;
         this.amount = amount;
         this.receiver = receiver;
         this.description = description;
         this.utr = utr;
+        this.transactionId = transactionId;
         this.comments = comments;
         this.category = category;
         this.paymentMethod = paymentMethod;
@@ -29,14 +31,15 @@ public class Transaction {
     }
 
     // Getters
+    public long getEntryId() { return entryId; }
     public String getDate() { return date; }
     public String getAmount() { return amount; }
     public String getReceiverName() { return receiver; }
     public String getDescription() { return description; }
     public String getUtr() { return utr; }
+    public String getTransactionID() { return transactionId; }
     public String getComments() { return comments; }
     public String getCategory() { return category; }
     public String getPaymentMethod() { return paymentMethod; }
     public String getTransactionType() { return textType; }
-    public long getEntryId() { return entryId; }
 }

@@ -3,6 +3,9 @@ package com.accounting.balancex;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.animation.TranslateAnimation;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -74,18 +77,28 @@ public class MainActivity extends AppCompatActivity {
 
         navTransactions.setOnClickListener(v -> {
             vibrateDevice();
+            hideNavText(); // Hide all text before navigating
+            applyNavAnimation(navTransactions); // Animate Transactions text
             startActivity(new Intent(MainActivity.this, TransactionActivity.class));
         });
 
         navEntry.setOnClickListener(v -> {
             vibrateDevice();
+            hideNavText();
+            applyNavAnimation(navEntry); // Animate Entry text
             startActivity(new Intent(MainActivity.this, EntryActivity.class));
         });
 
         navHome.setOnClickListener(v -> {
             vibrateDevice();
+            hideNavText();
+            applyNavAnimation(navHome); // Animate Home text
             Toast.makeText(MainActivity.this, "Already on Home Page", Toast.LENGTH_SHORT).show();
         });
+
+        // Apply animation to Home text on launch
+        new Handler().postDelayed(() -> applyNavAnimation(navHome), 100);
+        hideNavText(); // This will hide all text under icons initially
 
         slideMenu = findViewById(R.id.slideMenu);
         ImageView menuButton = findViewById(R.id.imageslidemenu_mainpage);
@@ -148,9 +161,26 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, TransactionActivity.class);
             startActivity(intent);
         });
-
         Log.d("BalanceXApplication", "Application Created!");
     }
+    //nav animation
+    private void hideNavText() {
+        ((TextView) ((LinearLayout) findViewById(R.id.navHome)).getChildAt(1)).setVisibility(View.INVISIBLE);
+        ((TextView) ((LinearLayout) findViewById(R.id.navTransactions)).getChildAt(1)).setVisibility(View.INVISIBLE);
+        ((TextView) ((LinearLayout) findViewById(R.id.navEntry)).getChildAt(1)).setVisibility(View.INVISIBLE);
+    }
+
+    private void applyNavAnimation(LinearLayout selectedNavItem) {
+        // Get the TextView inside the selected navigation item
+        TextView textView = (TextView) ((LinearLayout) selectedNavItem).getChildAt(1);
+        // Load the animation
+        Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up_nav);
+
+        // Apply the animation and make it visible
+        textView.setVisibility(View.VISIBLE);
+        textView.startAnimation(slideUp);
+    }
+
     @Override
     public void onBackPressed() {
         if (backPressedTime + 2000 > System.currentTimeMillis()) {
@@ -312,8 +342,6 @@ public class MainActivity extends AppCompatActivity {
 
             reader.close();
             fis.close();
-
-            Log.d("LoadTransactions", "JSON Read: " + sb.toString());
 
             JSONArray transactionsArray = new JSONArray(sb.toString());
             recentTransactions.clear();  // Clear old data before adding new

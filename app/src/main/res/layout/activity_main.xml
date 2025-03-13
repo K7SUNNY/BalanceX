@@ -34,36 +34,24 @@
                     android:id="@+id/imageslidemenu_mainpage"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="start"
                     android:layout_weight="1"
                     app:srcCompat="@drawable/menu_alt_1_svgrepo_com" />
-
-                <Space
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
 
                 <TextView
                     android:id="@+id/textViewdashboard"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="10"
                     android:gravity="center"
                     android:text="Dashboard"
                     android:textColor="#fff"
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
-                <Space
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
                 <ImageView
                     android:id="@+id/imagenotification"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="end"
                     android:layout_weight="1"
                     app:srcCompat="@drawable/notification_bell_svgrepo_com" />
             </LinearLayout>
@@ -512,7 +500,7 @@
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recyclerViewRecentTransactions"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/home_page_recycleview_background"
                     android:padding="10dp" />
             </LinearLayout>
@@ -522,7 +510,7 @@
             android:id="@+id/navbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
+            android:layout_gravity="center"
             android:background="@drawable/twoside_rounded_rectangular"
             android:clickable="true"
             android:focusable="true"
@@ -543,13 +531,15 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_home" />
+                    android:src="@drawable/ic_home"
+                    android:layout_gravity="center"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="HOME"
+                    android:layout_gravity="center"
                     android:textColor="@android:color/white" />
             </LinearLayout>
 

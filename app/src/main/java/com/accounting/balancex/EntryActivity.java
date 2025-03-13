@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
@@ -13,6 +14,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.VibrationEffect;
@@ -20,11 +22,11 @@ import android.os.Vibrator;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -77,7 +79,7 @@ public class EntryActivity extends AppCompatActivity {
     // Declare dialog variable at the top of EntryActivity
     private AlertDialog loadingDialog;
     private boolean isReceiptAttached = false;  // Default: No receipt attached
-    private LinearLayout utr_layout, transactionId_layout;
+    private LinearLayout moreDetailsUPI, transactionDetail;
     private ProgressDialog progressDialog;
 
     @Override
@@ -102,26 +104,7 @@ public class EntryActivity extends AppCompatActivity {
                 selectPaymentMethod("UPI");  // ✅ Auto-select UPI
             }
         });
-        setupValidationListeners(); // ✅ Call this after initializing views
-        // ✅ Hide UTR & Transaction ID layout at the start
-        utr_layout.setVisibility(View.GONE);
-        transactionId_layout.setVisibility(View.GONE);
 
-        paymentMethodGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                RadioButton selectedPayment = findViewById(checkedId);
-                if (selectedPayment != null) {
-                    String paymentMethod = selectedPayment.getText().toString();
-
-                    if (paymentMethod.equalsIgnoreCase("UPI")) {
-                        showFieldsWithAnimation(utr_layout, transactionId_layout);
-                    } else {
-                        hideFieldsWithAnimation(utr_layout, transactionId_layout);
-                    }
-                }
-            }
-        });
         clearAllButton.setOnClickListener(v -> {
             new AlertDialog.Builder(this)
                     .setTitle("Clear All Fields?")
@@ -129,6 +112,40 @@ public class EntryActivity extends AppCompatActivity {
                     .setPositiveButton("Yes", (dialog, which) -> clearAllFields())
                     .setNegativeButton("No", null)
                     .show();
+        });
+        moreDetailsUPI.setVisibility(View.GONE);
+        paymentMethodGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (checkedId == R.id.radioButtonUPI) {
+                    // Slide in moreDetailsUPI
+                    moreDetailsUPI.setVisibility(View.VISIBLE);
+                    moreDetailsUPI.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_in));
+
+                    // Move the transactionDetail layout with same timing
+                    transactionDetail.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_up));
+                } else if (checkedId == R.id.radioButtonCash) {
+                    // Slide out moreDetailsUPI
+                    Animation slideOut = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_out);
+                    moreDetailsUPI.startAnimation(slideOut);
+                    slideOut.setAnimationListener(new Animation.AnimationListener() {
+                        @Override
+                        public void onAnimationStart(Animation animation) {}
+
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            moreDetailsUPI.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {}
+                    });
+
+                    // Slide transactionDetail layout down to adjust
+                    Animation slideDown = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_down);
+                    transactionDetail.startAnimation(slideDown);
+                }
+            }
         });
 
     }
@@ -149,9 +166,11 @@ public class EntryActivity extends AppCompatActivity {
         navHome = findViewById(R.id.navHome);
         navTransactions = findViewById(R.id.navTransactions);
         navEntry = findViewById(R.id.navEntry);
-        utr_layout = findViewById(R.id.utr_layout);
-        transactionId_layout = findViewById(R.id.transactionId_layout);
+//        utr_layout = findViewById(R.id.utr_layout);
+//        transactionId_layout = findViewById(R.id.transactionId_layout);
+        moreDetailsUPI = findViewById(R.id.moreDetailsUPI);
         clearAllButton = findViewById(R.id.clearAllButton);
+        transactionDetail = findViewById(R.id.transactionDetail);
 
         // Initially disable save button
         saveButton.setEnabled(false);
@@ -224,21 +243,43 @@ public class EntryActivity extends AppCompatActivity {
         attachReceiptButton.setOnClickListener(v -> showImageSourceDialog());
     }
     private void setNavigationListeners() {
-        navHome.setOnClickListener(v -> {
+        hideNavText(); // Hide text initially
+
+        // Apply animation to the correct tab
+        applyNavAnimation(findViewById(R.id.navEntry)); // Change to R.id.navEntry in EntryActivity
+        // Navigation Click Listeners
+        findViewById(R.id.navHome).setOnClickListener(v -> {
+            startActivity(new Intent(this, MainActivity.class));
             vibrateDevice();
-            startActivity(new Intent(EntryActivity.this, MainActivity.class));
+            finish();
         });
 
-        navTransactions.setOnClickListener(v -> {
+        findViewById(R.id.navTransactions).setOnClickListener(v -> {
+            startActivity(new Intent(this, TransactionActivity.class));
             vibrateDevice();
-            startActivity(new Intent(EntryActivity.this, TransactionActivity.class));
+            finish();
         });
 
-        navEntry.setOnClickListener(v -> {
-            vibrateDevice();
-            Toast.makeText(EntryActivity.this, "Already on Entry Page", Toast.LENGTH_SHORT).show();
+        findViewById(R.id.navEntry).setOnClickListener(v -> {
+            Toast.makeText(this, "Already on Entry Page", Toast.LENGTH_SHORT).show();
         });
 
+    }
+    private void hideNavText() {
+        ((TextView) ((LinearLayout) findViewById(R.id.navHome)).getChildAt(1)).setVisibility(View.INVISIBLE);
+        ((TextView) ((LinearLayout) findViewById(R.id.navTransactions)).getChildAt(1)).setVisibility(View.INVISIBLE);
+        ((TextView) ((LinearLayout) findViewById(R.id.navEntry)).getChildAt(1)).setVisibility(View.INVISIBLE);
+    }
+
+    private void applyNavAnimation(LinearLayout selectedNavItem) {
+        // Get the TextView inside the selected navigation item
+        TextView textView = (TextView) ((LinearLayout) selectedNavItem).getChildAt(1);
+        // Load the animation
+        Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up_nav);
+
+        // Apply the animation and make it visible
+        textView.setVisibility(View.VISIBLE);
+        textView.startAnimation(slideUp);
     }
     private void setDateField() {
         calendar = Calendar.getInstance();
@@ -340,47 +381,11 @@ public class EntryActivity extends AppCompatActivity {
     }
     private void saveTransaction() {
         String selectedDate = dateTextView.getText().toString();
-        String formattedDate = new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(calendar.getTime()); // Use selected date
-        boolean isValid = true; // Flag to check validation
+        String formattedDate = new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(calendar.getTime());
 
-        if (amountInput.getText().toString().isEmpty()) {
-            amountInput.setBackgroundResource(R.drawable.red_outline); // Add red outline
-            isValid = false;
-        } else {
-            amountInput.setBackgroundResource(R.drawable.rounded_input_background); // Remove outline if fixed
-        }
-
-        if (receiverName.getText().toString().isEmpty()) {
-            receiverName.setBackgroundResource(R.drawable.red_outline);
-            isValid = false;
-        } else {
-            receiverName.setBackgroundResource(R.drawable.rounded_input_background);
-        }
-
-        int selectedTypeId = transactionTypeGroup.getCheckedRadioButtonId();
-        if (selectedTypeId == -1) {
-            transactionTypeGroup.setBackgroundResource(R.drawable.red_outline);
-            isValid = false;
-        } else {
-            transactionTypeGroup.setBackgroundResource(0);
-        }
-
-        int selectedPaymentId = paymentMethodGroup.getCheckedRadioButtonId();
-        if (selectedPaymentId == -1) {
-            paymentMethodGroup.setBackgroundResource(R.drawable.red_outline);
-            isValid = false;
-        } else {
-            paymentMethodGroup.setBackgroundResource(0);
-        }
-
-        if (!isValid) {
-            Toast.makeText(this, "Please fill all required fields!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        RadioButton selectedTransactionType = findViewById(selectedTypeId);
+        RadioButton selectedTransactionType = findViewById(transactionTypeGroup.getCheckedRadioButtonId());
         String transactionType = selectedTransactionType.getText().toString();
-        RadioButton selectedPaymentMethod = findViewById(selectedPaymentId);
+        RadioButton selectedPaymentMethod = findViewById(paymentMethodGroup.getCheckedRadioButtonId());
         String paymentMethod = selectedPaymentMethod.getText().toString();
         File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), FOLDER_NAME);
         if (!directory.exists()) {
@@ -397,7 +402,6 @@ public class EntryActivity extends AppCompatActivity {
                 }
                 transactionsArray = new JSONArray(content);
 
-                // Find the last transaction's entry ID for the selected date
                 for (int i = transactionsArray.length() - 1; i >= 0; i--) {
                     JSONObject obj = transactionsArray.getJSONObject(i);
                     if (obj.has("entryId") && obj.getString("entryId").startsWith(formattedDate)) {
@@ -423,7 +427,7 @@ public class EntryActivity extends AppCompatActivity {
             transaction.put("category", categoryInput.getText().toString());
             transaction.put("textType", transactionType);
             transaction.put("paymentMethod", paymentMethod);
-            // Only save UTR & Transaction ID if UPI is selected
+
             if (paymentMethod.equalsIgnoreCase("UPI")) {
                 transaction.put("utr", utr.getText().toString());
                 transaction.put("transactionId", transactionId.getText().toString());
@@ -436,75 +440,9 @@ public class EntryActivity extends AppCompatActivity {
         } catch (JSONException | IOException e) {
             e.printStackTrace();
         }
-        // Dismiss the dialog after saving
+
         if (progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
-        }
-    }
-    private void setupValidationListeners() {
-        amountInput.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                amountInput.setBackgroundResource(R.drawable.rounded_input_background); // ✅ Reset background
-            }
-            @Override
-            public void afterTextChanged(Editable s) {}
-        });
-
-        receiverName.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                receiverName.setBackgroundResource(R.drawable.rounded_input_background); // ✅ Reset background
-            }
-            @Override
-            public void afterTextChanged(Editable s) {}
-        });
-
-        transactionTypeGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId != -1) { // ✅ Only reset if an option is selected
-                    transactionTypeGroup.setBackgroundResource(0);
-                }
-            }
-        });
-
-        paymentMethodGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId != -1) { // ✅ Only reset if an option is selected
-                    paymentMethodGroup.setBackgroundResource(0);
-                }
-            }
-        });
-    }
-    private void showFieldsWithAnimation(View... views) {
-        for (View view : views) {
-            if (view.getVisibility() == View.GONE) {  // Ensure it doesn't reanimate when already visible
-                view.setVisibility(View.VISIBLE);
-                view.setAlpha(0f);
-                view.setScaleX(0.8f);
-                view.setScaleY(0.8f);
-                view.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(300).start();
-            }
-        }
-    }
-
-    private void hideFieldsWithAnimation(View... views) {
-        for (View view : views) {
-            if (view.getVisibility() == View.VISIBLE) {  // Only animate if it's currently visible
-                view.animate()
-                        .alpha(0f)
-                        .scaleX(0.8f)
-                        .scaleY(0.8f)
-                        .setDuration(300)
-                        .withEndAction(() -> view.setVisibility(View.GONE))
-                        .start();
-            }
         }
     }
 
@@ -592,13 +530,54 @@ public class EntryActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Attach Receipt")
                 .setItems(new String[]{"Capture Photo", "Choose from Gallery"}, (dialog, which) -> {
-                    if (which == 0) {
+                    // Show warning message before proceeding
+                    showWarningDialog(which);
+                })
+                .show();
+    }
+
+    private void showWarningDialog(int selectedOption) {
+        AlertDialog.Builder warningBuilder = new AlertDialog.Builder(this);
+        warningBuilder.setTitle("Warning!")
+                .setMessage("Scanning receipts may result in incorrect or unregistered inputs.\n\nDo you want to continue?")
+                .setCancelable(false);
+
+        // Create the dialog first
+        AlertDialog warningDialog = warningBuilder.create();
+
+        // Set buttons initially (without actions)
+        warningBuilder.setNegativeButton("Go Back", (dialog, which) -> dialog.dismiss());
+        warningBuilder.setPositiveButton("Go (5)", null); // Set initial text but no action yet
+
+        warningDialog = warningBuilder.create();
+        warningDialog.show();
+
+        // Get the "Go" button and disable it initially
+        Button goButton = warningDialog.getButton(DialogInterface.BUTTON_POSITIVE);
+        goButton.setEnabled(false);
+
+        // Start a countdown timer for 5 seconds
+        AlertDialog finalWarningDialog = warningDialog;
+        new CountDownTimer(5000, 1000) {
+            public void onTick(long millisUntilFinished) {
+                goButton.setText("Go (" + (millisUntilFinished / 1000) + ")");
+            }
+
+            public void onFinish() {
+                goButton.setEnabled(true);
+                goButton.setText("Go");
+
+                // Set the final action when the button is clicked
+                goButton.setOnClickListener(v -> {
+                    if (selectedOption == 0) {
                         captureImageFromCamera();
                     } else {
                         pickImageFromGallery();
                     }
-                })
-                .show();
+                    finalWarningDialog.dismiss();
+                });
+            }
+        }.start();
     }
     private void captureImageFromCamera() {
         Intent takePictureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
@@ -764,7 +743,6 @@ public class EntryActivity extends AppCompatActivity {
             return extractedDate; // Return original if parsing fails
         }
     }
-    //clear all
     //clear all
     private void clearAllFields() {
         amountInput.setText("");

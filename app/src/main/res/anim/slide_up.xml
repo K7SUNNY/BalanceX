@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Move the layout from below (20dp) to its original position (0dp) -->
+    <translate
+        android:fromYDelta="20dp"
+        android:toYDelta="0dp"
+        android:duration="300"/>
+</set>

@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <!-- res/layout/bar_chart_layout.xml -->
-    <com.example.accountingapp.LineChartView
+    <com.accounting.balancex.LineChartView
         android:id="@+id/customBarChart"
         android:layout_width="match_parent"
         android:layout_height="300dp"

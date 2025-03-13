@@ -34,8 +34,8 @@ public class RecentTransactionsAdapter extends RecyclerView.Adapter<RecentTransa
         RecentTransactionModel transaction = recentTransactions.get(position);
 
         String textViewReceiver = transaction.getReceiver();
-        if (textViewReceiver != null && textViewReceiver.length() > 5) {
-            textViewReceiver = textViewReceiver.substring(0, 5) + "...";
+        if (textViewReceiver != null && textViewReceiver.length() > 6) {
+            textViewReceiver = textViewReceiver.substring(0, 6) + " ";
         }
         holder.textViewReceiver.setText(textViewReceiver);
         holder.textViewDate.setText(transaction.getDate());

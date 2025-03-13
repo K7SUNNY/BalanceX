@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,7 +11,7 @@
     <LinearLayout
         android:id="@+id/linearLayout5"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -39,8 +40,9 @@
         </LinearLayout>
         <!--        Main content-->
         <LinearLayout
+            android:id="@+id/main_body_history"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="10dp">
             <!--            search box-->
@@ -61,20 +63,22 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="@drawable/search_container"
+                        android:hapticFeedbackEnabled="true"
                         android:iconifiedByDefault="false"
                         android:queryHint="Search by Name and UTR"
-                        android:theme="@style/CustomSearchView"
-                        android:hapticFeedbackEnabled="true"/>
+                        android:theme="@style/CustomSearchView" />
                 </LinearLayout>
             </LinearLayout>
             <!--            show recent transaction with filtration and title-->
             <LinearLayout
                 android:id="@+id/recentTransaction_page"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:background="@drawable/rounded_corner_container"
                 android:orientation="vertical"
-                android:padding="10dp">
+                android:padding="10dp"
+                android:layout_marginBottom="60dp">
 
                 <LinearLayout
                     android:id="@+id/sectionTitles"
@@ -94,7 +98,7 @@
                         android:id="@+id/textAll"
                         android:layout_width="0dp"
                         android:layout_height="30dp"
-                        android:layout_weight="10"
+                        android:layout_weight="14"
                         android:gravity="center"
                         android:text="All"
                         android:textColor="#333333"
@@ -110,7 +114,7 @@
                         android:id="@+id/textCredits"
                         android:layout_width="0dp"
                         android:layout_height="30dp"
-                        android:layout_weight="10"
+                        android:layout_weight="14"
                         android:gravity="center"
                         android:text="Credits"
                         android:textColor="#333333"
@@ -126,7 +130,7 @@
                         android:id="@+id/textDebits"
                         android:layout_width="0dp"
                         android:layout_height="30dp"
-                        android:layout_weight="10"
+                        android:layout_weight="14"
                         android:gravity="center"
                         android:text="Debits"
                         android:textColor="#333333"
@@ -146,7 +150,6 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:orientation="horizontal"
-                    android:padding="8dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/sectionTitles">
@@ -154,7 +157,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:padding="6dp">
                         <!--            Download statement-->
                         <TextView
                             android:id="@+id/download_statement"
@@ -192,49 +196,95 @@
                 </LinearLayout>
 
                 <!-- Transaction Section (RecyclerView) -->
-                <LinearLayout
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
-                    android:orientation="vertical"
                     android:background="@drawable/selection_title_bg"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/loadingText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_centerInParent="true"
+                        android:gravity="center"
                         android:text="Loading transactions, please wait..."
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:gravity="center"
-                        android:visibility="gone"
-                        android:layout_centerInParent="true"/>
+                        android:visibility="gone" />
 
-                    <TextView
+                    <LinearLayout
                         android:id="@+id/noTransactionsText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="No transactions available"
-                        android:textSize="16sp"
-                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:layout_gravity="center"
                         android:visibility="gone"
-                        android:padding="20dp"
-                        android:textColor="@android:color/darker_gray"/>
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <!-- Empty Wallet Icon -->
+                        <ImageView
+                            android:layout_width="120dp"
+                            android:layout_height="120dp"
+                            android:src="@drawable/empty_wallet_remove_svgrepo_com"
+                            android:contentDescription="No transactions"
+                            android:layout_gravity="center"/>
+
+                        <!-- Message -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Oops! No transactions found."
+                            android:textSize="18sp"
+                            android:textColor="@color/grey"
+                            android:padding="10dp"
+                            android:layout_gravity="center"/>
+
+                        <!-- Add New Transaction Button -->
+                        <Button
+                            android:id="@+id/btnAddTransaction"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="+ Add New Transaction"
+                            android:background="@drawable/rounded_corner_container_save"
+                            android:enabled="true"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:textColor="@android:color/white"
+                            android:padding="10dp"
+                            android:layout_gravity="center"/>
+                    </LinearLayout>
 
                     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
                         android:id="@+id/swipeRefreshLayout"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
+                        android:layout_height="wrap_content"
+                        android:clickable="false"
+                        android:focusable="false">
 
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/recyclerView"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:scrollbars="vertical"
-                            android:padding="10dp"/>
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:padding="10dp"
+                            android:paddingBottom="72dp"
+                            android:scrollbars="vertical" />
                     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-                </LinearLayout>
+
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/btnScrollToTop"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|end"
+                        android:layout_margin="16dp"
+                        android:src="@drawable/up_arrow_svgrepo_com"
+                        android:visibility="gone"
+                        app:backgroundTint="@color/white" /> <!-- Initially hidden -->
+                </FrameLayout>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
@@ -244,12 +294,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/twoside_rounded_rectangular"
-        android:orientation="horizontal"
         android:gravity="bottom"
+        android:orientation="horizontal"
+        android:padding="5dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:padding="5dp">
+        app:layout_constraintStart_toStartOf="parent">
 
         <LinearLayout
             android:id="@+id/navHome"
@@ -258,10 +308,12 @@
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical">
+
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:src="@drawable/ic_home" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -276,16 +328,19 @@
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical">
+
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:src="@drawable/ic_transaction" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="HISTORY"
                 android:textColor="@android:color/white" />
         </LinearLayout>
+
         <LinearLayout
             android:id="@+id/navEntry"
             android:layout_width="0dp"
@@ -293,10 +348,12 @@
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical">
+
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:src="@drawable/ic_entry" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -304,4 +361,5 @@
                 android:textColor="@android:color/white" />
         </LinearLayout>
     </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

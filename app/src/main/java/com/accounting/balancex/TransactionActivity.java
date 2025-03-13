@@ -1,5 +1,7 @@
 package com.accounting.balancex;
 
+import static com.accounting.balancex.R.*;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -11,11 +13,16 @@ import android.os.Vibrator;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.SearchView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -32,6 +39,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import android.widget.Toast;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 //History page
 public class TransactionActivity extends AppCompatActivity {
 
@@ -45,7 +55,8 @@ public class TransactionActivity extends AppCompatActivity {
     private TextView filterByDateTextView;
     private SwipeRefreshLayout swipeRefreshLayout;
     private String currentFilterType = "All"; // Default to All
-
+    private FloatingActionButton btnScrollToTop;
+    private Button btnAddTransaction;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,11 +81,9 @@ public class TransactionActivity extends AppCompatActivity {
 
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
 
-        loadTransactionsFromFile();
-
         adapter = new TransactionAdapter(this, filteredList);
         recyclerView.setAdapter(adapter);
-
+        loadTransactionsFromFile();
         filterTransactions("All");
 
         textAll.setOnClickListener(v -> filterTransactions("All"));
@@ -95,19 +104,27 @@ public class TransactionActivity extends AppCompatActivity {
             }
         });
 
-        navHome.setOnClickListener(v -> {
+
+        hideNavText(); // Hide text initially
+
+        // Apply animation to the correct tab
+        applyNavAnimation(findViewById(R.id.navTransactions)); // Change to R.id.navEntry in EntryActivity
+
+        // Navigation Click Listeners
+        findViewById(R.id.navHome).setOnClickListener(v -> {
+            startActivity(new Intent(this, MainActivity.class));
             vibrateDevice();
-            startActivity(new Intent(TransactionActivity.this, MainActivity.class));
+            finish();
         });
 
-        navTransactions.setOnClickListener(v -> {
-            vibrateDevice();
-            Toast.makeText(TransactionActivity.this, "Already on Transactions Page", Toast.LENGTH_SHORT).show();
+        findViewById(R.id.navTransactions).setOnClickListener(v -> {
+            Toast.makeText(this, "Already on History Page", Toast.LENGTH_SHORT).show();
         });
 
-        navEntry.setOnClickListener(v -> {
+        findViewById(R.id.navEntry).setOnClickListener(v -> {
+            startActivity(new Intent(this, EntryActivity.class));
             vibrateDevice();
-            startActivity(new Intent(TransactionActivity.this, EntryActivity.class));
+            finish();
         });
 
         filterByDateTextView.setOnClickListener(v -> showFilterPopup(v));
@@ -115,6 +132,42 @@ public class TransactionActivity extends AppCompatActivity {
         // Pull-to-Refresh Listener
         swipeRefreshLayout.setOnRefreshListener(() -> {
             refreshTransactionList();
+        });
+
+        //scroll to top button
+        btnScrollToTop = findViewById(R.id.btnScrollToTop);
+        // Show or hide button based on scroll position
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                // Show button only when scrolling down
+                if (!recyclerView.canScrollVertically(-1)) {
+                    if (btnScrollToTop.getVisibility() == View.VISIBLE) {
+                        btnScrollToTop.hide();
+                    }
+                } else {
+                    if (btnScrollToTop.getVisibility() == View.GONE) {
+                        btnScrollToTop.show();
+                    }
+                }
+            }
+        });
+
+        // Scroll to top smoothly and hide button
+        btnScrollToTop.setOnClickListener(v -> {
+            recyclerView.smoothScrollToPosition(0);
+
+            // Delay hiding the button so the ripple effect completes
+            new Handler().postDelayed(() -> btnScrollToTop.hide(), 200);
+        });
+
+        //Add new transaction button
+        Button btnAddTransaction = findViewById(R.id.btnAddTransaction);
+        btnAddTransaction.setOnClickListener(v -> {
+            Log.d("DEBUG BUTTON", "Button Clicked!");  // Log to check if button is clickable
+            Toast.makeText(TransactionActivity.this, "Redirecting to Entry Page...", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(TransactionActivity.this, EntryActivity.class);
+            startActivity(intent);
         });
     }
     private void showFilterPopup(View v) {
@@ -138,12 +191,29 @@ public class TransactionActivity extends AppCompatActivity {
         // Show the popup menu
         popupMenu.show();
     }
+    //nav animation
+    private void hideNavText() {
+        ((TextView) ((LinearLayout) findViewById(R.id.navHome)).getChildAt(1)).setVisibility(View.INVISIBLE);
+        ((TextView) ((LinearLayout) findViewById(R.id.navTransactions)).getChildAt(1)).setVisibility(View.INVISIBLE);
+        ((TextView) ((LinearLayout) findViewById(R.id.navEntry)).getChildAt(1)).setVisibility(View.INVISIBLE);
+    }
+
+    private void applyNavAnimation(LinearLayout selectedNavItem) {
+        // Get the TextView inside the selected navigation item
+        TextView textView = (TextView) ((LinearLayout) selectedNavItem).getChildAt(1);
+        // Load the animation
+        Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up_nav);
+
+        // Apply the animation and make it visible
+        textView.setVisibility(View.VISIBLE);
+        textView.startAnimation(slideUp);
+    }
 
     private void loadTransactionsFromFile() {
         transactionList.clear(); // Clear existing transactions
 
         TextView loadingText = findViewById(R.id.loadingText);
-        TextView textNoTransactions = findViewById(R.id.noTransactionsText);
+        LinearLayout textNoTransactions = findViewById(R.id.noTransactionsText);
         recyclerView.setVisibility(View.GONE);
         loadingText.setVisibility(View.VISIBLE);
         textNoTransactions.setVisibility(View.GONE);
@@ -181,8 +251,9 @@ public class TransactionActivity extends AppCompatActivity {
                         obj.optString("utr", "Unknown"),
                         obj.optString("comments", ""),
                         obj.optString("category", ""),
-                        obj.optString("paymentMethod", "Cash"),
-                        obj.optString("textType", "Unknown"),
+                        obj.optString("transactionId", "N/A"),   // ✅ Corrected
+                        obj.optString("paymentMethod", "Cash"),  // ✅ Corrected
+                        obj.optString("textType", "Unknown"),    // ✅ Corrected
                         obj.optLong("entryId", System.currentTimeMillis())
                 ));
             }
@@ -222,13 +293,17 @@ public class TransactionActivity extends AppCompatActivity {
 
         adapter.updateList(filteredList);
 
-        TextView textNoTransactions = findViewById(R.id.noTransactionsText);
+        LinearLayout textNoTransactions = findViewById(R.id.noTransactionsText);
         if (filteredList.isEmpty()) {
             textNoTransactions.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
+            // Move noTransactionsText to front
+            textNoTransactions.bringToFront();
         } else {
             textNoTransactions.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
+            // Move SwipeRefreshLayout to front
+            swipeRefreshLayout.bringToFront();
         }
 
         recyclerView.post(() -> {
@@ -307,9 +382,12 @@ public class TransactionActivity extends AppCompatActivity {
         List<Transaction> searchResults = new ArrayList<>();
 
         for (Transaction transaction : transactionList) {
-            if (transaction.getReceiverName().toLowerCase().contains(query.toLowerCase()) ||
-                    transaction.getUtr().toLowerCase().contains(query.toLowerCase())) {
-                searchResults.add(transaction);
+            // Ensure search only considers transactions that match the current filter type
+            if (currentFilterType.equals("All") || transaction.getTransactionType().equals(currentFilterType)) {
+                if (transaction.getReceiverName().toLowerCase().contains(query.toLowerCase()) ||
+                        transaction.getUtr().toLowerCase().contains(query.toLowerCase())) {
+                    searchResults.add(transaction);
+                }
             }
         }
 
