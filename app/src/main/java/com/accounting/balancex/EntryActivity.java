@@ -379,14 +379,21 @@ public class EntryActivity extends AppCompatActivity {
         progressDialog.setCancelable(false); // Prevent dismissal
         progressDialog.show();
     }
+    // Helper method to return "N/A" if the input is empty
+    private String getOrNA(EditText editText) {
+        String text = editText.getText().toString().trim();
+        return text.isEmpty() ? "NA" : text; // Use "NA" instead of "N/A"
+    }
     private void saveTransaction() {
         String selectedDate = dateTextView.getText().toString();
         String formattedDate = new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(calendar.getTime());
 
         RadioButton selectedTransactionType = findViewById(transactionTypeGroup.getCheckedRadioButtonId());
-        String transactionType = selectedTransactionType.getText().toString();
+        String transactionType = selectedTransactionType != null ? selectedTransactionType.getText().toString() : "N/A";
+
         RadioButton selectedPaymentMethod = findViewById(paymentMethodGroup.getCheckedRadioButtonId());
-        String paymentMethod = selectedPaymentMethod.getText().toString();
+        String paymentMethod = selectedPaymentMethod != null ? selectedPaymentMethod.getText().toString() : "N/A";
+
         File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), FOLDER_NAME);
         if (!directory.exists()) {
             directory.mkdirs();
@@ -394,6 +401,7 @@ public class EntryActivity extends AppCompatActivity {
         File file = new File(directory, FILE_NAME);
         JSONArray transactionsArray = new JSONArray();
         int entryCounter = 1;
+
         try {
             if (file.exists()) {
                 String content = null;
@@ -413,30 +421,31 @@ public class EntryActivity extends AppCompatActivity {
         } catch (IOException | JSONException e) {
             e.printStackTrace();
         }
+
         String entryId = formattedDate + String.format("%06d", entryCounter);
         JSONObject transaction = new JSONObject();
+
         try {
             transaction.put("entryId", entryId);
-            transaction.put("date", selectedDate);
-            transaction.put("amount", amountInput.getText().toString());
-            transaction.put("receiver", receiverName.getText().toString().trim());
-            transaction.put("description", description.getText().toString());
-            transaction.put("utr", utr.getText().toString());
-            transaction.put("transactionId", transactionId.getText().toString());
-            transaction.put("comments", comments.getText().toString());
-            transaction.put("category", categoryInput.getText().toString());
+            transaction.put("date", selectedDate.isEmpty() ? "N/A" : selectedDate);
+            transaction.put("amount", getOrNA(amountInput));
+            transaction.put("receiver", getOrNA(receiverName));
+            transaction.put("description", getOrNA(description));
+            transaction.put("utr", getOrNA(utr));
+            transaction.put("transactionId", getOrNA(transactionId));
+            transaction.put("comments", getOrNA(comments));
+            transaction.put("category", getOrNA(categoryInput));
             transaction.put("textType", transactionType);
             transaction.put("paymentMethod", paymentMethod);
 
-            if (paymentMethod.equalsIgnoreCase("UPI")) {
-                transaction.put("utr", utr.getText().toString());
-                transaction.put("transactionId", transactionId.getText().toString());
-            }
             transactionsArray.put(transaction);
+
             try (FileWriter writer = new FileWriter(file)) {
                 writer.write(transactionsArray.toString(4));
             }
+
             Toast.makeText(this, "Transaction saved successfully!", Toast.LENGTH_SHORT).show();
+
         } catch (JSONException | IOException e) {
             e.printStackTrace();
         }

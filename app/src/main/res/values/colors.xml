@@ -13,6 +13,7 @@
     <color name="lime">#00ff00 </color>
     <color name="green">#008000 </color>
     <color name="red">#ff0000 </color>
-    <color name="light_gray">#F0F0F0</color>
+    <color name="light_gray">#F0EFEE</color>
     <color name="grey">#a9a9a9 </color>
+    <color name="app_background">#F8FCFF</color>
 </resources>

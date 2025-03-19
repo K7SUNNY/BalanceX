@@ -2,7 +2,13 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_marginBottom="10dp">
+    android:elevation="4dp"
+    android:gravity="center"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginBottom="5dp"
+    android:background="@drawable/rounded_rectangle">
 
     <!-- Main Card Layout -->
     <FrameLayout
@@ -10,8 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal"
-        android:padding="10dp"
-        android:background="@drawable/rounded_rectangle">
+        android:padding="10dp">
 
         <!-- Transaction Details & Payment Info -->
         <LinearLayout

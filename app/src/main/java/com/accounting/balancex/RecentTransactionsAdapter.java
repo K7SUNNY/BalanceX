@@ -10,16 +10,24 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+
 //
 public class RecentTransactionsAdapter extends RecyclerView.Adapter<RecentTransactionsAdapter.RecentTransactionViewHolder> {
 
     private Context context;
-    private List<RecentTransactionModel> recentTransactions;
+    private List<com.accounting.balancex.RecentTransactionModel> recentTransactions;
 
-    public RecentTransactionsAdapter(Context context, List<RecentTransactionModel> recentTransactions) {
+    public RecentTransactionsAdapter(Context context, List<com.accounting.balancex.RecentTransactionModel> recentTransactions) {
         this.context = context;
         this.recentTransactions = recentTransactions;
+    }
+
+    public RecentTransactionsAdapter(List<com.accounting.balancex.RecentTransactionModel> recentTransactions) {
     }
 
     @NonNull
@@ -31,14 +39,17 @@ public class RecentTransactionsAdapter extends RecyclerView.Adapter<RecentTransa
 
     @Override
     public void onBindViewHolder(@NonNull RecentTransactionViewHolder holder, int position) {
-        RecentTransactionModel transaction = recentTransactions.get(position);
+        com.accounting.balancex.RecentTransactionModel transaction = recentTransactions.get(position);
 
         String textViewReceiver = transaction.getReceiver();
         if (textViewReceiver != null && textViewReceiver.length() > 6) {
             textViewReceiver = textViewReceiver.substring(0, 6) + " ";
         }
         holder.textViewReceiver.setText(textViewReceiver);
-        holder.textViewDate.setText(transaction.getDate());
+
+        // ✅ Format the date before displaying
+        holder.textViewDate.setText(formatDate(transaction.getDate()));
+
         holder.textViewAmount.setText("₹" + transaction.getAmount());
         holder.textViewType.setText(transaction.getType());
 
@@ -50,9 +61,22 @@ public class RecentTransactionsAdapter extends RecyclerView.Adapter<RecentTransa
         }
     }
 
+    private String formatDate(String dateStr) {
+        SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        SimpleDateFormat outputFormat = new SimpleDateFormat("dd MMM", Locale.getDefault()); // Changed "MMMM" to "MMM"
+
+        try {
+            Date date = inputFormat.parse(dateStr);
+            return outputFormat.format(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return dateStr; // Return original if parsing fails
+        }
+    }
+
     @Override
     public int getItemCount() {
-        return recentTransactions.size();
+        return recentTransactions != null ? recentTransactions.size() : 0; // Prevent null crash
     }
 
     // ✅ Define ViewHolder class inside the adapter

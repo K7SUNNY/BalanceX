@@ -1,28 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/rootLayout"
+    android:id="@+id/main"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:background="@color/app_background">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/light_gray">
-        <!--    herder-->
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+        <!--        Header section for balance, Net credit and Debit-->
         <LinearLayout
             android:id="@+id/header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/home_page_gradient_background"
+            android:elevation="20dp"
             android:orientation="vertical"
             android:padding="10dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="UselessParent">
+            <!--            section for slide menu button and dashboard text and notification button-->
             <LinearLayout
                 android:id="@+id/dashboardview"
                 android:layout_width="match_parent"
@@ -34,7 +41,7 @@
                     android:id="@+id/imageslidemenu_mainpage"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="0"
                     app:srcCompat="@drawable/menu_alt_1_svgrepo_com" />
 
                 <TextView
@@ -52,7 +59,7 @@
                     android:id="@+id/imagenotification"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="0"
                     app:srcCompat="@drawable/notification_bell_svgrepo_com" />
             </LinearLayout>
             <!--            total balance view-->
@@ -67,7 +74,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="₹ Balance"
+                    android:text="₹ 0.00"
                     android:textColor="@android:color/white"
                     android:textSize="26sp"
                     android:textStyle="bold" />
@@ -86,24 +93,23 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="horizontal">
                 <!--            net credit section-->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:background="@drawable/rounded_corner_container_for_search_box"
-                    android:orientation="horizontal"
-                    android:padding="10dp"
                     android:gravity="start"
-                    android:layout_weight="1">
+                    android:orientation="horizontal"
+                    android:padding="10dp">
 
                     <ImageView
                         android:id="@+id/imageViewcreditarrow"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:layout_weight="1"
                         android:background="@drawable/rounded_corner_arrow_container"
                         android:padding="5dp"
                         app:srcCompat="@drawable/arrow_down_left_svgrepo_com" />
@@ -119,23 +125,23 @@
                             android:id="@+id/textViewNetCredit"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
                             android:text="Net Credit"
                             android:textColor="#fff"
                             android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:layout_weight="1"
-                            android:gravity="center"/>
+                            android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/textNetCredit"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="₹ credit"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="₹ 0.00"
                             android:textColor="@android:color/white"
                             android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:layout_weight="1"
-                            android:gravity="center"/>
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -147,370 +153,398 @@
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="10dp"
-                    android:background="@drawable/rounded_corner_container_for_search_box"
                     android:layout_weight="1"
-                    android:gravity="end">
+                    android:background="@drawable/rounded_corner_container_for_search_box"
+                    android:gravity="end"
+                    android:orientation="horizontal"
+                    android:padding="10dp">
 
                     <ImageView
                         android:id="@+id/imageViewdebitarrow"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        app:srcCompat="@drawable/arrow_up_right_lg_svgrepo_com"
+                        android:layout_gravity="center"
                         android:background="@drawable/rounded_corner_arrow_container"
                         android:padding="5dp"
-                        android:layout_gravity="center"/>
+                        app:srcCompat="@drawable/arrow_up_right_lg_svgrepo_com" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:gravity="end">
+                        android:gravity="end"
+                        android:orientation="vertical">
 
                         <TextView
                             android:id="@+id/textViewNetDebit"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
                             android:text="Net Debit"
                             android:textColor="#fff"
                             android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:layout_weight="1"
-                            android:gravity="center"/>
+                            android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/textNetDebit"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="₹ Debit"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="₹ 0.00"
                             android:textColor="#fff"
                             android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:layout_weight="1"
-                            android:gravity="center"/>
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
         <!-- Slide Menu (Initially hidden) -->
         <include layout="@layout/slide_menu" />
-        <!--    color indicators for graph-->
+
         <LinearLayout
-            android:id="@+id/linearLayout2"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="end"
-            android:orientation="horizontal"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/header"
-            android:layout_marginRight="20dp">
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:padding="10dp">
-
-                <ImageView
-                    android:id="@+id/imageView5"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    app:srcCompat="@drawable/color_indicator_blue" />
-
-                <Space
-                    android:layout_width="5dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/textView9"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Crecit"
-                    android:textColor="#000"
-                    android:textSize="16dp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:padding="10dp">
-
-                <ImageView
-                    android:id="@+id/imageView6"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    app:srcCompat="@drawable/color_indicator_purple" />
-
-                <Space
-                    android:layout_width="5dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/textView12"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Debit"
-                    android:textColor="#000"
-                    android:textSize="16dp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
-        <!--    graph section-->
-        <LinearLayout
-            android:id="@+id/graphSection"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/linearLayout2">
-
-            <!-- Placeholder for the Chart -->
-            <FrameLayout
-                android:id="@+id/graphContainer"
+            <ScrollView
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:background="@color/light_gray">
+                android:layout_height="match_parent"
+                android:scrollbars="none">
 
-                <com.accounting.balancex.CustomBarGraphView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-            </FrameLayout>
-
-            <ImageView
-                android:id="@+id/imageline"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintTop_toBottomOf="@+id/chartContainer"
-                app:srcCompat="@drawable/line_xl_svgrepo_com" />
-            <!--            display recent months-->
-            <LinearLayout
-                android:id="@+id/linearLayout3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="0dp"
-                android:background="#EDEDED"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:padding="0dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/imageline">
-
-                <TextView
-                    android:id="@+id/textmonth1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Month1"
-                    android:textColor="#000"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/textmonth2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Month2"
-                    android:textColor="#000"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/textmonth3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Month3"
-                    android:textColor="#000"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/textmonth4"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Month4"
-                    android:textColor="#000"
-                    android:textStyle="bold" />
-            </LinearLayout>
-            <!--        section of selection of graph timeline(months or days or weeks or years)-->
-            <LinearLayout
-                android:id="@+id/timeline_selection_for_graph"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="0dp"
-                android:background="#D7D7D7"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:padding="5dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/linearLayout3">
-
-                <TextView
-                    android:id="@+id/months"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/rounded_corner_unselected"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:text="M"
-                    android:textColor="#000"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/days"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/rounded_corner_unselected"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:text="D"
-                    android:textColor="#000"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/weeks"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/rounded_corner_unselected"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:text="W"
-                    android:textColor="#000"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/years"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/rounded_corner_unselected"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:text="Y"
-                    android:textColor="#000"
-                    android:textStyle="bold" />
-                <!--         section of selection of line chart or bar chat-->
-                <!--         add this background to which one is selected: @drawable/rounded_corner_selected_timeline.xml -->
-                <!--            line chart imageview section-->
-                <ImageView
-                    android:id="@+id/linechart"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/rounded_corner_unselected"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:srcCompat="@drawable/line_chart_svgrepo_com" />
-                <!--            bar chart imageview section -->
-                <ImageView
-                    android:id="@+id/imageViewbarchart"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/rounded_corner_unselected"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:srcCompat="@drawable/bar_chart_12_svgrepo_com" />
-            </LinearLayout>
-            <ImageView
-                android:id="@+id/imageline2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintTop_toBottomOf="@+id/chartContainer"
-                app:srcCompat="@drawable/line_xl_svgrepo_com" />
-        </LinearLayout>
-        <!--    recent transactions-->
-        <LinearLayout
-            android:id="@+id/linearLayoutrecenttransactiona"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/graphSection">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/textViewrecenttransactions"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingLeft="10dp"
-                    android:text="Recent Transactions"
-                    android:textColor="#000"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:gravity="start"
-                    android:layout_weight="2"/>
-                <TextView
-                    android:id="@+id/seeAllButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:text="see all"
-                    android:background="@android:color/transparent"
-                    android:textColor="#00a1ff"
-                    android:textStyle="bold"
-                    android:textSize="15dp"
-                    android:gravity="center"
-                    android:layout_weight="1"/>
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/home_page_recent_transaction_container"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="10dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/linearLayout4">
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerViewRecentTransactions"
+                <LinearLayout
+                    android:id="@+id/graphSection"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/home_page_recycleview_background"
-                    android:padding="10dp" />
-            </LinearLayout>
+                    android:orientation="vertical">
+                    <!--        Graph section-->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="10dp"
+                        android:background="@drawable/rounded_rectangle"
+                        android:elevation="4dp"
+                        android:orientation="vertical">
+                        <!--                    color indicator section-->
+                        <LinearLayout
+                            android:id="@+id/colorIndicatorSection"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="end"
+                            android:orientation="horizontal"
+                            android:paddingRight="10dp">
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="end"
+                                android:gravity="center"
+                                android:orientation="horizontal"
+                                android:padding="10dp">
+
+                                <ImageView
+                                    android:id="@+id/imageView5"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    app:srcCompat="@drawable/color_indicator_blue" />
+
+                                <Space
+                                    android:layout_width="5dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1" />
+
+                                <TextView
+                                    android:id="@+id/textView9"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:layout_weight="1"
+                                    android:gravity="center"
+                                    android:text="Crecit"
+                                    android:textColor="#000"
+                                    android:textSize="14dp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="end"
+                                android:gravity="center"
+                                android:orientation="horizontal"
+                                android:padding="10dp">
+
+                                <ImageView
+                                    android:id="@+id/imageView6"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    app:srcCompat="@drawable/color_indicator_purple" />
+
+                                <Space
+                                    android:layout_width="5dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1" />
+
+                                <TextView
+                                    android:id="@+id/textView12"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:layout_weight="1"
+                                    android:gravity="center"
+                                    android:text="Debit"
+                                    android:textColor="#000"
+                                    android:textSize="14dp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        <!--                    Graph view-->
+                        <LinearLayout
+                            android:id="@+id/graphContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="250dp"
+                            android:orientation="horizontal">
+
+                        </LinearLayout>
+                        <!--                        display timeline-->
+<!--                        <LinearLayout-->
+<!--                            android:id="@+id/displayTimeline"-->
+<!--                            android:layout_width="match_parent"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:layout_marginTop="0dp"-->
+<!--                            android:background="#EDEDED"-->
+<!--                            android:gravity="center"-->
+<!--                            android:orientation="horizontal"-->
+<!--                            android:padding="0dp"-->
+<!--                            app:layout_constraintEnd_toEndOf="parent"-->
+<!--                            app:layout_constraintStart_toStartOf="parent"-->
+<!--                            app:layout_constraintTop_toBottomOf="@+id/imageline">-->
+
+<!--                            <TextView-->
+<!--                                android:id="@+id/textmonth1"-->
+<!--                                android:layout_width="wrap_content"-->
+<!--                                android:layout_height="wrap_content"-->
+<!--                                android:layout_weight="1"-->
+<!--                                android:gravity="center"-->
+<!--                                android:text="Month1"-->
+<!--                                android:textColor="#000"-->
+<!--                                android:textStyle="bold" />-->
+
+<!--                            <TextView-->
+<!--                                android:id="@+id/textmonth2"-->
+<!--                                android:layout_width="wrap_content"-->
+<!--                                android:layout_height="wrap_content"-->
+<!--                                android:layout_weight="1"-->
+<!--                                android:gravity="center"-->
+<!--                                android:text="Month2"-->
+<!--                                android:textColor="#000"-->
+<!--                                android:textStyle="bold" />-->
+
+<!--                            <TextView-->
+<!--                                android:id="@+id/textmonth3"-->
+<!--                                android:layout_width="wrap_content"-->
+<!--                                android:layout_height="wrap_content"-->
+<!--                                android:layout_weight="1"-->
+<!--                                android:gravity="center"-->
+<!--                                android:text="Month3"-->
+<!--                                android:textColor="#000"-->
+<!--                                android:textStyle="bold" />-->
+
+<!--                            <TextView-->
+<!--                                android:id="@+id/textmonth4"-->
+<!--                                android:layout_width="wrap_content"-->
+<!--                                android:layout_height="wrap_content"-->
+<!--                                android:layout_weight="1"-->
+<!--                                android:gravity="center"-->
+<!--                                android:text="Month4"-->
+<!--                                android:textColor="#000"-->
+<!--                                android:textStyle="bold" />-->
+<!--                        </LinearLayout>-->
+
+                        <!--                    timeline selection-->
+                        <LinearLayout
+                            android:id="@+id/timeline_selection_for_graph"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="0dp"
+                            android:background="#E9E9E9"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:padding="5dp">
+
+                            <TextView
+                                android:id="@+id/months"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="2"
+                                android:background="@drawable/rounded_corner_unselected"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center"
+                                android:text="M"
+                                android:textColor="#000"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/days"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="2"
+                                android:background="@drawable/rounded_corner_unselected"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center"
+                                android:text="D"
+                                android:textColor="#000"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/weeks"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="2"
+                                android:background="@drawable/rounded_corner_unselected"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center"
+                                android:text="W"
+                                android:textColor="#000"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/years"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="2"
+                                android:background="@drawable/rounded_corner_unselected"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center"
+                                android:text="Y"
+                                android:textColor="#000"
+                                android:textStyle="bold" />
+                            <!--                        a barrier for timeline selection and graph view selection-->
+                            <TextView
+                                android:layout_width="10dp"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:text="|" />
+                            <!--         section of selection of line chart or bar chat-->
+                            <!--         add this background to which one is selected: @drawable/rounded_corner_selected_timeline.xml -->
+
+                            <!--            line chart imageview section-->
+                            <ImageView
+                                android:id="@+id/linechart"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:background="@drawable/rounded_corner_unselected"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:srcCompat="@drawable/line_chart_svgrepo_com" />
+                            <!--            bar chart imageview section -->
+                            <ImageView
+                                android:id="@+id/imageViewbarchart"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:background="@drawable/rounded_corner_unselected"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:srcCompat="@drawable/bar_chart_12_svgrepo_com" />
+                        </LinearLayout>
+                    </LinearLayout>
+                    <!--                    recent transaction view-->
+                    <LinearLayout
+                        android:id="@+id/recentTransactionsContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="10dp"
+                        android:background="@drawable/rounded_rectangle"
+                        android:elevation="4dp"
+                        android:orientation="vertical"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/graphSection">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:padding="10dp">
+
+                            <TextView
+                                android:id="@+id/textViewrecenttransactions"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:gravity="start"
+                                android:text="Recent Transactions"
+                                android:textColor="#000"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/seeAllButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="0"
+                                android:background="@android:color/transparent"
+                                android:gravity="center"
+                                android:text="see all"
+                                android:textColor="#00a1ff"
+                                android:textSize="15dp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/home_page_recent_transaction_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/home_page_recycleview_background"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:layout_margin="10dp">
+
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/recyclerViewRecentTransactions"
+                                android:layout_width="match_parent"
+                                android:layout_height="80dp"
+                                android:clipToPadding="false"
+                                android:overScrollMode="never"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                    <!--                    Pie chart-->
+                    <LinearLayout
+                        android:id="@+id/pieChartContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_margin="10dp"
+                        android:elevation="4dp"
+                        android:background="@drawable/rounded_rectangle">
+                        <com.github.mikephil.charting.charts.PieChart
+                            android:id="@+id/pieChart"
+                            android:layout_width="match_parent"
+                            android:layout_height="200dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="20dp"
+                            tools:ignore="MissingClass" />
+
+                    </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
         </LinearLayout>
-        <!--    nav bar-->
+
         <LinearLayout
             android:id="@+id/navbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_gravity="bottom"
             android:background="@drawable/twoside_rounded_rectangular"
             android:clickable="true"
             android:focusable="true"
@@ -531,15 +565,13 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_home"
-                    android:layout_gravity="center"/>
+                    android:src="@drawable/ic_home" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="HOME"
-                    android:layout_gravity="center"
                     android:textColor="@android:color/white" />
             </LinearLayout>
 
@@ -583,5 +615,8 @@
                     android:textColor="@android:color/white" />
             </LinearLayout>
         </LinearLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</FrameLayout>
+
+    </LinearLayout>
+
+
+</LinearLayout>

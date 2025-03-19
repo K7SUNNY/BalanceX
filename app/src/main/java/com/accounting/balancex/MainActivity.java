@@ -1,175 +1,124 @@
 package com.accounting.balancex;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.util.Log;
+import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.view.animation.TranslateAnimation;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
-import android.view.View;
-import android.widget.ImageView;
-import android.util.Log;
+import androidx.recyclerview.widget.SnapHelper;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import android.content.SharedPreferences;
-import android.widget.Toast;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
-import android.content.Context;
-
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.utils.ColorTemplate;
 
 public class MainActivity extends AppCompatActivity {
-    private TextView totalBalanceText, totalCreditText, totalDebitText;
-    private FrameLayout graphContainer;
-    private TextView months, days, weeks, years;
-    private List<Transaction> transactions;
-    private TextView textmonth1, textmonth2, textmonth3, textmonth4;
-    private LinearLayout navHome, navTransactions, navEntry;
-    private LinearLayout slideMenu;
-    private ImageView lineChartButton, barChartButton;
-    private CustomBarGraphView barGraphView;
-    private CustomLineGraphView lineGraphView;
-    private boolean isMenuOpen = false;
+    private TextView textTotalBalance, textNetCredit, textNetDebit;
     private double totalBalance = 0, totalCredit = 0, totalDebit = 0;
-    private List<String> transactionDates;
-    private long appInstallTime;
-    private List<RecentTransactionModel> recentTransactions;
+    private ArrayList<String> transactionDates;
+    private Handler handler = new Handler();
+    private Runnable scrollRunnable;
+    private int scrollPosition = 0;
+    private RecyclerView recyclerView;
     private RecentTransactionsAdapter adapter;
-    private long backPressedTime = 0;
-    private TextView seeAllButton;
+    private List<RecentTransactionModel> recentTransactions;
+    private PieChart pieChart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        totalBalanceText = findViewById(R.id.textTotalBalance);
-        totalCreditText = findViewById(R.id.textNetCredit);
-        totalDebitText = findViewById(R.id.textNetDebit);
-        graphContainer = findViewById(R.id.graphContainer);
+        hideNavText(); // Hide text initially
 
-        navHome = findViewById(R.id.navHome);
-        navTransactions = findViewById(R.id.navTransactions);
-        navEntry = findViewById(R.id.navEntry);
+        // Apply animation to the correct tab
+        applyNavAnimation(findViewById(R.id.navHome));
 
-        loadTransactionData();
-
-        navTransactions.setOnClickListener(v -> {
-            vibrateDevice();
-            hideNavText(); // Hide all text before navigating
-            applyNavAnimation(navTransactions); // Animate Transactions text
-            startActivity(new Intent(MainActivity.this, TransactionActivity.class));
+        // Navigation Click Listeners
+        findViewById(R.id.navHome).setOnClickListener(v -> {
+            Toast.makeText(this, "Already on Home Page", Toast.LENGTH_SHORT).show();;
         });
 
-        navEntry.setOnClickListener(v -> {
+        findViewById(R.id.navTransactions).setOnClickListener(v -> {
+            startActivity(new Intent(this, TransactionActivity.class));
             vibrateDevice();
-            hideNavText();
-            applyNavAnimation(navEntry); // Animate Entry text
-            startActivity(new Intent(MainActivity.this, EntryActivity.class));
+            finish();
         });
 
-        navHome.setOnClickListener(v -> {
+        findViewById(R.id.navEntry).setOnClickListener(v -> {
+            startActivity(new Intent(this, EntryActivity.class));
             vibrateDevice();
-            hideNavText();
-            applyNavAnimation(navHome); // Animate Home text
-            Toast.makeText(MainActivity.this, "Already on Home Page", Toast.LENGTH_SHORT).show();
+            finish();
         });
 
-        // Apply animation to Home text on launch
-        new Handler().postDelayed(() -> applyNavAnimation(navHome), 100);
-        hideNavText(); // This will hide all text under icons initially
+        // Initialize Views
+        textTotalBalance = findViewById(R.id.textTotalBalance);
+        textNetCredit = findViewById(R.id.textNetCredit);
+        textNetDebit = findViewById(R.id.textNetDebit);
 
-        slideMenu = findViewById(R.id.slideMenu);
-        ImageView menuButton = findViewById(R.id.imageslidemenu_mainpage);
-        menuButton.setOnClickListener(v -> { if (isMenuOpen) closeMenu(); else openMenu(); });
-        findViewById(R.id.rootLayout).setOnClickListener(v -> { if (isMenuOpen) closeMenu(); });
+        // Load initial balance
+        loadBalanceData();
 
-        ImageView notificationIcon = findViewById(R.id.imagenotification);
-        notificationIcon.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, NotificationActivity.class)));
-
-        graphContainer = findViewById(R.id.graphContainer);
-        lineChartButton = findViewById(R.id.linechart);
-        barChartButton = findViewById(R.id.imageViewbarchart);
-
-        barGraphView = new CustomBarGraphView(this);
-        lineGraphView = new CustomLineGraphView(this);
-        graphContainer.removeAllViews();
-        graphContainer.addView(barGraphView);
-        setSelectedGraph(barChartButton, lineChartButton);
-
-        barChartButton.setOnClickListener(v -> switchGraphView(barGraphView, barChartButton, lineChartButton));
-        lineChartButton.setOnClickListener(v -> switchGraphView(lineGraphView, lineChartButton, barChartButton));
-
-        months = findViewById(R.id.months);
-        days = findViewById(R.id.days);
-        weeks = findViewById(R.id.weeks);
-        years = findViewById(R.id.years);
-
-        textmonth1 = findViewById(R.id.textmonth1);
-        textmonth2 = findViewById(R.id.textmonth2);
-        textmonth3 = findViewById(R.id.textmonth3);
-        textmonth4 = findViewById(R.id.textmonth4);
-
-        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-        if (!prefs.contains("install_time")) {
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putLong("install_time", System.currentTimeMillis());
-            editor.apply();
-        }
-        appInstallTime = prefs.getLong("install_time", System.currentTimeMillis());
-
-        months.setOnClickListener(view -> updateTimelineSelection(months, "months"));
-        days.setOnClickListener(view -> updateTimelineSelection(days, "days"));
-        weeks.setOnClickListener(view -> updateTimelineSelection(weeks, "weeks"));
-        years.setOnClickListener(view -> updateTimelineSelection(years, "years"));
-        updateTimelineSelection(months, "months");
-
-        // Initialize RecyclerView
-        RecyclerView recyclerView = findViewById(R.id.recyclerViewRecentTransactions);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this)); // Set layout manager
-        recentTransactions = new ArrayList<>();
+        recyclerView = findViewById(R.id.recyclerViewRecentTransactions);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        recentTransactions = new ArrayList<>(); // ✅ Initialize empty list before passing it to adapter
         adapter = new RecentTransactionsAdapter(this, recentTransactions);
         recyclerView.setAdapter(adapter);
-
+        recyclerView.setLayoutManager(layoutManager);
         // Load transactions from storage
-        loadRecentTransactions();
+        loadTransactionsFromStorage();
 
-        //sea all
-        seeAllButton = findViewById(R.id.seeAllButton);
-        seeAllButton.setOnClickListener(view -> {
+        // Ensures the item in the center stays in place
+        SnapHelper snapHelper = new LinearSnapHelper();
+        snapHelper.attachToRecyclerView(recyclerView);
+        startAutoScroll(); // ✅ Start auto-scrolling after setting up RecyclerView
+
+        // Initialize PieChart
+        pieChart = findViewById(R.id.pieChart);
+        setupPieChart();
+
+        // Initialize the See All button
+        TextView seeAllButton = findViewById(R.id.seeAllButton);
+
+        // Set click listener to open TransactionActivity
+        seeAllButton.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, TransactionActivity.class);
             startActivity(intent);
         });
-        Log.d("BalanceXApplication", "Application Created!");
     }
-    //nav animation
     private void hideNavText() {
         ((TextView) ((LinearLayout) findViewById(R.id.navHome)).getChildAt(1)).setVisibility(View.INVISIBLE);
         ((TextView) ((LinearLayout) findViewById(R.id.navTransactions)).getChildAt(1)).setVisibility(View.INVISIBLE);
         ((TextView) ((LinearLayout) findViewById(R.id.navEntry)).getChildAt(1)).setVisibility(View.INVISIBLE);
     }
-
     private void applyNavAnimation(LinearLayout selectedNavItem) {
         // Get the TextView inside the selected navigation item
         TextView textView = (TextView) ((LinearLayout) selectedNavItem).getChildAt(1);
@@ -180,19 +129,17 @@ public class MainActivity extends AppCompatActivity {
         textView.setVisibility(View.VISIBLE);
         textView.startAnimation(slideUp);
     }
-
-    @Override
-    public void onBackPressed() {
-        if (backPressedTime + 2000 > System.currentTimeMillis()) {
-            super.onBackPressed();
-            finishAffinity(); // Exit the app
-        } else {
-            Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show();
+    public void vibrateDevice() {
+        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator != null && vibrator.hasVibrator()) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(30); // Deprecated in API 26+, but works for older versions
+            }
         }
-        backPressedTime = System.currentTimeMillis();
     }
-    //load transaction from file
-    private void loadTransactionData() {
+    private void loadBalanceData() {
         try {
             File file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
             if (!file.exists()) return;
@@ -218,112 +165,17 @@ public class MainActivity extends AppCompatActivity {
                 else if (type.equalsIgnoreCase("debit")) { totalDebit += amount; totalBalance -= amount; }
             }
 
-            totalBalanceText.setText("₹" + totalBalance);
-            totalCreditText.setText("₹" + totalCredit);
-            totalDebitText.setText("₹" + totalDebit);
+            textTotalBalance.setText("₹" + totalBalance);
+            textNetCredit.setText("₹" + totalCredit);
+            textNetDebit.setText("₹" + totalDebit);
 
             transactionDates = new ArrayList<>(dateSet);
             Collections.sort(transactionDates, Collections.reverseOrder());
         } catch (IOException | org.json.JSONException e) { e.printStackTrace(); }
+        Log.e("LoadTransactions", "Transaction file not found!");
     }
-    private void openMenu() {
-        int menuWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.45);
-        slideMenu.getLayoutParams().width = menuWidth;
-        slideMenu.requestLayout();
-        slideMenu.setVisibility(View.VISIBLE);
-        TranslateAnimation openAnimation = new TranslateAnimation(-menuWidth, 0, 0, 0);
-        openAnimation.setDuration(300);
-        slideMenu.startAnimation(openAnimation);
-        isMenuOpen = true;
-    }
-
-    private void closeMenu() {
-        int menuWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.45);
-        TranslateAnimation closeAnimation = new TranslateAnimation(0, -menuWidth, 0, 0);
-        closeAnimation.setDuration(300);
-        slideMenu.startAnimation(closeAnimation);
-        slideMenu.setVisibility(View.GONE);
-        isMenuOpen = false;
-    }
-
-    private void switchGraphView(View newGraph, ImageView selectedButton, ImageView unselectedButton) {
-        graphContainer.removeAllViews();
-        graphContainer.addView(newGraph);
-        newGraph.invalidate();
-        setSelectedGraph(selectedButton, unselectedButton);
-    }
-
-    private void setSelectedGraph(ImageView selected, ImageView unselected) {
-        selected.setBackgroundResource(R.drawable.rounded_corner_selected_timeline);
-        unselected.setBackgroundResource(R.drawable.rounded_corner_unselected);
-    }
-
-
-    private void updateTimelineSelection(TextView selectedView, String timelineType) {
-        months.setBackgroundResource(R.drawable.rounded_corner_unselected);
-        days.setBackgroundResource(R.drawable.rounded_corner_unselected);
-        weeks.setBackgroundResource(R.drawable.rounded_corner_unselected);
-        years.setBackgroundResource(R.drawable.rounded_corner_unselected);
-
-        selectedView.setBackgroundResource(R.drawable.rounded_corner_selected_timeline);
-        List<String> labels = getTimelineLabels(timelineType);
-
-        textmonth1.setText(labels.size() > 0 ? labels.get(0) : "");
-        textmonth2.setText(labels.size() > 1 ? labels.get(1) : "");
-        textmonth3.setText(labels.size() > 2 ? labels.get(2) : "");
-        textmonth4.setText(labels.size() > 3 ? labels.get(3) : "");
-    }
-    private List<String> getTimelineLabels(String type) {
-        List<String> labels = new ArrayList<>();
-        Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat formatter;
-
-        switch (type) {
-            case "months":
-                formatter = new SimpleDateFormat("MMM", Locale.getDefault());
-                for (int i = 3; i >= 0; i--) {
-                    calendar.add(Calendar.MONTH, -i);
-                    labels.add(formatter.format(calendar.getTime()));
-                    calendar.add(Calendar.MONTH, i);
-                }
-                break;
-
-            case "days":
-                formatter = new SimpleDateFormat("E", Locale.getDefault());
-                for (int i = 3; i >= 0; i--) {
-                    calendar.add(Calendar.DAY_OF_MONTH, -i);
-                    labels.add(formatter.format(calendar.getTime()));
-                    calendar.add(Calendar.DAY_OF_MONTH, i);
-                }
-                break;
-
-            case "years":
-                formatter = new SimpleDateFormat("yyyy", Locale.getDefault());
-                for (int i = 3; i >= 0; i--) {
-                    calendar.add(Calendar.YEAR, -i);
-                    labels.add(formatter.format(calendar.getTime()));
-                    calendar.add(Calendar.YEAR, i);
-                }
-                break;
-
-            case "weeks":
-                long weeksSinceInstall = (System.currentTimeMillis() - appInstallTime) / (7 * 24 * 60 * 60 * 1000);
-                long startWeek = Math.max(1, weeksSinceInstall - 3);
-                for (long i = startWeek; i <= weeksSinceInstall; i++) {
-                    labels.add("Week " + i);
-                }
-                break;
-        }
-
-        while (labels.size() < 4) {
-            labels.add("-");
-        }
-
-        return labels;
-    }
-    private void loadRecentTransactions() {
-        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-                "Accounting/transactions.json");
+    private void loadTransactionsFromStorage() {
+        File file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
 
         if (!file.exists()) {
             Log.e("LoadTransactions", "Transaction file not found!");
@@ -344,7 +196,10 @@ public class MainActivity extends AppCompatActivity {
             fis.close();
 
             JSONArray transactionsArray = new JSONArray(sb.toString());
-            recentTransactions.clear();  // Clear old data before adding new
+            if (recentTransactions == null) {
+                recentTransactions = new ArrayList<>(); // ✅ Initialize if null
+            }
+            recentTransactions.clear();
 
             for (int i = 0; i < transactionsArray.length(); i++) {
                 JSONObject transaction = transactionsArray.getJSONObject(i);
@@ -361,20 +216,118 @@ public class MainActivity extends AppCompatActivity {
             Collections.sort(recentTransactions, (t1, t2) -> Long.compare(t2.getEntryId(), t1.getEntryId()));
 
             adapter.notifyDataSetChanged();  // Update RecyclerView after sorting and loading
+            Log.d("Transactions", "Loaded Transactions: " + recentTransactions.size());
+
 
         } catch (Exception e) {
             Log.e("LoadTransactions", "Error parsing JSON", e);
         }
     }
-    //vibrate device
-    public void vibrateDevice() {
-        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        if (vibrator != null && vibrator.hasVibrator()) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE));
-            } else {
-                vibrator.vibrate(30); // Deprecated in API 26+, but works for older versions
-            }
+    private void startAutoScroll() {
+        if (scrollRunnable != null) {
+            handler.removeCallbacks(scrollRunnable); // Prevent duplicate runnables
         }
+
+        scrollRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (transactionDates == null || transactionDates.isEmpty()) return; // Prevent crashes
+
+                // 🔹 Smooth scroll normally
+                if (scrollPosition < transactionDates.size() - 1) {
+                    scrollPosition++;
+                    recyclerView.smoothScrollBy(0, 150); // Adjust for better smoothness
+                }
+                // 🔹 Handle last item (wait & reset smoothly)
+                else {
+                    recyclerView.smoothScrollToPosition(transactionDates.size() - 1); // Reach last item
+                    new Handler().postDelayed(() -> {
+                        recyclerView.scrollToPosition(0); // Reset to first item after delay
+                        scrollPosition = 0; // Reset position
+                    }, 1500); // Delay before resetting
+                }
+
+                handler.postDelayed(this, 4000); // Auto-scroll every 4 sec
+            }
+        };
+
+        handler.postDelayed(scrollRunnable, 4000); // Start scrolling after 4 sec
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startAutoScroll(); // Resume auto-scroll
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        handler.removeCallbacks(scrollRunnable); // Stop auto-scroll to save resources
+    }
+
+    // ✅ Properly Used updateRecyclerView()
+    private void updateRecyclerView() {
+        adapter.notifyDataSetChanged(); // Refresh data
+        scrollPosition = 0; // Reset scrolling position
+    }
+    // Initialize PieChart
+    private ArrayList<PieModel> loadPieChartData() {
+        ArrayList<PieModel> pieDataList = new ArrayList<>();
+        HashMap<String, Float> categoryTotals = new HashMap<>();
+
+        try {
+            File file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
+            if (!file.exists()) return pieDataList; // Return empty if no data
+
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            StringBuilder jsonContent = new StringBuilder();
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                jsonContent.append(line);
+            }
+            reader.close();
+
+            JSONArray transactionsArray = new JSONArray(jsonContent.toString());
+
+            for (int i = 0; i < transactionsArray.length(); i++) {
+                JSONObject transaction = transactionsArray.getJSONObject(i);
+
+                String category = transaction.getString("category");
+                float amount = Float.parseFloat(transaction.getString("amount"));
+
+                if (categoryTotals.containsKey(category)) {
+                    categoryTotals.put(category, categoryTotals.get(category) + amount);
+                } else {
+                    categoryTotals.put(category, amount);
+                }
+            }
+
+            for (Map.Entry<String, Float> entry : categoryTotals.entrySet()) {
+                pieDataList.add(new PieModel(entry.getKey(), entry.getValue()));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return pieDataList;
+    }
+    private void setupPieChart() {
+        ArrayList<PieModel> pieDataList = loadPieChartData(); // Load data
+
+        ArrayList<PieEntry> entries = new ArrayList<>();
+        for (PieModel pieData : pieDataList) {
+            entries.add(new PieEntry(pieData.getAmount(), pieData.getCategory()));
+        }
+
+        PieDataSet dataSet = new PieDataSet(entries, "Categories");
+        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
+        dataSet.setValueTextSize(14f);
+
+        PieData pieData = new PieData(dataSet);
+        pieChart.setData(pieData);
+        pieChart.invalidate(); // Refresh chart
     }
 }

@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".TransactionActivity"
-    android:background="#e5e4e2">
+    android:background="@color/app_background">
 
     <LinearLayout
         android:id="@+id/linearLayout5"
@@ -43,15 +43,15 @@
             android:id="@+id/main_body_history"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="10dp">
+            android:orientation="vertical">
             <!--            search box-->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
                 android:background="@drawable/search_box_container"
-                android:padding="10dp">
+                android:padding="10dp"
+                android:layout_margin="10dp"
+                android:elevation="4dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -62,7 +62,6 @@
                         android:id="@+id/searchBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/search_container"
                         android:hapticFeedbackEnabled="true"
                         android:iconifiedByDefault="false"
                         android:queryHint="Search by Name and UTR"
@@ -77,8 +76,11 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded_corner_container"
                 android:orientation="vertical"
+                android:layout_marginRight="10dp"
+                android:layout_marginLeft="10dp"
+                android:elevation="4dp"
                 android:padding="10dp"
-                android:layout_marginBottom="60dp">
+                android:layout_marginBottom="70dp">
 
                 <LinearLayout
                     android:id="@+id/sectionTitles"
@@ -87,7 +89,8 @@
                     android:background="@drawable/selection_title_bg"
                     android:gravity="center"
                     android:orientation="horizontal"
-                    android:padding="5dp">
+                    android:padding="5dp"
+                    android:layout_marginBottom="10dp">
 
                     <Space
                         android:layout_width="0dp"
@@ -152,13 +155,13 @@
                     android:orientation="horizontal"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/sectionTitles">
+                    app:layout_constraintTop_toBottomOf="@id/sectionTitles"
+                    android:layout_marginBottom="10dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="horizontal"
-                        android:padding="6dp">
+                        android:orientation="horizontal">
                         <!--            Download statement-->
                         <TextView
                             android:id="@+id/download_statement"
@@ -196,95 +199,102 @@
                 </LinearLayout>
 
                 <!-- Transaction Section (RecyclerView) -->
-                <FrameLayout
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/selection_title_bg"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/loadingText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerInParent="true"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/history_transaction_bg">
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
                         android:gravity="center"
-                        android:text="Loading transactions, please wait..."
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:visibility="gone" />
+                        android:orientation="vertical">
 
-                    <LinearLayout
-                        android:id="@+id/noTransactionsText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_gravity="center"
-                        android:visibility="gone"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <!-- Empty Wallet Icon -->
-                        <ImageView
-                            android:layout_width="120dp"
-                            android:layout_height="120dp"
-                            android:src="@drawable/empty_wallet_remove_svgrepo_com"
-                            android:contentDescription="No transactions"
-                            android:layout_gravity="center"/>
-
-                        <!-- Message -->
                         <TextView
+                            android:id="@+id/loadingText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Oops! No transactions found."
-                            android:textSize="18sp"
-                            android:textColor="@color/grey"
-                            android:padding="10dp"
-                            android:layout_gravity="center"/>
+                            android:layout_centerInParent="true"
+                            android:gravity="center"
+                            android:text="Loading transactions, please wait..."
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:visibility="gone" />
 
-                        <!-- Add New Transaction Button -->
-                        <Button
-                            android:id="@+id/btnAddTransaction"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="+ Add New Transaction"
-                            android:background="@drawable/rounded_corner_container_save"
-                            android:enabled="true"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:textColor="@android:color/white"
-                            android:padding="10dp"
-                            android:layout_gravity="center"/>
-                    </LinearLayout>
-
-                    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-                        android:id="@+id/swipeRefreshLayout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:clickable="false"
-                        android:focusable="false">
-
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/recyclerView"
+                        <LinearLayout
+                            android:id="@+id/noTransactionsText"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:padding="10dp"
-                            android:paddingBottom="72dp"
-                            android:scrollbars="vertical" />
-                    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_gravity="center"
+                            android:visibility="gone"
+                            android:clickable="true"
+                            android:focusable="true">
 
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:id="@+id/btnScrollToTop"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="bottom|end"
-                        android:layout_margin="16dp"
-                        android:src="@drawable/up_arrow_svgrepo_com"
-                        android:visibility="gone"
-                        app:backgroundTint="@color/white" /> <!-- Initially hidden -->
-                </FrameLayout>
+                            <!-- Empty Wallet Icon -->
+                            <ImageView
+                                android:layout_width="120dp"
+                                android:layout_height="120dp"
+                                android:src="@drawable/empty_wallet_remove_svgrepo_com"
+                                android:contentDescription="No transactions"
+                                android:layout_gravity="center"/>
+
+                            <!-- Message -->
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Oops! No transactions found."
+                                android:textSize="18sp"
+                                android:textColor="@color/grey"
+                                android:padding="10dp"
+                                android:layout_gravity="center"/>
+
+                            <!-- Add New Transaction Button -->
+                            <Button
+                                android:id="@+id/btnAddTransaction"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+ Add New Transaction"
+                                android:background="@drawable/rounded_corner_container_save"
+                                android:enabled="true"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:textColor="@android:color/white"
+                                android:padding="10dp"
+                                android:layout_gravity="center"/>
+                        </LinearLayout>
+
+                        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                            android:id="@+id/swipeRefreshLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:clickable="false"
+                            android:focusable="false">
+
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/recyclerView"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:scrollbars="vertical"
+                                android:paddingTop="10dp"
+                                android:paddingBottom="10dp"/>
+                        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/btnScrollToTop"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="bottom|end"
+                            android:layout_marginBottom="16dp"
+                            android:layout_marginRight="10dp"
+                            android:src="@drawable/up_arrow_svgrepo_com"
+                            android:visibility="gone"
+                            app:backgroundTint="@color/white" /> <!-- Initially hidden -->
+                    </FrameLayout>
+
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

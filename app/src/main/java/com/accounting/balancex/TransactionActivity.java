@@ -108,7 +108,7 @@ public class TransactionActivity extends AppCompatActivity {
         hideNavText(); // Hide text initially
 
         // Apply animation to the correct tab
-        applyNavAnimation(findViewById(R.id.navTransactions)); // Change to R.id.navEntry in EntryActivity
+        applyNavAnimation(findViewById(R.id.navTransactions));
 
         // Navigation Click Listeners
         findViewById(R.id.navHome).setOnClickListener(v -> {
