@@ -2,6 +2,7 @@ package com.accounting.balancex;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.VibrationEffect;
@@ -10,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,6 +36,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
+
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
@@ -51,6 +56,10 @@ public class MainActivity extends AppCompatActivity {
     private RecentTransactionsAdapter adapter;
     private List<RecentTransactionModel> recentTransactions;
     private PieChart pieChart;
+    private String selectedTimeline = "M"; // Default to Months
+    private String graphType = "bar"; // Default to Bar Graph
+    private BarChart barChart;
+    private LineChart lineChart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Navigation Click Listeners
         findViewById(R.id.navHome).setOnClickListener(v -> {
-            Toast.makeText(this, "Already on Home Page", Toast.LENGTH_SHORT).show();;
+            Toast.makeText(this, "Already on Home Page", Toast.LENGTH_SHORT).show();
         });
 
         findViewById(R.id.navTransactions).setOnClickListener(v -> {
@@ -105,13 +114,66 @@ public class MainActivity extends AppCompatActivity {
         pieChart = findViewById(R.id.pieChart);
         setupPieChart();
 
-        // Initialize the See All button
-        TextView seeAllButton = findViewById(R.id.seeAllButton);
+        // Initialize Graph
+        BarChart barChart = findViewById(R.id.barChart);
+        LineChart lineChart = findViewById(R.id.lineChart);
 
-        // Set click listener to open TransactionActivity
-        seeAllButton.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, TransactionActivity.class);
-            startActivity(intent);
+        GraphManager graphManager = new GraphManager(this, barChart, lineChart);
+        selectedTimeline = "M"; // Default to Months
+        graphType = "bar"; // Default to Bar Graph
+        graphManager.updateGraph(selectedTimeline, graphType);
+
+        // Timeline Selection Buttons
+        TextView monthsTextView = findViewById(R.id.months);
+        TextView daysTextView = findViewById(R.id.days);
+        TextView weeksTextView = findViewById(R.id.weeks);
+        TextView yearsTextView = findViewById(R.id.years);
+
+        // Graph Type Buttons
+        ImageView lineChartImageView = findViewById(R.id.ImageViewlineChart);
+        ImageView barGraphImageView = findViewById(R.id.ImageViewbarGraph);
+
+        // Apply Default Selection
+        updateTimelineSelection(monthsTextView, daysTextView, weeksTextView, yearsTextView);
+        updateGraphTypeSelection(barGraphImageView, lineChartImageView);
+
+        // Timeline Selection
+        monthsTextView.setOnClickListener(view -> {
+            selectedTimeline = "M";
+            updateTimelineSelection(monthsTextView, daysTextView, weeksTextView, yearsTextView);
+            graphManager.updateGraph(selectedTimeline, graphType);
+        });
+
+        daysTextView.setOnClickListener(view -> {
+            selectedTimeline = "D";
+            updateTimelineSelection(daysTextView, monthsTextView, weeksTextView, yearsTextView);
+            graphManager.updateGraph(selectedTimeline, graphType);
+        });
+
+        weeksTextView.setOnClickListener(view -> {
+            selectedTimeline = "W";
+            updateTimelineSelection(weeksTextView, monthsTextView, daysTextView, yearsTextView);
+            graphManager.updateGraph(selectedTimeline, graphType);
+        });
+
+        yearsTextView.setOnClickListener(view -> {
+            selectedTimeline = "Y";
+            updateTimelineSelection(yearsTextView, monthsTextView, daysTextView, weeksTextView);
+            graphManager.updateGraph(selectedTimeline, graphType);
+        });
+
+        // Graph Type Selection
+        lineChartImageView.setOnClickListener(view -> {
+            Log.d("GraphManager", "Line Chart button clicked!");
+            graphType = "line";
+            updateGraphTypeSelection(lineChartImageView, barGraphImageView);
+            graphManager.updateGraph(selectedTimeline, graphType);
+        });
+
+        barGraphImageView.setOnClickListener(view -> {
+            graphType = "bar";
+            updateGraphTypeSelection(barGraphImageView, lineChartImageView);
+            graphManager.updateGraph(selectedTimeline, graphType);
         });
     }
     private void hideNavText() {
@@ -119,6 +181,7 @@ public class MainActivity extends AppCompatActivity {
         ((TextView) ((LinearLayout) findViewById(R.id.navTransactions)).getChildAt(1)).setVisibility(View.INVISIBLE);
         ((TextView) ((LinearLayout) findViewById(R.id.navEntry)).getChildAt(1)).setVisibility(View.INVISIBLE);
     }
+
     private void applyNavAnimation(LinearLayout selectedNavItem) {
         // Get the TextView inside the selected navigation item
         TextView textView = (TextView) ((LinearLayout) selectedNavItem).getChildAt(1);
@@ -129,16 +192,21 @@ public class MainActivity extends AppCompatActivity {
         textView.setVisibility(View.VISIBLE);
         textView.startAnimation(slideUp);
     }
-    public void vibrateDevice() {
-        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        if (vibrator != null && vibrator.hasVibrator()) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE));
-            } else {
-                vibrator.vibrate(30); // Deprecated in API 26+, but works for older versions
-            }
+    private void updateTimelineSelection(TextView selected, TextView... others) {
+        selected.setBackgroundResource(R.drawable.selected_title);
+        selected.setTextColor(Color.BLACK);
+
+        for (TextView other : others) {
+            other.setBackgroundColor(Color.TRANSPARENT);
+            other.setTextColor(Color.BLACK);
         }
     }
+    private void updateGraphTypeSelection(ImageView selected, ImageView other) {
+        selected.setBackgroundResource(R.drawable.selected_title);
+        other.setBackgroundColor(Color.TRANSPARENT);
+    }
+
+
     private void loadBalanceData() {
         try {
             File file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
@@ -223,6 +291,7 @@ public class MainActivity extends AppCompatActivity {
             Log.e("LoadTransactions", "Error parsing JSON", e);
         }
     }
+
     private void startAutoScroll() {
         if (scrollRunnable != null) {
             handler.removeCallbacks(scrollRunnable); // Prevent duplicate runnables
@@ -329,5 +398,15 @@ public class MainActivity extends AppCompatActivity {
         PieData pieData = new PieData(dataSet);
         pieChart.setData(pieData);
         pieChart.invalidate(); // Refresh chart
+    }
+    public void vibrateDevice() {
+        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator != null && vibrator.hasVibrator()) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(30); // Deprecated in API 26+, but works for older versions
+            }
+        }
     }
 }

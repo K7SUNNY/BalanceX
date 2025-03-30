@@ -44,6 +44,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Credit"
+        android:gravity="center"
         android:textSize="16sp"
         android:textColor="@color/grey"
         android:textStyle="bold"
