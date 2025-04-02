@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -16,7 +17,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -44,6 +47,7 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.google.android.material.navigation.NavigationView;
 
 public class MainActivity extends AppCompatActivity {
     private TextView textTotalBalance, textNetCredit, textNetDebit;
@@ -60,11 +64,14 @@ public class MainActivity extends AppCompatActivity {
     private String graphType = "bar"; // Default to Bar Graph
     private BarChart barChart;
     private LineChart lineChart;
+    private DrawerLayout drawerLayout;
+    private ImageView menuButton;
+    private NavigationView navigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main_drawer);
 
         hideNavText(); // Hide text initially
 
@@ -174,6 +181,28 @@ public class MainActivity extends AppCompatActivity {
             graphType = "bar";
             updateGraphTypeSelection(barGraphImageView, lineChartImageView);
             graphManager.updateGraph(selectedTimeline, graphType);
+        });
+
+        drawerLayout = findViewById(R.id.drawerlayout);
+        menuButton = findViewById(R.id.menu_button);
+        menuButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawerLayout.open();
+            }
+        });
+        navigationView = findViewById(R.id.navigationView);
+        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                int itemId = item.getItemId();
+                if (itemId == R.id.my_profile) {
+                    Log.d("navigationView", "onNavigationItemSelected: my profile");
+                } else if (itemId == R.id.about_BalanceX) {
+                    Log.d("navigationView", "onNavigationItemSelected: about balanceX");
+                }
+                return false;
+            }
         });
     }
     private void hideNavText() {
