@@ -13,7 +13,7 @@
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigationView"
-        android:layout_width="wrap_content"
+        android:layout_width="230dp"
         android:layout_height="match_parent"
         app:menu="@menu/slide_menu_items"
         app:headerLayout="@layout/slide_menu"

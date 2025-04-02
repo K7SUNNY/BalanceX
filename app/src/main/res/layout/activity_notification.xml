@@ -85,7 +85,9 @@
                     android:background="@android:color/transparent"
                     android:text="Unread"
                     android:textStyle="bold"
-                    android:textColor="#000"/>
+                    android:textColor="#000"
+                    android:backgroundTint="@null"
+                    android:elevation="0dp"/>
 <!--                Read button-->
                 <Button
                     android:id="@+id/buttonRead"
@@ -95,11 +97,14 @@
                     android:background="@android:color/transparent"
                     android:text="Read"
                     android:textStyle="bold"
-                    android:textColor="#000"/>
+                    android:textColor="#000"
+                    android:backgroundTint="@null"
+                    android:elevation="0dp"/>
             </LinearLayout>
         </LinearLayout>
 <!--        Main body to show Notifications-->
         <LinearLayout
+            android:id="@+id/main_notification_body"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"

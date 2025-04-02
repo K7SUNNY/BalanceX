@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
     private BarChart barChart;
     private LineChart lineChart;
     private DrawerLayout drawerLayout;
-    private ImageView menuButton;
+    private ImageView menuButton,notificationButton;
     private NavigationView navigationView;
 
     @Override
@@ -203,6 +203,13 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return false;
             }
+        });
+
+        notificationButton = findViewById(R.id.notificationButton);
+        notificationButton.setOnClickListener( v -> {
+            startActivity(new Intent(this, NotificationActivity.class));
+            vibrateDevice();
+            finish();
         });
     }
     private void hideNavText() {
