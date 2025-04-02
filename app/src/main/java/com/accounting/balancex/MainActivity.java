@@ -67,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
     private DrawerLayout drawerLayout;
     private ImageView menuButton,notificationButton;
     private NavigationView navigationView;
+    // Back Press Handling
+    private boolean backPressedOnce = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -209,8 +211,20 @@ public class MainActivity extends AppCompatActivity {
         notificationButton.setOnClickListener( v -> {
             startActivity(new Intent(this, NotificationActivity.class));
             vibrateDevice();
-            finish();
         });
+    }
+    @Override
+    public void onBackPressed() {
+        if (backPressedOnce) {
+            super.onBackPressed(); // Close the app
+            return;
+        }
+
+        this.backPressedOnce = true;
+        Toast.makeText(this, "Press back again to exit app", Toast.LENGTH_SHORT).show();
+
+        // Reset flag after 2 seconds
+        new Handler().postDelayed(() -> backPressedOnce = false, 2000);
     }
     private void hideNavText() {
         ((TextView) ((LinearLayout) findViewById(R.id.navHome)).getChildAt(1)).setVisibility(View.INVISIBLE);

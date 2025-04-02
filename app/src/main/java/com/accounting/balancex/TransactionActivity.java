@@ -104,7 +104,6 @@ public class TransactionActivity extends AppCompatActivity {
             }
         });
 
-
         hideNavText(); // Hide text initially
 
         // Apply animation to the correct tab
@@ -169,6 +168,13 @@ public class TransactionActivity extends AppCompatActivity {
             Intent intent = new Intent(TransactionActivity.this, EntryActivity.class);
             startActivity(intent);
         });
+    }
+    @Override
+    public void onBackPressed() {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        vibrateDevice(); // Optional if you want feedback on back press
+        finish();
     }
     private void showFilterPopup(View v) {
         PopupMenu popupMenu = new PopupMenu(TransactionActivity.this, v);

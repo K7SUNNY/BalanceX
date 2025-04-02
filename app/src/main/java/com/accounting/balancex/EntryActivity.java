@@ -263,7 +263,14 @@ public class EntryActivity extends AppCompatActivity {
         findViewById(R.id.navEntry).setOnClickListener(v -> {
             Toast.makeText(this, "Already on Entry Page", Toast.LENGTH_SHORT).show();
         });
-
+    }
+    // Override onBackPressed to go back to MainActivity
+    @Override
+    public void onBackPressed() {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        vibrateDevice(); // Optional if you want feedback on back press
+        finish();
     }
     private void hideNavText() {
         ((TextView) ((LinearLayout) findViewById(R.id.navHome)).getChildAt(1)).setVisibility(View.INVISIBLE);
