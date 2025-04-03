@@ -2,7 +2,9 @@ package com.accounting.balancex;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.VibrationEffect;
@@ -200,8 +202,15 @@ public class MainActivity extends AppCompatActivity {
                 int itemId = item.getItemId();
                 if (itemId == R.id.my_profile) {
                     Log.d("navigationView", "onNavigationItemSelected: my profile");
+                    startActivity(new Intent(MainActivity.this, ProfileActivity.class));
                 } else if (itemId == R.id.about_BalanceX) {
                     Log.d("navigationView", "onNavigationItemSelected: about balanceX");
+                    startActivity(new Intent(MainActivity.this, AboutActivity.class));
+                    return true;
+                }else if (itemId == R.id.help_support) {
+                    sendEmail("Help & Support");
+                } else if (itemId == R.id.feedback) {
+                    sendEmail("Feedback");
                 }
                 return false;
             }
@@ -212,6 +221,49 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, NotificationActivity.class));
             vibrateDevice();
         });
+
+        // 🔥 Get Navigation View
+        NavigationView navigationView = findViewById(R.id.navigationView);
+
+        // 🔥 Get Header View
+        View headerView = navigationView.getHeaderView(0);
+
+        // 🔥 Now Find Views Inside Header
+        TextView userNameText = headerView.findViewById(R.id.user_name);
+        TextView bioText = headerView.findViewById(R.id.bio);
+        ImageView profileImage = headerView.findViewById(R.id.profileImage);
+
+        // Initialize SharedPreferences
+        SharedPreferences sharedPreferences = getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
+
+        // Load Profile Data
+        loadProfileData();
+    }
+    // 🔥 Function to Load User Data
+    private void loadProfileData() {
+        SharedPreferences sharedPreferences = getSharedPreferences("UserProfile", MODE_PRIVATE);
+
+        // Get NavigationView
+        NavigationView navigationView = findViewById(R.id.navigationView);
+        View headerView = navigationView.getHeaderView(0); // Get the first (default) header
+
+        // Find views in header
+        TextView userNameText = headerView.findViewById(R.id.user_name);
+        TextView bioText = headerView.findViewById(R.id.bio);
+        ImageView profileImage = headerView.findViewById(R.id.profileImage);
+
+        // Load and set text data
+        userNameText.setText(sharedPreferences.getString("userName", "User Name"));
+        bioText.setText(sharedPreferences.getString("bio", "Your Bio"));
+
+        // Load and set profile image
+        String imageUriString = sharedPreferences.getString("profileImageUri", "");
+        if (!imageUriString.isEmpty()) {
+            Uri imageUri = Uri.parse(imageUriString);
+            profileImage.setImageURI(imageUri);
+        } else {
+            Log.e("ProfileImage", "Profile image URI is empty.");
+        }
     }
     @Override
     public void onBackPressed() {
@@ -226,6 +278,19 @@ public class MainActivity extends AppCompatActivity {
         // Reset flag after 2 seconds
         new Handler().postDelayed(() -> backPressedOnce = false, 2000);
     }
+    private void sendEmail(String subject) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("message/rfc822"); // Ensures only email apps handle it
+        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"sunnyk7rajput@gmail.com"});
+        intent.putExtra(Intent.EXTRA_SUBJECT, subject);
+
+        try {
+            startActivity(Intent.createChooser(intent, "Choose Email Client"));
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(this, "No email apps installed.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void hideNavText() {
         ((TextView) ((LinearLayout) findViewById(R.id.navHome)).getChildAt(1)).setVisibility(View.INVISIBLE);
         ((TextView) ((LinearLayout) findViewById(R.id.navTransactions)).getChildAt(1)).setVisibility(View.INVISIBLE);

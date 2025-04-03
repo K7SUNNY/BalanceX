@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginStart="1dp"
-        android:background="@color/light_gray"
+        android:background="@color/app_background"
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -74,8 +74,7 @@
                 android:background="@drawable/notification_read_unread_main_background"
                 android:orientation="horizontal"
                 android:padding="3dp">
-<!--                default selected buttonUnread-->
-                <!--                add this background to selected button: @drawable/notification_button_background-->
+
 <!--                Unread button-->
                 <Button
                     android:id="@+id/buttonUnread"
@@ -86,8 +85,7 @@
                     android:text="Unread"
                     android:textStyle="bold"
                     android:textColor="#000"
-                    android:backgroundTint="@null"
-                    android:elevation="0dp"/>
+                    android:backgroundTint="@null"/>
 <!--                Read button-->
                 <Button
                     android:id="@+id/buttonRead"
@@ -98,8 +96,7 @@
                     android:text="Read"
                     android:textStyle="bold"
                     android:textColor="#000"
-                    android:backgroundTint="@null"
-                    android:elevation="0dp"/>
+                    android:backgroundTint="@null"/>
             </LinearLayout>
         </LinearLayout>
 <!--        Main body to show Notifications-->
@@ -110,14 +107,13 @@
             android:orientation="vertical"
             android:gravity="center">
 
-            <TextView
-                android:id="@+id/textViewNonotification"
+            <!-- RecyclerView for Notifications -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewNotifications"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="No notification right now"
-                android:textColor="#595959"
-                android:textStyle="bold"
-                android:gravity="center"/>
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_margin="10dp"/>
         </LinearLayout>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

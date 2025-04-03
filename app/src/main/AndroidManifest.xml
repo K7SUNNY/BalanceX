@@ -86,6 +86,25 @@
             android:theme="@style/Theme.BalanceX"
             android:windowNoTitle="true"
             android:windowSoftInputMode="adjustPan"/>
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.BalanceX"
+            android:windowNoTitle="true"
+            android:windowSoftInputMode="adjustPan"/>
+        <activity android:name=".ProfileActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.BalanceX"
+            android:windowNoTitle="true"
+            android:windowSoftInputMode="adjustPan"/>
+        <activity android:name=".EditProfileActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.BalanceX"
+            android:windowNoTitle="true"
+            android:windowSoftInputMode="adjustPan"/>
     </application>
 
 </manifest>

@@ -16,7 +16,7 @@
         android:layout_width="230dp"
         android:layout_height="match_parent"
         app:menu="@menu/slide_menu_items"
-        app:headerLayout="@layout/slide_menu"
+        app:headerLayout="@layout/slide_menu_header"
         tools:ignore="MissingConstraints"
         android:layout_gravity="start"
         app:dividerInsetStart="10dp"

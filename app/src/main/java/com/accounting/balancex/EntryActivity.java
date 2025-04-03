@@ -267,6 +267,7 @@ public class EntryActivity extends AppCompatActivity {
     // Override onBackPressed to go back to MainActivity
     @Override
     public void onBackPressed() {
+        super.onBackPressed();
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
         vibrateDevice(); // Optional if you want feedback on back press

@@ -11,14 +11,16 @@
     <androidx.cardview.widget.CardView
         android:layout_width="60dp"
         android:layout_height="60dp"
-        app:cardElevation="0dp"
-        app:cardCornerRadius="40dp"
-        android:background="@android:color/transparent">
+        app:cardCornerRadius="60dp"
+        app:cardElevation="4dp"
+        android:background="@drawable/circle_account">
 
         <ImageView
+            android:id="@+id/profileImage"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:src="@drawable/account_svgrepo_com"/>
+            android:scaleType="centerCrop"
+            android:src="@drawable/account_svgrepo_com" />
     </androidx.cardview.widget.CardView>
     <LinearLayout
         android:id="@+id/user_name_section"
