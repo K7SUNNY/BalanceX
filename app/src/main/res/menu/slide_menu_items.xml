@@ -17,28 +17,22 @@
         android:id="@+id/group3">
         <item
             android:id="@+id/export_data"
-            android:title="Export data"/>
+            android:title="Export Data"/>
     </group>
     <group
         android:id="@+id/group4">
-        <item
-            android:id="@+id/settings"
-            android:title="Settings"/>
-    </group>
-    <group
-        android:id="@+id/group5">
         <item
             android:id="@+id/backup_restore"
             android:title="Backup &amp; Restore"/>
     </group>
     <group
-        android:id="@+id/group6">
+        android:id="@+id/group5">
         <item
             android:id="@+id/help_support"
             android:title="Hepl &amp; Support"/>
     </group>
     <group
-        android:id="@+id/group7">
+        android:id="@+id/group6">
         <item
             android:id="@+id/feedback"
             android:title="Feedback"/>

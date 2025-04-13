@@ -3,13 +3,20 @@ package com.accounting.balancex;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.pdf.PdfDocument;
+import android.icu.util.Calendar;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
@@ -20,27 +27,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SnapHelper;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
@@ -49,7 +42,31 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.navigation.NavigationView;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
     private TextView textTotalBalance, textNetCredit, textNetDebit;
@@ -71,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
     private NavigationView navigationView;
     // Back Press Handling
     private boolean backPressedOnce = false;
+    private static final int EDIT_PROFILE_REQUEST = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -211,6 +229,8 @@ public class MainActivity extends AppCompatActivity {
                     sendEmail("Help & Support");
                 } else if (itemId == R.id.feedback) {
                     sendEmail("Feedback");
+                }else if (itemId == R.id.export_data) {
+                    showExportBottomSheet();
                 }
                 return false;
             }
@@ -222,13 +242,10 @@ public class MainActivity extends AppCompatActivity {
             vibrateDevice();
         });
 
-        // 🔥 Get Navigation View
         NavigationView navigationView = findViewById(R.id.navigationView);
 
-        // 🔥 Get Header View
         View headerView = navigationView.getHeaderView(0);
 
-        // 🔥 Now Find Views Inside Header
         TextView userNameText = headerView.findViewById(R.id.user_name);
         TextView bioText = headerView.findViewById(R.id.bio);
         ImageView profileImage = headerView.findViewById(R.id.profileImage);
@@ -239,7 +256,6 @@ public class MainActivity extends AppCompatActivity {
         // Load Profile Data
         loadProfileData();
     }
-    // 🔥 Function to Load User Data
     private void loadProfileData() {
         SharedPreferences sharedPreferences = getSharedPreferences("UserProfile", MODE_PRIVATE);
 
@@ -263,6 +279,13 @@ public class MainActivity extends AppCompatActivity {
             profileImage.setImageURI(imageUri);
         } else {
             Log.e("ProfileImage", "Profile image URI is empty.");
+        }
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == EDIT_PROFILE_REQUEST && resultCode == RESULT_OK) {
+            loadProfileData(); // Reload updated data
         }
     }
     @Override
@@ -409,7 +432,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void startAutoScroll() {
         if (scrollRunnable != null) {
-            handler.removeCallbacks(scrollRunnable); // Prevent duplicate runnables
+            handler.removeCallbacks(scrollRunnable); // Prevent duplicate runnable
         }
 
         scrollRunnable = new Runnable() {
@@ -442,6 +465,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         startAutoScroll(); // Resume auto-scroll
+        loadProfileData();
     }
 
     @Override
@@ -524,4 +548,166 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.slide_menu_items, menu);  // Inflates your menu XML
+        return true;
+    }
+
+    private void showExportBottomSheet() {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.export_bottom_sheet, null);
+        bottomSheetDialog.setContentView(view);
+
+        // Buttons
+        view.findViewById(R.id.btn_last_10_days).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            exportData("10_days");
+        });
+
+        view.findViewById(R.id.btn_last_month).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            exportData("last_month");
+        });
+
+        view.findViewById(R.id.btn_last_6_months).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            exportData("6_months");
+        });
+
+        view.findViewById(R.id.btn_last_year).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            exportData("last_year");
+        });
+
+        view.findViewById(R.id.btn_financial_year).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            exportData("financial_year");
+        });
+
+        bottomSheetDialog.show();
+    }
+    public List<JSONObject> getFilteredTransactions(String filterKey) {
+        List<JSONObject> filteredList = new ArrayList<>();
+
+        try {
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                    + "/Accounting/transactions.json");
+
+            if (!file.exists()) return filteredList;
+
+            String json = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                json = new String(Files.readAllBytes(file.toPath()));
+            }
+            JSONArray array = new JSONArray(json);
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            Calendar today = Calendar.getInstance();
+            Calendar fromDate = Calendar.getInstance();
+
+            switch (filterKey) {
+                case "10_days":
+                    fromDate.add(Calendar.DAY_OF_YEAR, -10);
+                    break;
+                case "last_month":
+                    fromDate.add(Calendar.MONTH, -1);
+                    break;
+                case "6_months":
+                    fromDate.add(Calendar.MONTH, -6);
+                    break;
+                case "last_year":
+                    fromDate.add(Calendar.YEAR, -1);
+                    break;
+                case "financial_year":
+                    int year = today.get(Calendar.YEAR);
+                    if (today.get(Calendar.MONTH) < Calendar.APRIL) {
+                        year -= 1;
+                    }
+                    fromDate.set(year, Calendar.APRIL, 1);
+                    break;
+            }
+
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject obj = array.getJSONObject(i);
+                Date transactionDate = sdf.parse(obj.getString("date"));
+                if (transactionDate != null && transactionDate.after(fromDate.getTime())) {
+                    filteredList.add(obj);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return filteredList;
+    }
+    private void exportData(String filterKey) {
+        List<JSONObject> transactions = getFilteredTransactions(filterKey);
+        if (transactions.isEmpty()) {
+            Toast.makeText(this, "No transactions found!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        PdfDocument pdfDocument = new PdfDocument();
+        Paint paint = new Paint();
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(595, 842, 1).create(); // A4 size
+        PdfDocument.Page page = pdfDocument.startPage(pageInfo);
+        Canvas canvas = page.getCanvas();
+
+        int x = 20, y = 40;
+
+        paint.setTextSize(16);
+        paint.setFakeBoldText(true);
+        canvas.drawText("BalanceX - Transaction Report", x, y, paint);
+        y += 30;
+        paint.setTextSize(12);
+        canvas.drawText("Filtered by: " + filterKey.replace("_", " "), x, y, paint);
+        y += 20;
+
+        paint.setFakeBoldText(false);
+
+        for (JSONObject transaction : transactions) {
+            try {
+                // Modify these lines to use the correct keys from your stored data
+                String line = transaction.getString("date") + " | " +
+                        transaction.getString("receiver") + " | ₹" +
+                        transaction.getString("amount") + " | " +
+                        transaction.getString("textType"); // 'textType' is the 'type' field
+
+                y += 20;
+                canvas.drawText(line, x, y, paint);
+
+                if (y > 800) {
+                    pdfDocument.finishPage(page);
+                    pageInfo = new PdfDocument.PageInfo.Builder(595, 842, pdfDocument.getPages().size() + 1).create();
+                    page = pdfDocument.startPage(pageInfo);
+                    canvas = page.getCanvas();
+                    y = 40;
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        pdfDocument.finishPage(page);
+
+        // Format the current time
+        String timeStamp = new SimpleDateFormat("dd-MMM-yyyy_hh-mm-a").format(new Date());
+        // Create the file name with formatted time
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "BalanceX_Export_" + timeStamp + ".pdf");
+
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
+            pdfDocument.writeTo(fos);
+            Toast.makeText(this, "PDF saved to Downloads", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Failed to save PDF", Toast.LENGTH_SHORT).show();
+        }
+
+        pdfDocument.close();
+    }
+
 }

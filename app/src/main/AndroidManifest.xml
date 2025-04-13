@@ -43,68 +43,69 @@
         <!-- Splash Activity Declaration -->
         <activity
             android:name=".SplashActivity"
-            android:exported="true" >
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <!-- Main Activity Declaration -->
+        </activity> <!-- Main Activity Declaration -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
             android:windowNoTitle="true"
-            android:windowSoftInputMode="adjustPan">
-        </activity>
-        <!-- Transaction Page -->
+            android:windowSoftInputMode="adjustPan"/> <!-- Transaction Page -->
         <activity
             android:name=".TransactionActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
             android:windowNoTitle="true"
-            android:windowSoftInputMode="adjustPan"/>
-        <!-- Entry Page -->
+            android:windowSoftInputMode="adjustPan" /> <!-- Entry Page -->
         <activity
             android:name=".EntryActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
             android:windowNoTitle="true"
-            android:windowSoftInputMode="adjustPan"/>
-
+            android:windowSoftInputMode="adjustPan" />
         <activity
             android:name=".TransactionDetailsActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
             android:windowNoTitle="true"
-            android:windowSoftInputMode="adjustPan"/>
+            android:windowSoftInputMode="adjustPan" />
         <activity
             android:name=".NotificationActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
             android:windowNoTitle="true"
-            android:windowSoftInputMode="adjustPan"/>
+            android:windowSoftInputMode="adjustPan" />
         <activity
             android:name=".AboutActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
             android:windowNoTitle="true"
-            android:windowSoftInputMode="adjustPan"/>
-        <activity android:name=".ProfileActivity"
+            android:windowSoftInputMode="adjustPan" />
+        <activity
+            android:name=".ProfileActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
             android:windowNoTitle="true"
-            android:windowSoftInputMode="adjustPan"/>
-        <activity android:name=".EditProfileActivity"
+            android:windowSoftInputMode="adjustPan" />
+        <activity
+            android:name=".EditProfileActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
             android:windowNoTitle="true"
-            android:windowSoftInputMode="adjustPan"/>
+            android:windowSoftInputMode="adjustPan" />
+        <activity
+            android:name=".SettingsActivity"
+            android:theme="@style/Theme.BalanceX"
+            android:windowSoftInputMode="adjustPan"
+            android:windowNoTitle="true"/>
     </application>
-
 </manifest>

@@ -20,5 +20,7 @@
         tools:ignore="MissingConstraints"
         android:layout_gravity="start"
         app:dividerInsetStart="10dp"
-        app:dividerInsetEnd="10dp"/>
+        app:dividerInsetEnd="10dp"
+        android:background="#fff"
+        app:itemTextColor="#000"/>
 </androidx.drawerlayout.widget.DrawerLayout>
