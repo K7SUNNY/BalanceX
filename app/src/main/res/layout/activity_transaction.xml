@@ -6,13 +6,15 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".TransactionActivity"
+    android:fitsSystemWindows="true"
     android:background="@color/app_background">
 
     <LinearLayout
         android:id="@+id/linearLayout5"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@+id/navBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -79,8 +81,7 @@
                 android:layout_marginRight="10dp"
                 android:layout_marginLeft="10dp"
                 android:elevation="4dp"
-                android:padding="10dp"
-                android:layout_marginBottom="70dp">
+                android:padding="10dp">
 
                 <LinearLayout
                     android:id="@+id/sectionTitles"

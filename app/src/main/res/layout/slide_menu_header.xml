@@ -3,16 +3,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/slideMenu"
     android:layout_width="match_parent"
-    android:layout_height="200dp"
+    android:layout_height="260dp"
     android:orientation="vertical"
     android:gravity="bottom"
     android:padding="10dp"
+    android:fitsSystemWindows="true"
     android:background="@color/blue">
+
     <androidx.cardview.widget.CardView
         android:layout_width="60dp"
         android:layout_height="60dp"
         app:cardCornerRadius="60dp"
         app:cardElevation="4dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="15dp"
         android:background="@drawable/circle_account">
 
         <ImageView

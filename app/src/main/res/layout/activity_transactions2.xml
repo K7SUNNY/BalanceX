@@ -5,13 +5,15 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".TransactionActivity"
-    android:background="#e5e4e2">
+    android:background="#e5e4e2"
+    android:fitsSystemWindows="true">
 
     <LinearLayout
         android:id="@+id/linearLayout5"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@+id/navBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -71,7 +73,8 @@
             <LinearLayout
                 android:id="@+id/recentTransaction_page"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:background="@drawable/rounded_corner_container"
                 android:orientation="vertical"
                 android:padding="10dp">
