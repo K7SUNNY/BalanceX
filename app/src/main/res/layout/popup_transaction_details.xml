@@ -25,7 +25,7 @@
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"
                 android:text="Date"
-                android:textColor="@color/blue"
+                android:textColor="@color/see_all_link"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_weight="1"/>
@@ -49,14 +49,14 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_weight="1"
-                android:textColor="#777777"
+                android:textColor="@color/text_secondary"
                 android:gravity="start"/>
             <TextView
                 android:id="@+id/detailReceiver"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Name"
-                android:textColor="@color/blue"
+                android:textColor="@color/see_all_link"
                 android:layout_weight="1"
                 android:gravity="end"
                 android:textStyle="bold"/>
@@ -75,14 +75,14 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_weight="1"
-                android:textColor="#777777"
+                android:textColor="@color/text_secondary"
                 android:gravity="start"/>
             <TextView
                 android:id="@+id/detailAmount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Amount"
-                android:textColor="@color/blue"
+                android:textColor="@color/see_all_link"
                 android:layout_weight="1"
                 android:gravity="end"
                 android:textStyle="bold" />
@@ -101,14 +101,14 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_weight="1"
-                android:textColor="#777777"
+                android:textColor="@color/text_secondary"
                 android:gravity="start"/>
             <TextView
                 android:id="@+id/detailTransactionID"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Transaction ID"
-                android:textColor="@color/blue"
+                android:textColor="@color/see_all_link"
                 android:layout_weight="1"
                 android:gravity="end"
                 android:textStyle="bold"
@@ -134,14 +134,14 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_weight="1"
-                android:textColor="#777777"
+                android:textColor="@color/text_secondary"
                 android:gravity="start"/>
             <TextView
                 android:id="@+id/detailUTR"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="UTR"
-                android:textColor="@color/blue"
+                android:textColor="@color/see_all_link"
                 android:layout_weight="1"
                 android:gravity="end"
                 android:textStyle="bold" />
@@ -167,14 +167,14 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_weight="1"
-                android:textColor="#777777"
+                android:textColor="@color/text_secondary"
                 android:gravity="start"/>
             <TextView
                 android:id="@+id/detailPaymentMethod"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Payment Method"
-                android:textColor="@color/blue"
+                android:textColor="@color/see_all_link"
                 android:layout_weight="1"
                 android:gravity="end"
                 android:textStyle="bold" />
@@ -193,14 +193,14 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_weight="1"
-                android:textColor="#777777"
+                android:textColor="@color/text_secondary"
                 android:gravity="start"/>
             <TextView
                 android:id="@+id/detailComments"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Comments"
-                android:textColor="@color/blue"
+                android:textColor="@color/see_all_link"
                 android:layout_weight="1"
                 android:gravity="end"
                 android:textStyle="bold" />
@@ -219,14 +219,14 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_weight="1"
-                android:textColor="#777777"
+                android:textColor="@color/text_secondary"
                 android:gravity="start"/>
             <TextView
                 android:id="@+id/detailCategory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Category"
-                android:textColor="@color/blue"
+                android:textColor="@color/see_all_link"
                 android:layout_weight="1"
                 android:gravity="end"
                 android:textStyle="bold" />
@@ -245,14 +245,14 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_weight="1"
-                android:textColor="#777777"
+                android:textColor="@color/text_secondary"
                 android:gravity="start"/>
             <TextView
                 android:id="@+id/detailDescription"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Description"
-                android:textColor="@color/blue"
+                android:textColor="@color/see_all_link"
                 android:layout_weight="1"
                 android:gravity="end"
                 android:textStyle="bold"

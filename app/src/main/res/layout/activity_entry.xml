@@ -104,7 +104,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="10dp"
                             android:text="Required info"
-                            android:textColor="#949494"
+                            android:textColor="@color/text_secondary"
                             android:textSize="18dp"
                             android:textStyle="bold"/>
                         <!-- Display the date here as TextView (non-editable) -->
@@ -115,7 +115,7 @@
                             android:layout_marginBottom="10dp"
                             android:background="@drawable/rounded_input_background"
                             android:padding="10dp"
-                            android:textColor="#000000"
+                            android:textColor="@color/text_primary"
                             android:textSize="16sp" />
 
                         <EditText
@@ -127,8 +127,8 @@
                             android:hint="Enter Amount"
                             android:inputType="numberDecimal"
                             android:padding="10dp"
-                            android:textColor="#000"
-                            android:textColorHint="#a6a6a6" />
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
 
                         <EditText
                             android:id="@+id/receiverName"
@@ -139,8 +139,8 @@
                             android:hint="Enter Person Name"
                             android:inputType="text"
                             android:padding="10dp"
-                            android:textColor="#000"
-                            android:textColorHint="#a6a6a6" />
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -154,7 +154,7 @@
                                 android:layout_height="wrap_content"
                                 android:padding="10dp"
                                 android:text="Transaction Type:"
-                                android:textColor="#000"
+                                android:textColor="@color/text_primary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
 
@@ -170,18 +170,18 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:buttonTint="#000000"
+                                    android:buttonTint="@color/text_primary"
                                     android:text="Credit"
-                                    android:textColor="#000" />
+                                    android:textColor="@color/text_primary" />
 
                                 <RadioButton
                                     android:id="@+id/entryradioButtonDebit"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:buttonTint="#000000"
+                                    android:buttonTint="@color/text_primary"
                                     android:text="Debit"
-                                    android:textColor="#000" />
+                                    android:textColor="@color/text_primary" />
                             </RadioGroup>
                         </LinearLayout>
 
@@ -196,7 +196,7 @@
                                 android:layout_height="wrap_content"
                                 android:padding="10dp"
                                 android:text="Payment Method:"
-                                android:textColor="#000"
+                                android:textColor="@color/text_primary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
 
@@ -212,18 +212,18 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:buttonTint="#000000"
+                                    android:buttonTint="@color/text_primary"
                                     android:text="Cash"
-                                    android:textColor="#000" />
+                                    android:textColor="@color/text_primary" />
 
                                 <RadioButton
                                     android:id="@+id/radioButtonUPI"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:buttonTint="#000000"
+                                    android:buttonTint="@color/text_primary"
                                     android:text="UPI"
-                                    android:textColor="#000" />
+                                    android:textColor="@color/text_primary" />
 
                             </RadioGroup>
                         </LinearLayout>
@@ -246,7 +246,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="10dp"
                             android:text="More detail for UPI"
-                            android:textColor="#949494"
+                            android:textColor="@color/text_secondary"
                             android:textSize="18dp"
                             android:textStyle="bold"/>
 
@@ -259,8 +259,8 @@
                             android:hint="Enter UTR"
                             android:inputType="number"
                             android:padding="10dp"
-                            android:textColor="#000"
-                            android:textColorHint="#a6a6a6" />
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
 
                         <EditText
                             android:id="@+id/transactionId"
@@ -270,8 +270,8 @@
                             android:hint="Enter Transaction ID"
                             android:inputType="text"
                             android:padding="10dp"
-                            android:textColor="#000"
-                            android:textColorHint="#a6a6a6" />
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
                     </LinearLayout>
                     <!-- Transaction Detail-->
                     <LinearLayout
@@ -291,7 +291,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="10dp"
                             android:text="Transaction detail"
-                            android:textColor="#949494"
+                            android:textColor="@color/text_secondary"
                             android:textSize="18dp"
                             android:textStyle="bold"/>
 
@@ -304,8 +304,8 @@
                             android:hint="Enter Description"
                             android:inputType="text"
                             android:padding="10dp"
-                            android:textColor="#000"
-                            android:textColorHint="#a6a6a6" />
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
 
                         <EditText
                             android:id="@+id/comments"
@@ -316,8 +316,8 @@
                             android:hint="Enter Comments"
                             android:inputType="text"
                             android:padding="10dp"
-                            android:textColor="#000"
-                            android:textColorHint="#a6a6a6" />
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
 
                         <EditText
                             android:id="@+id/inputCategory"
@@ -327,8 +327,8 @@
                             android:hint="Enter Category"
                             android:inputType="text"
                             android:padding="10dp"
-                            android:textColor="#000"
-                            android:textColorHint="#a6a6a6" />
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
                     </LinearLayout>
                     <!-- buttons and checkbox-->
                     <LinearLayout
@@ -352,7 +352,7 @@
                             android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:text="I confirm this transaction"
-                            android:textColor="#000"
+                            android:textColor="@color/text_primary"
                             android:textSize="16sp"
                             android:textStyle="bold" />
                     </LinearLayout>

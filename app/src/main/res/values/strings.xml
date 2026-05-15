@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">BalanceX</string>
+    <string name="name_label">Name:</string>
+    <string name="default_user_name">user_name</string>
+    <string name="bio_label">Bio:</string>
+    <string name="default_bio">bio goes here</string>
+    <string name="profile_image_desc">Profile Image</string>
 </resources>

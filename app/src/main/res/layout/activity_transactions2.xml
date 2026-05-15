@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".TransactionActivity"
-    android:background="#e5e4e2"
+    android:background="@color/app_background"
     android:fitsSystemWindows="true">
 
     <LinearLayout
@@ -95,7 +95,7 @@
                         android:layout_weight="1"
                         android:gravity="center"
                         android:text="All"
-                        android:textColor="#333333"
+                        android:textColor="@color/text_primary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -106,7 +106,7 @@
                         android:layout_weight="1"
                         android:gravity="center"
                         android:text="Credits"
-                        android:textColor="#333333"
+                        android:textColor="@color/text_primary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -117,7 +117,7 @@
                         android:layout_weight="1"
                         android:gravity="center"
                         android:text="Debits"
-                        android:textColor="#333333"
+                        android:textColor="@color/text_primary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -149,7 +149,7 @@
                             android:gravity="center"
                             android:padding="5dp"
                             android:text="Download Statement"
-                            android:textColor="#333333"
+                            android:textColor="@color/text_primary"
                             android:textSize="15sp"
                             android:textStyle="bold" />
                         <!--                space to give a gap-->
@@ -168,7 +168,7 @@
                             android:gravity="center"
                             android:padding="5dp"
                             android:text="Filter"
-                            android:textColor="#333333"
+                            android:textColor="@color/text_primary"
                             android:textSize="15sp"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -200,7 +200,7 @@
                     android:text="No More Transactions"
                     android:gravity="center"
                     android:textSize="14sp"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="@color/text_secondary"
                     android:padding="10dp"
                     android:layout_marginBottom="8dp"
                     android:elevation="4dp"/>

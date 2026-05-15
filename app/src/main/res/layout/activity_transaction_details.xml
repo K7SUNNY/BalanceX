@@ -1,6 +1,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/app_background"
     android:orientation="vertical"
     android:padding="16dp"
     android:fitsSystemWindows="true">
@@ -12,6 +13,7 @@
         android:text="Transactions with"
         android:textSize="20sp"
         android:textStyle="bold"
+        android:textColor="@color/text_primary"
         android:paddingBottom="10dp"/>
 
     <androidx.recyclerview.widget.RecyclerView

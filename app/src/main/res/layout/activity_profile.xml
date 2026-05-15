@@ -20,7 +20,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:text="My Profile"
-            android:textColor="#000"
+            android:textColor="@color/text_primary"
             android:textStyle="bold"
             android:textSize="18sp"
             android:gravity="center"
@@ -31,7 +31,7 @@
             android:layout_height="match_parent"
             android:text="Edit"
             android:textSize="18sp"
-            android:textColor="@color/blue"
+            android:textColor="@color/see_all_link"
             android:backgroundTint="@android:color/transparent"
             android:layout_weight="0"
             android:layout_gravity="center"
@@ -97,7 +97,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Full Name: "
-                        android:textColor="@android:color/darker_gray"
+                        android:textColor="@color/text_secondary"
                         android:textSize="18sp"
                         android:textStyle="bold"/>
                     <TextView
@@ -115,7 +115,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Bio: "
-                        android:textColor="@android:color/darker_gray"
+                        android:textColor="@color/text_secondary"
                         android:textSize="18sp"
                         android:textStyle="bold"/>
                     <TextView
@@ -133,7 +133,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Comapany Name: (optional)"
-                        android:textColor="@android:color/darker_gray"
+                        android:textColor="@color/text_secondary"
                         android:textSize="18sp"
                         android:textStyle="bold"/>
                     <TextView
@@ -160,7 +160,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Email: "
-                        android:textColor="@android:color/darker_gray"
+                        android:textColor="@color/text_secondary"
                         android:textSize="18sp"
                         android:textStyle="bold"/>
                     <TextView
@@ -178,7 +178,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Phone no: (optional)"
-                        android:textColor="@android:color/darker_gray"
+                        android:textColor="@color/text_secondary"
                         android:textSize="18sp"
                         android:textStyle="bold"/>
                     <TextView
@@ -196,7 +196,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Address: (optional)"
-                        android:textColor="@android:color/darker_gray"
+                        android:textColor="@color/text_secondary"
                         android:textSize="18sp"
                         android:textStyle="bold"/>
                     <TextView

@@ -47,7 +47,7 @@
                 android:layout_weight="1"
                 android:text="Notifications"
                 android:textAlignment="center"
-                android:textColor="#000000"
+                android:textColor="@color/text_primary"
                 android:textSize="24sp"
                 android:textStyle="bold"/>
 
@@ -87,7 +87,7 @@
                     android:background="@android:color/transparent"
                     android:text="Unread"
                     android:textStyle="bold"
-                    android:textColor="#000"
+                    android:textColor="@color/text_primary"
                     android:backgroundTint="@null"/>
 <!--                Read button-->
                 <Button
@@ -98,7 +98,7 @@
                     android:background="@android:color/transparent"
                     android:text="Read"
                     android:textStyle="bold"
-                    android:textColor="#000"
+                    android:textColor="@color/text_primary"
                     android:backgroundTint="@null"/>
             </LinearLayout>
         </LinearLayout>

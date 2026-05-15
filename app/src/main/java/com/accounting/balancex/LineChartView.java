@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
+import androidx.core.content.ContextCompat;
 import java.util.List;
 
 public class LineChartView extends View {
@@ -18,21 +19,25 @@ public class LineChartView extends View {
     }
     // i don't know why this file is here
     private void init() {
-        // Line paint (Blue)
+        Context context = getContext();
+        int creditColor = ContextCompat.getColor(context, R.color.chart_credit);
+        int textColor = ContextCompat.getColor(context, R.color.text_primary);
+
+        // Line paint
         linePaint = new Paint();
-        linePaint.setColor(Color.BLUE);
+        linePaint.setColor(creditColor);
         linePaint.setStrokeWidth(6);
         linePaint.setStyle(Paint.Style.STROKE);
 
-        // Point paint (Red)
+        // Point paint
         pointPaint = new Paint();
-        pointPaint.setColor(Color.RED);
+        pointPaint.setColor(Color.RED); // Keep Red for points or use theme color
         pointPaint.setStrokeWidth(12);
         pointPaint.setStyle(Paint.Style.FILL);
 
-        // Text paint (Black)
+        // Text paint
         textPaint = new Paint();
-        textPaint.setColor(Color.BLACK);
+        textPaint.setColor(textColor);
         textPaint.setTextSize(36);
     }
 

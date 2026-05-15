@@ -1,14 +1,15 @@
 <resources>
     <style name="Base.Theme.BalanceX." parent="Theme.MaterialComponents.DayNight.NoActionBar">
-    <item name="windowActionBar">false</item>
+        <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>
-        <item name="android:popupBackground">#FFFFFF</item>
+        <item name="android:popupBackground">?attr/colorSurface</item>
     </style>
-    <style name="CustomPopupMenu" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <item name="android:popupBackground">#FFFFFF</item> <!-- Set white background -->
+    <style name="CustomPopupMenu" parent="Theme.AppCompat.DayNight">
+        <item name="android:popupBackground">?attr/colorSurface</item>
     </style>
-    <style name="CustomSearchView" parent="Theme.MaterialComponents.Light">
-        <item name="android:textColorHint">#C5C5C5</item> <!-- Hint text color -->
+    <style name="CustomSearchView" parent="Theme.MaterialComponents.DayNight">
+        <item name="android:textColorHint">@color/text_hint</item>
+        <item name="android:editTextColor">@color/text_primary</item>
     </style>
 </resources>

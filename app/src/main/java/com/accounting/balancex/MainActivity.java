@@ -29,6 +29,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSnapHelper;
@@ -533,9 +534,13 @@ public class MainActivity extends AppCompatActivity {
         PieDataSet dataSet = new PieDataSet(entries, "Categories");
         dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
         dataSet.setValueTextSize(14f);
+        int textColor = ContextCompat.getColor(this, R.color.text_primary);
+        dataSet.setValueTextColor(textColor);
 
         PieData pieData = new PieData(dataSet);
         pieChart.setData(pieData);
+        pieChart.getLegend().setTextColor(textColor);
+        pieChart.setEntryLabelColor(textColor);
         pieChart.invalidate(); // Refresh chart
     }
     public void vibrateDevice() {

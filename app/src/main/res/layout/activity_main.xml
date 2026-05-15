@@ -47,7 +47,7 @@
                     android:layout_weight="10"
                     android:gravity="center"
                     android:text="Dashboard"
-                    android:textColor="#fff"
+                    android:textColor="@color/text_primary"
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
@@ -124,7 +124,7 @@
                             android:layout_weight="1"
                             android:gravity="center"
                             android:text="Net Credit"
-                            android:textColor="#fff"
+                            android:textColor="@color/text_primary"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -178,7 +178,7 @@
                             android:layout_weight="1"
                             android:gravity="center"
                             android:text="Net Debit"
-                            android:textColor="#fff"
+                            android:textColor="@color/text_primary"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -189,7 +189,7 @@
                             android:layout_weight="1"
                             android:gravity="center"
                             android:text="₹ 0.00"
-                            android:textColor="#fff"
+                            android:textColor="@color/text_primary"
                             android:textSize="18sp"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -257,7 +257,7 @@
                                     android:layout_weight="1"
                                     android:gravity="center"
                                     android:text="Crecit"
-                                    android:textColor="#000"
+                                    android:textColor="@color/text_primary"
                                     android:textSize="14dp"
                                     android:textStyle="bold" />
                             </LinearLayout>
@@ -290,7 +290,7 @@
                                     android:layout_weight="1"
                                     android:gravity="center"
                                     android:text="Debit"
-                                    android:textColor="#000"
+                                    android:textColor="@color/text_primary"
                                     android:textSize="14dp"
                                     android:textStyle="bold" />
                             </LinearLayout>
@@ -336,7 +336,7 @@
                                 android:focusable="true"
                                 android:gravity="center"
                                 android:text="M"
-                                android:textColor="#000"
+                                android:textColor="@color/text_primary"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -349,7 +349,7 @@
                                 android:focusable="true"
                                 android:gravity="center"
                                 android:text="D"
-                                android:textColor="#000"
+                                android:textColor="@color/text_primary"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -362,7 +362,7 @@
                                 android:focusable="true"
                                 android:gravity="center"
                                 android:text="W"
-                                android:textColor="#000"
+                                android:textColor="@color/text_primary"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -375,7 +375,7 @@
                                 android:focusable="true"
                                 android:gravity="center"
                                 android:text="Y"
-                                android:textColor="#000"
+                                android:textColor="@color/text_primary"
                                 android:textStyle="bold" />
                             <!--                        a barrier for timeline selection and graph view selection-->
                             <TextView
@@ -434,7 +434,7 @@
                                 android:layout_weight="1"
                                 android:gravity="start"
                                 android:text="Recent Transactions"
-                                android:textColor="#000"
+                                android:textColor="@color/text_primary"
                                 android:textSize="20sp"
                                 android:textStyle="bold" />
 
@@ -446,7 +446,7 @@
                                 android:background="@android:color/transparent"
                                 android:gravity="center"
                                 android:text="see all"
-                                android:textColor="#00a1ff"
+                                android:textColor="@color/see_all_link"
                                 android:textSize="15dp"
                                 android:textStyle="bold" />
                         </LinearLayout>

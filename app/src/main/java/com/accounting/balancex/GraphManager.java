@@ -2,6 +2,7 @@ package com.accounting.balancex;
 
 import android.content.Context;
 import android.graphics.Color;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 
@@ -180,13 +181,17 @@ public class GraphManager {
         }
 
         // Data sets for Credit and Debit
+        int creditColor = ContextCompat.getColor(context, R.color.chart_credit);
+        int debitColor = ContextCompat.getColor(context, R.color.chart_debit);
+        int textColor = ContextCompat.getColor(context, R.color.chart_text);
+
         BarDataSet creditSet = new BarDataSet(creditEntries, "Credit");
-        creditSet.setColor(Color.parseColor("#1E90FF")); // Dodger Blue for Credit
-        creditSet.setValueTextColor(Color.WHITE);
+        creditSet.setColor(creditColor);
+        creditSet.setValueTextColor(textColor);
 
         BarDataSet debitSet = new BarDataSet(debitEntries, "Debit");
-        debitSet.setColor(Color.parseColor("#3700B3")); // Dark Purple for Debit
-        debitSet.setValueTextColor(Color.WHITE);
+        debitSet.setColor(debitColor);
+        debitSet.setValueTextColor(textColor);
 
         // Group the bars
         float groupSpace = 0.2f; // Space between groups
@@ -204,10 +209,12 @@ public class GraphManager {
         xAxis.setCenterAxisLabels(true);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(false);
-        xAxis.setTextColor(Color.BLACK);
+        xAxis.setTextColor(textColor);
 
         // Y-Axis Customization
+        barChart.getAxisLeft().setTextColor(textColor);
         barChart.getAxisLeft().setDrawGridLines(true);
+        barChart.getAxisLeft().setGridColor(ContextCompat.getColor(context, R.color.chart_grid));
         barChart.getAxisRight().setEnabled(false);
         barChart.getLegend().setEnabled(false); // Hide legend if not needed
 
@@ -234,22 +241,26 @@ public class GraphManager {
         lineChart.setVisibility(View.VISIBLE);
 
         // Create Line DataSets
+        int creditColor = ContextCompat.getColor(context, R.color.chart_credit);
+        int debitColor = ContextCompat.getColor(context, R.color.chart_debit);
+        int textColor = ContextCompat.getColor(context, R.color.chart_text);
+
         LineDataSet creditSet = new LineDataSet(creditEntries, "Credit");
-        creditSet.setColor(Color.parseColor("#1E90FF")); // Dodger Blue
-        creditSet.setCircleColor(Color.parseColor("#1E90FF"));
+        creditSet.setColor(creditColor);
+        creditSet.setCircleColor(creditColor);
         creditSet.setLineWidth(2f);
         creditSet.setCircleRadius(5f);
         creditSet.setDrawValues(true);
-        creditSet.setValueTextColor(Color.BLACK);
+        creditSet.setValueTextColor(textColor);
         creditSet.setMode(LineDataSet.Mode.CUBIC_BEZIER); // Smooth curve
 
         LineDataSet debitSet = new LineDataSet(debitEntries, "Debit");
-        debitSet.setColor(Color.parseColor("#3700B3")); // Deep Purple
-        debitSet.setCircleColor(Color.parseColor("#3700B3"));
+        debitSet.setColor(debitColor);
+        debitSet.setCircleColor(debitColor);
         debitSet.setLineWidth(2f);
         debitSet.setCircleRadius(5f);
         debitSet.setDrawValues(true);
-        debitSet.setValueTextColor(Color.BLACK);
+        debitSet.setValueTextColor(textColor);
         debitSet.setMode(LineDataSet.Mode.CUBIC_BEZIER); // Smooth curve
 
         // Apply dataset to LineData
@@ -262,12 +273,15 @@ public class GraphManager {
         xAxis.setGranularity(1f);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(false);
-        xAxis.setTextColor(Color.BLACK);
+        xAxis.setTextColor(textColor);
         xAxis.setLabelRotationAngle(-45);
 
         // Y-Axis Customization
+        lineChart.getAxisLeft().setTextColor(textColor);
         lineChart.getAxisLeft().setDrawGridLines(true);
+        lineChart.getAxisLeft().setGridColor(ContextCompat.getColor(context, R.color.chart_grid));
         lineChart.getAxisRight().setEnabled(false);
+        lineChart.getLegend().setTextColor(textColor);
         lineChart.getLegend().setEnabled(true);
 
         // Apply animations

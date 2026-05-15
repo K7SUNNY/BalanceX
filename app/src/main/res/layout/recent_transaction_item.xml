@@ -15,7 +15,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Person Name"
-        android:textColor="@color/blue"
+        android:textColor="@color/see_all_link"
         android:textSize="16sp"
         android:textStyle="bold"
         android:layout_weight="1"/>
@@ -25,7 +25,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Date"
-        android:textColor="@color/black"
+        android:textColor="@color/text_primary"
         android:textSize="16sp"
         android:layout_weight="1"/>
 
@@ -35,7 +35,7 @@
         android:layout_height="wrap_content"
         android:text="₹100.00"
         android:gravity="center"
-        android:textColor="@color/black"
+        android:textColor="@color/text_primary"
         android:textSize="16sp"
         android:layout_weight="1"/>
 

@@ -22,6 +22,6 @@
         android:layout_gravity="start"
         app:dividerInsetStart="10dp"
         app:dividerInsetEnd="10dp"
-        android:background="#fff"
-        app:itemTextColor="#000"/>
+        android:background="?attr/colorSurface"
+        app:itemTextColor="@color/text_primary"/>
 </androidx.drawerlayout.widget.DrawerLayout>
