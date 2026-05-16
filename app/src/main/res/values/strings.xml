@@ -53,4 +53,23 @@
     <string name="transactions">Transactions</string>
     <string name="entry">Entry</string>
     <string name="all">All</string>
+    <string name="new_transaction">New Transaction</string>
+    <string name="clear">Clear</string>
+    <string name="recent">Recent</string>
+    <string name="contacts">Contacts</string>
+    <string name="scan">Scan</string>
+    <string name="required_details">Required Details</string>
+    <string name="amount">Amount</string>
+    <string name="receiver_name_hint">Person / Receiver Name</string>
+    <string name="transaction_type">Transaction Type</string>
+    <string name="payment_method">Payment Method</string>
+    <string name="upi_details">UPI Details</string>
+    <string name="utr_number">UTR Number</string>
+    <string name="transaction_id_hint">Transaction ID</string>
+    <string name="additional_information">Additional Information</string>
+    <string name="description">Description</string>
+    <string name="comments">Comments</string>
+    <string name="category">Category</string>
+    <string name="confirm_transaction">I confirm this transaction details</string>
+    <string name="save_transaction">Save Transaction</string>
 </resources>

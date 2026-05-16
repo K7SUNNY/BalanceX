@@ -47,6 +47,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import android.widget.Toast;
+import com.google.android.material.card.MaterialCardView;
 import com.googlecode.tesseract.android.TessBaseAPI;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -79,7 +80,7 @@ public class EntryActivity extends AppCompatActivity {
     // Declare dialog variable at the top of EntryActivity
     private AlertDialog loadingDialog;
     private boolean isReceiptAttached = false;  // Default: No receipt attached
-    private LinearLayout moreDetailsUPI, transactionDetail;
+    private MaterialCardView moreDetailsUPI, transactionDetail;
     private ProgressDialog progressDialog;
 
     @Override
@@ -241,6 +242,8 @@ public class EntryActivity extends AppCompatActivity {
         //Attach receipt button calling
         attachReceiptButton = findViewById(R.id.button_attach_receipt);
         attachReceiptButton.setOnClickListener(v -> showImageSourceDialog());
+
+        findViewById(R.id.backButton).setOnClickListener(v -> onBackPressed());
     }
     private void setNavigationListeners() {
         hideNavText(); // Hide text initially

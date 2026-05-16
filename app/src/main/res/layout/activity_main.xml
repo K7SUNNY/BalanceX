@@ -585,8 +585,10 @@
         android:id="@+id/navbar_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_margin="0dp"
         app:cardCornerRadius="32dp"
         app:cardElevation="12dp"
+        app:cardUseCompatPadding="false"
         app:strokeWidth="0dp">
 
         <LinearLayout
