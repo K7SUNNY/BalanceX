@@ -1,5 +1,6 @@
 [versions]
 agp = "9.2.1"
+kotlin = "2.3.21"
 graphview = "4.2.2"
 gson = "2.14.0"
 itext7Core = "9.6.0"
@@ -31,4 +32,5 @@ tess-two = { module = "com.rmtheis:tess-two", version.ref = "tessTwo" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 
