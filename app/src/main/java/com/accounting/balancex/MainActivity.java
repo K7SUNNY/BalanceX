@@ -101,6 +101,27 @@ public class MainActivity extends AppCompatActivity {
         // Apply animation to the correct tab
         applyNavAnimation(findViewById(R.id.navHome));
 
+        // Quick Actions Listeners
+        findViewById(R.id.action_add_transaction).setOnClickListener(v -> {
+            startActivity(new Intent(this, EntryActivity.class));
+            vibrateDevice();
+        });
+
+        findViewById(R.id.action_history).setOnClickListener(v -> {
+            startActivity(new Intent(this, TransactionActivity.class));
+            vibrateDevice();
+        });
+
+        findViewById(R.id.action_export).setOnClickListener(v -> {
+            showExportBottomSheet();
+            vibrateDevice();
+        });
+
+        findViewById(R.id.action_profile).setOnClickListener(v -> {
+            startActivity(new Intent(this, ProfileActivity.class));
+            vibrateDevice();
+        });
+
         // Navigation Click Listeners
         findViewById(R.id.navHome).setOnClickListener(v -> {
             Toast.makeText(this, "Already on Home Page", Toast.LENGTH_SHORT).show();
