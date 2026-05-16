@@ -40,4 +40,17 @@
     <string name="month">Month</string>
     <string name="year">Year</string>
     <string name="category_breakdown">Category Breakdown</string>
+    <string name="back">Back</string>
+    <string name="transaction_history">Transaction History</string>
+    <string name="sort">Sort</string>
+    <string name="income">Income</string>
+    <string name="expenses">Expenses</string>
+    <string name="loading_transactions">Loading transactions...</string>
+    <string name="no_transactions_found">No transactions found</string>
+    <string name="add_transaction">+ Add Transaction</string>
+    <string name="scroll_to_top">Scroll to top</string>
+    <string name="home">Home</string>
+    <string name="transactions">Transactions</string>
+    <string name="entry">Entry</string>
+    <string name="all">All</string>
 </resources>

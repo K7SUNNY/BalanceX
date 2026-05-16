@@ -18,6 +18,7 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SearchView;
 import android.widget.TextView;
@@ -53,7 +54,7 @@ public class TransactionActivity extends AppCompatActivity {
     private TextView textAll, textCredits, textDebits;
     private SearchView searchBox;
     private LinearLayout navHome, navTransactions, navEntry;
-    private TextView filterByDateTextView;
+    private ImageView filterByDateIcon;
     private SwipeRefreshLayout swipeRefreshLayout;
     private String currentFilterType = "All"; // Default to All
     private FloatingActionButton btnScrollToTop;
@@ -71,7 +72,7 @@ public class TransactionActivity extends AppCompatActivity {
         textCredits = findViewById(R.id.textCredits);
         textDebits = findViewById(R.id.textDebits);
         searchBox = findViewById(R.id.searchBox);
-        filterByDateTextView = findViewById(R.id.filter_by_date);
+        filterByDateIcon = findViewById(R.id.filter_by_date);
 
         navHome = findViewById(R.id.navHome);
         navTransactions = findViewById(R.id.navTransactions);
@@ -127,7 +128,9 @@ public class TransactionActivity extends AppCompatActivity {
             finish();
         });
 
-        filterByDateTextView.setOnClickListener(v -> showFilterPopup(v));
+        filterByDateIcon.setOnClickListener(v -> showFilterPopup(v));
+
+        findViewById(R.id.backButton).setOnClickListener(v -> onBackPressed());
 
         // Pull-to-Refresh Listener
         swipeRefreshLayout.setOnRefreshListener(() -> {
@@ -162,7 +165,7 @@ public class TransactionActivity extends AppCompatActivity {
         });
 
         //Add new transaction button
-        Button btnAddTransaction = findViewById(R.id.btnAddTransaction);
+        btnAddTransaction = findViewById(R.id.btnAddTransaction);
         btnAddTransaction.setOnClickListener(v -> {
             Log.d("DEBUG BUTTON", "Button Clicked!");  // Log to check if button is clickable
             Toast.makeText(TransactionActivity.this, "Redirecting to Entry Page...", Toast.LENGTH_SHORT).show();
@@ -172,6 +175,7 @@ public class TransactionActivity extends AppCompatActivity {
     }
     @Override
     public void onBackPressed() {
+        super.onBackPressed();
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
         vibrateDevice(); // Optional if you want feedback on back press
