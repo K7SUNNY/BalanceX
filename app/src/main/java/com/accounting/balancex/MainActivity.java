@@ -276,8 +276,13 @@ public class MainActivity extends AppCompatActivity {
         // Load and set profile image
         String imageUriString = sharedPreferences.getString("profileImageUri", "");
         if (!imageUriString.isEmpty()) {
-            Uri imageUri = Uri.parse(imageUriString);
-            profileImage.setImageURI(imageUri);
+            try {
+                Uri imageUri = Uri.parse(imageUriString);
+                profileImage.setImageURI(imageUri);
+            } catch (SecurityException e) {
+                Log.e("ProfileImage", "Permission denied for URI: " + imageUriString, e);
+                profileImage.setImageResource(R.drawable.account_svgrepo_com); // Fallback to default
+            }
         } else {
             Log.e("ProfileImage", "Profile image URI is empty.");
         }
@@ -333,16 +338,16 @@ public class MainActivity extends AppCompatActivity {
     }
     private void updateTimelineSelection(TextView selected, TextView... others) {
         selected.setBackgroundResource(R.drawable.selected_title);
-        selected.setTextColor(Color.BLACK);
+        selected.setTextColor(ContextCompat.getColor(this, R.color.selection_tab_selected_text));
 
         for (TextView other : others) {
             other.setBackgroundColor(Color.TRANSPARENT);
-            other.setTextColor(Color.BLACK);
+            other.setTextColor(ContextCompat.getColor(this, R.color.selection_tab_unselected_text));
         }
     }
     private void updateGraphTypeSelection(ImageView selected, ImageView other) {
         selected.setBackgroundResource(R.drawable.selected_title);
-        other.setBackgroundColor(Color.TRANSPARENT);
+        other.setBackgroundResource(android.R.color.transparent);
     }
 
 

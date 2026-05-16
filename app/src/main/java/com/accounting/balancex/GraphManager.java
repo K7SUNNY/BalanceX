@@ -201,6 +201,8 @@ public class GraphManager {
         BarData barData = new BarData(creditSet, debitSet);
         barData.setBarWidth(barWidth); // Set width
         barChart.setData(barData);
+        barChart.setBackgroundColor(Color.TRANSPARENT);
+        barChart.setDrawGridBackground(false);
 
         // X-Axis Customization
         XAxis xAxis = barChart.getXAxis();
@@ -266,6 +268,8 @@ public class GraphManager {
         // Apply dataset to LineData
         LineData lineData = new LineData(creditSet, debitSet);
         lineChart.setData(lineData);
+        lineChart.setBackgroundColor(Color.TRANSPARENT);
+        lineChart.setDrawGridBackground(false);
 
         // X-Axis Customization (Add Labels like Bar Chart)
         XAxis xAxis = lineChart.getXAxis();

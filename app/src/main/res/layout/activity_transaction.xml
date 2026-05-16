@@ -292,7 +292,8 @@
                             android:layout_marginRight="10dp"
                             android:src="@drawable/up_arrow_svgrepo_com"
                             android:visibility="gone"
-                            app:backgroundTint="@color/white" /> <!-- Initially hidden -->
+                            app:backgroundTint="@color/card_bg"
+                            app:tint="@color/text_primary" /> <!-- Initially hidden -->
                     </FrameLayout>
 
                 </LinearLayout>

@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.ParseException;
@@ -55,9 +56,9 @@ public class RecentTransactionsAdapter extends RecyclerView.Adapter<RecentTransa
 
         // Change text color based on transaction type
         if (transaction.getType().equalsIgnoreCase("Credit")) {
-            holder.textViewType.setTextColor(Color.parseColor("#008000")); // Green for Credit
+            holder.textViewType.setTextColor(ContextCompat.getColor(context, R.color.green)); // Green for Credit
         } else if (transaction.getType().equalsIgnoreCase("Debit")) {
-            holder.textViewType.setTextColor(Color.parseColor("#ff0000")); // Red for Debit
+            holder.textViewType.setTextColor(ContextCompat.getColor(context, R.color.red)); // Red for Debit
         }
     }
 

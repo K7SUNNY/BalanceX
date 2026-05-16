@@ -68,8 +68,13 @@ public class ProfileActivity extends AppCompatActivity {
         // Load profile image URI
         String imageUriString = sharedPreferences.getString("profileImageUri", "");
         if (!imageUriString.isEmpty()) {
-            Uri imageUri = Uri.parse(imageUriString);
-            profileImage.setImageURI(imageUri);
+            try {
+                Uri imageUri = Uri.parse(imageUriString);
+                profileImage.setImageURI(imageUri);
+            } catch (SecurityException e) {
+                e.printStackTrace();
+                profileImage.setImageResource(R.drawable.account_svgrepo_com);
+            }
         }
     }
 

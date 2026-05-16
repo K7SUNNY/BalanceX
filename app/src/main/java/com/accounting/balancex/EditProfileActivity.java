@@ -12,6 +12,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 public class EditProfileActivity extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 1;
     private EditText userNameEdit, bioEdit, companyNameEdit, emailEdit, phoneEdit, addressEdit;
@@ -100,8 +106,30 @@ public class EditProfileActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
-            imageUri = data.getData();
-            profileImage.setImageURI(imageUri);
+            Uri selectedImageUri = data.getData();
+            if (selectedImageUri != null) {
+                imageUri = saveImageToInternalStorage(selectedImageUri);
+                profileImage.setImageURI(imageUri);
+            }
+        }
+    }
+
+    private Uri saveImageToInternalStorage(Uri uri) {
+        try (InputStream inputStream = getContentResolver().openInputStream(uri)) {
+            if (inputStream == null) return uri;
+            File file = new File(getFilesDir(), "profile_image.jpg");
+            try (OutputStream outputStream = new FileOutputStream(file)) {
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = inputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, length);
+                }
+                outputStream.flush();
+            }
+            return Uri.fromFile(file);
+        } catch (IOException e) {
+            Log.e("EditProfileActivity", "Error saving image to internal storage", e);
+            return uri; // Fallback to original URI
         }
     }
 }

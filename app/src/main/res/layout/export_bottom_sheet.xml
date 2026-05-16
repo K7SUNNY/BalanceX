@@ -54,6 +54,7 @@
             android:text="Last Month"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:background="@drawable/rounded_corner_container_fliter_section"
+            android:textColor="@color/text_primary"
             android:padding="10dp"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"/>
@@ -86,6 +87,7 @@
             android:text="Last Year"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:background="@drawable/rounded_corner_container_fliter_section"
+            android:textColor="@color/text_primary"
             android:padding="10dp"
             android:layout_marginEnd="8dp"/>
 
@@ -97,6 +99,7 @@
             android:text="Financial Year (Apr-Mar)"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:background="@drawable/rounded_corner_container_fliter_section"
+            android:textColor="@color/text_primary"
             android:padding="10dp"
             android:layout_marginStart="8dp"/>
     </LinearLayout>

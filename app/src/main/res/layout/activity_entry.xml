@@ -75,7 +75,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:background="@drawable/rounded_corner_container_save"
-                                android:backgroundTint="#00a1ff"
+                                android:backgroundTint="@color/colorAccent"
                                 android:gravity="center"
                                 android:padding="8dp"
                                 android:text="Show most used"
@@ -94,7 +94,7 @@
                                 android:background="@android:color/transparent"
                                 android:gravity="center"
                                 android:text="clear all"
-                                android:textColor="#00a1ff"
+                                android:textColor="@color/colorAccent"
                                 android:textSize="15dp"
                                 android:textStyle="bold" />
                         </LinearLayout>
@@ -343,7 +343,7 @@
                             android:id="@+id/confirmCheckBox"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:buttonTint="@color/black"
+                            android:buttonTint="@color/text_primary"
                             android:gravity="center" />
 
                         <TextView

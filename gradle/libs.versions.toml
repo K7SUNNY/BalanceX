@@ -1,21 +1,33 @@
 [versions]
 agp = "9.2.1"
+graphview = "4.2.2"
+gson = "2.14.0"
+itext7Core = "9.6.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
+lottie = "6.7.1"
 material = "1.12.0"
 activity = "1.10.1"
 constraintlayout = "2.2.1"
+mpandroidchart = "v3.1.0"
+tessTwo = "9.1.0"
 
 [libraries]
+graphview = { module = "com.jjoe64:graphview", version.ref = "graphview" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+itext7-core = { module = "com.itextpdf:itext7-core", version.ref = "itext7Core" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+mpandroidchart = { module = "com.github.PhilJay:MPAndroidChart", version.ref = "mpandroidchart" }
+tess-two = { module = "com.rmtheis:tess-two", version.ref = "tessTwo" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

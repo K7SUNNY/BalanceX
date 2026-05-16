@@ -32,6 +32,9 @@
     <color name="text_hint">#A6A6A6</color>
     <color name="input_bg">#F0EFEE</color>
     <color name="selection_bg">#F0F0F0</color>
+    <color name="selection_tab_selected_bg">#FFFFFF</color>
+    <color name="selection_tab_selected_text">#1E90FF</color>
+    <color name="selection_tab_unselected_text">#000000</color>
     <color name="filter_stroke">#A9A9A9</color>
     <color name="chart_credit">#1E90FF</color>
     <color name="chart_debit">#3700B3</color>
@@ -41,8 +44,8 @@
     <!-- Legacy / To be replaced -->
     <color name="blue">#1E90FF</color>
     <color name="lime">#00FF00</color>
-    <color name="green">#008000</color>
-    <color name="red">#FF0000</color>
+    <color name="green">#2E7D32</color>
+    <color name="red">#C62828</color>
     <color name="light_gray">#F0EFEE</color>
     <color name="grey">#A9A9A9</color>
 </resources>

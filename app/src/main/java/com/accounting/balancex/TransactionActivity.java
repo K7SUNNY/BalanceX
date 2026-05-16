@@ -25,6 +25,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -349,7 +350,9 @@ public class TransactionActivity extends AppCompatActivity {
         textView.setPadding(isSelected ? 10 : 5, 5, isSelected ? 10 : 5, 5); // Adjust padding instead of text size
 
         // Keep background size fixed while changing color
-        textView.setTextColor(isSelected ? Color.parseColor("#1e90ff") : Color.BLACK);
+        int selectedColor = ContextCompat.getColor(this, R.color.selection_tab_selected_text);
+        int unselectedColor = ContextCompat.getColor(this, R.color.selection_tab_unselected_text);
+        textView.setTextColor(isSelected ? selectedColor : unselectedColor);
         textView.setBackgroundResource(isSelected ? R.drawable.selected_title : android.R.color.transparent);
     }
     private void sortTransactions(boolean isOldestToNewest) {
