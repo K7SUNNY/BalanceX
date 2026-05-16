@@ -6,14 +6,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    android:background="@color/app_background">
+    android:background="@color/app_background"
+    android:orientation="vertical">
 
+    <!--        Header section for balance, Net credit and Debit-->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-        <!--        Header section for balance, Net credit and Debit-->
-        <LinearLayout
             android:id="@+id/header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -38,6 +35,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="0"
+                    android:contentDescription="@string/menu_desc"
                     app:srcCompat="@drawable/menu_alt_1_svgrepo_com" />
 
                 <TextView
@@ -46,7 +44,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="10"
                     android:gravity="center"
-                    android:text="Dashboard"
+                    android:text="@string/dashboard"
                     android:textColor="@android:color/white"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -56,6 +54,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="0"
+                    android:contentDescription="@string/notification_desc"
                     app:srcCompat="@drawable/notification_bell_svgrepo_com" />
             </LinearLayout>
             <!--            total balance view-->
@@ -70,7 +69,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="₹ 0.00"
+                    android:text="@string/default_amount"
                     android:textColor="@android:color/white"
                     android:textSize="26sp"
                     android:textStyle="bold" />
@@ -80,9 +79,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="Your Net Balance"
+                    android:text="@string/your_net_balance"
                     android:textColor="@android:color/white"
-                    android:textSize="10sp"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
             <!--        net credit and net debit section-->
@@ -93,9 +92,9 @@
                 android:orientation="horizontal">
                 <!--            net credit section-->
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="10"
                     android:background="@drawable/rounded_corner_container_for_search_box"
                     android:gravity="start"
                     android:orientation="horizontal"
@@ -108,12 +107,12 @@
                         android:layout_gravity="center"
                         android:background="@drawable/rounded_corner_arrow_container"
                         android:padding="5dp"
+                        android:contentDescription="@string/credit_arrow_desc"
                         app:srcCompat="@drawable/arrow_down_left_svgrepo_com" />
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:gravity="end"
                         android:orientation="vertical">
 
@@ -121,9 +120,8 @@
                             android:id="@+id/textViewNetCredit"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:gravity="center"
-                            android:text="Net Credit"
+                            android:text="@string/net_credit"
                             android:textColor="@android:color/white"
                             android:textSize="16sp"
                             android:textStyle="bold" />
@@ -132,9 +130,8 @@
                             android:id="@+id/textNetCredit"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:gravity="center"
-                            android:text="₹ 0.00"
+                            android:text="@string/default_amount"
                             android:textColor="@android:color/white"
                             android:textSize="18sp"
                             android:textStyle="bold" />
@@ -142,14 +139,14 @@
                 </LinearLayout>
 
                 <Space
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1" />
                 <!--            net debit section-->
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="10"
                     android:background="@drawable/rounded_corner_container_for_search_box"
                     android:gravity="end"
                     android:orientation="horizontal"
@@ -162,12 +159,12 @@
                         android:layout_gravity="center"
                         android:background="@drawable/rounded_corner_arrow_container"
                         android:padding="5dp"
+                        android:contentDescription="@string/debit_arrow_desc"
                         app:srcCompat="@drawable/arrow_up_right_lg_svgrepo_com" />
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:gravity="end"
                         android:orientation="vertical">
 
@@ -175,9 +172,8 @@
                             android:id="@+id/textViewNetDebit"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:gravity="center"
-                            android:text="Net Debit"
+                            android:text="@string/net_debit"
                             android:textColor="@android:color/white"
                             android:textSize="16sp"
                             android:textStyle="bold" />
@@ -186,9 +182,8 @@
                             android:id="@+id/textNetDebit"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:gravity="center"
-                            android:text="₹ 0.00"
+                            android:text="@string/default_amount"
                             android:textColor="@android:color/white"
                             android:textSize="18sp"
                             android:textStyle="bold" />
@@ -196,22 +191,17 @@
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
-        <LinearLayout
+        <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:scrollbars="none">
 
-            <ScrollView
+            <LinearLayout
+                android:id="@+id/graphSection"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scrollbars="none">
-
-                <LinearLayout
-                    android:id="@+id/graphSection"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
                     <!--        Graph section-->
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -227,7 +217,8 @@
                             android:layout_height="wrap_content"
                             android:gravity="end"
                             android:orientation="horizontal"
-                            android:paddingRight="10dp">
+                            android:paddingEnd="10dp"
+                            android:paddingStart="0dp">
 
                             <LinearLayout
                                 android:layout_width="wrap_content"
@@ -242,6 +233,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
+                                    android:contentDescription="@string/color_indicator_desc"
                                     app:srcCompat="@drawable/color_indicator_blue" />
 
                                 <Space
@@ -256,9 +248,9 @@
                                     android:layout_gravity="center"
                                     android:layout_weight="1"
                                     android:gravity="center"
-                                    android:text="Credit"
+                                    android:text="@string/credit"
                                     android:textColor="@color/text_primary"
-                                    android:textSize="14dp"
+                                    android:textSize="14sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
 
@@ -275,6 +267,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
+                                    android:contentDescription="@string/color_indicator_desc"
                                     app:srcCompat="@drawable/color_indicator_purple" />
 
                                 <Space
@@ -289,9 +282,9 @@
                                     android:layout_gravity="center"
                                     android:layout_weight="1"
                                     android:gravity="center"
-                                    android:text="Debit"
+                                    android:text="@string/debit"
                                     android:textColor="@color/text_primary"
-                                    android:textSize="14dp"
+                                    android:textSize="14sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
                         </LinearLayout>
@@ -335,7 +328,7 @@
                                 android:clickable="true"
                                 android:focusable="true"
                                 android:gravity="center"
-                                android:text="M"
+                                android:text="@string/month_abbr"
                                 android:textColor="@color/text_primary"
                                 android:textStyle="bold" />
 
@@ -348,7 +341,7 @@
                                 android:clickable="true"
                                 android:focusable="true"
                                 android:gravity="center"
-                                android:text="D"
+                                android:text="@string/day_abbr"
                                 android:textColor="@color/text_primary"
                                 android:textStyle="bold" />
 
@@ -361,7 +354,7 @@
                                 android:clickable="true"
                                 android:focusable="true"
                                 android:gravity="center"
-                                android:text="W"
+                                android:text="@string/week_abbr"
                                 android:textColor="@color/text_primary"
                                 android:textStyle="bold" />
 
@@ -374,7 +367,7 @@
                                 android:clickable="true"
                                 android:focusable="true"
                                 android:gravity="center"
-                                android:text="Y"
+                                android:text="@string/year_abbr"
                                 android:textColor="@color/text_primary"
                                 android:textStyle="bold" />
                             <!--                        a barrier for timeline selection and graph view selection-->
@@ -382,7 +375,7 @@
                                 android:layout_width="10dp"
                                 android:layout_height="match_parent"
                                 android:gravity="center"
-                                android:text="|" />
+                                android:text="@string/separator" />
                             <!--         section of selection of line chart or bar chat-->
                             <!--         add this background to which one is selected: @drawable/rounded_corner_selected_timeline.xml -->
 
@@ -395,6 +388,7 @@
                                 android:background="@drawable/rounded_corner_unselected"
                                 android:clickable="true"
                                 android:focusable="true"
+                                android:contentDescription="@string/line_chart_desc"
                                 app:srcCompat="@drawable/line_chart_svgrepo_com" />
                             <!--            bar chart imageview section -->
                             <ImageView
@@ -405,6 +399,7 @@
                                 android:background="@drawable/rounded_corner_unselected"
                                 android:clickable="true"
                                 android:focusable="true"
+                                android:contentDescription="@string/bar_chart_desc"
                                 app:srcCompat="@drawable/bar_chart_12_svgrepo_com" />
                         </LinearLayout>
                     </LinearLayout>
@@ -425,15 +420,16 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:padding="10dp">
+                            android:padding="10dp"
+                            android:baselineAligned="false">
 
                             <TextView
                                 android:id="@+id/textViewrecenttransactions"
-                                android:layout_width="wrap_content"
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:gravity="start"
-                                android:text="Recent Transactions"
+                                android:text="@string/recent_transactions"
                                 android:textColor="@color/text_primary"
                                 android:textSize="20sp"
                                 android:textStyle="bold" />
@@ -445,9 +441,9 @@
                                 android:layout_weight="0"
                                 android:background="@android:color/transparent"
                                 android:gravity="center"
-                                android:text="see all"
+                                android:text="@string/see_all"
                                 android:textColor="@color/see_all_link"
-                                android:textSize="15dp"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
 
@@ -488,7 +484,6 @@
                     </LinearLayout>
                 </LinearLayout>
             </ScrollView>
-        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/navbar"
@@ -500,6 +495,7 @@
             android:focusable="true"
             android:orientation="horizontal"
             android:padding="5dp"
+            android:baselineAligned="false"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
@@ -510,18 +506,18 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:orientation="vertical">
-
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true">
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_home" />
-
+                    android:contentDescription="@string/nav_home"
+                    app:srcCompat="@drawable/ic_home" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="HOME"
+                    android:text="@string/nav_home"
                     android:textColor="@android:color/white" />
             </LinearLayout>
 
@@ -531,17 +527,18 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:orientation="vertical">
-
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true">
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_transaction" />
-
+                    android:contentDescription="@string/nav_history"
+                    app:srcCompat="@drawable/ic_transaction" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="HISTORY"
+                    android:text="@string/nav_history"
                     android:textColor="@android:color/white" />
             </LinearLayout>
 
@@ -551,19 +548,19 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:orientation="vertical">
-
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true">
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_entry" />
-
+                    android:contentDescription="@string/nav_entry"
+                    app:srcCompat="@drawable/ic_entry" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="ENTRY"
+                    android:text="@string/nav_entry"
                     android:textColor="@android:color/white" />
             </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
 </LinearLayout>
