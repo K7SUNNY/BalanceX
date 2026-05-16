@@ -2,29 +2,24 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
-def getGitCommitCount = { ->
+def getGitCommitCount() {
     try {
-        def stdout = new ByteArrayOutputStream()
-        exec {
-            commandLine 'git', 'rev-list', '--count', 'HEAD'
-            standardOutput = stdout
+        def process = "git rev-list --count HEAD".execute(null, project.rootDir)
+        process.waitFor()
+        if (process.exitValue() == 0) {
+            return process.inputStream.text.trim().toInteger()
         }
-        return stdout.toString().trim().toInteger()
-    } catch (Exception ignored) {
-        return 1
-    }
+    } catch (Exception ignored) {}
+    return 1
 }
 
-def getGitVersionName = { baseVersion ->
+def getGitVersionName(baseVersion) {
     def commitCount = getGitCommitCount()
     def dirty = ""
     try {
-        def stdout = new ByteArrayOutputStream()
-        exec {
-            commandLine 'git', 'status', '--porcelain'
-            standardOutput = stdout
-        }
-        if (stdout.toString().trim().length() > 0) {
+        def process = "git status --porcelain".execute(null, project.rootDir)
+        process.waitFor()
+        if (process.exitValue() == 0 && process.inputStream.text.trim().length() > 0) {
             dirty = "-dirty"
         }
     } catch (Exception ignored) {}
@@ -33,7 +28,7 @@ def getGitVersionName = { baseVersion ->
 
 android {
     namespace 'com.accounting.balancex'
-    compileSdk 35
+    compileSdk 37
 
     defaultConfig {
         applicationId "com.accounting.balancex"
