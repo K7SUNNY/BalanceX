@@ -36,7 +36,7 @@ The fundamental principle of BalanceX is "Your Money, Your Control." In contrast
 
 1.  **Clone the Repository**:
     ```bash
-    git clone https://github.com/[your-username]/BalanceX.git
+    git clone https://github.com/K7SUNNY/BalanceX.git
     ```
 2.  **Import Project**: Open Android Studio and import the directory as a Gradle-based project.
 3.  **Execution**: Build and deploy the application to an emulator or a physical device running Android 7.0 (API 24) or higher.
