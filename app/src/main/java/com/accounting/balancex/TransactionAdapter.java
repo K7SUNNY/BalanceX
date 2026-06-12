@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.FrameLayout;
+import com.google.android.material.card.MaterialCardView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -47,22 +48,7 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Transaction transaction = transactionList.get(position);
-        // Handle Touch & Hover Effect
-        holder.itemView.setOnTouchListener((v, event) -> {
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN: // When user touches the card
-                    holder.hoverMessage.setVisibility(View.VISIBLE);
-                    holder.transactionCard.setBackground(ContextCompat.getDrawable(v.getContext(), R.drawable.rounded_rectangular_gray)); // Grey background
-                    break;
 
-                case MotionEvent.ACTION_UP:   // When user lifts their finger
-                case MotionEvent.ACTION_CANCEL: // If the touch is canceled
-                    holder.hoverMessage.setVisibility(View.GONE);
-                    holder.transactionCard.setBackground(ContextCompat.getDrawable(v.getContext(), R.drawable.rounded_rectangle));
-                    break;
-            }
-            return true;
-        });
         holder.transactionCard.setOnTouchListener(new View.OnTouchListener() {
             private Handler handler = new Handler();
             private boolean isLongPress = false;
@@ -71,27 +57,24 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        isLongPress = false; // Reset flag
+                        isLongPress = false;
                         holder.hoverMessage.setVisibility(View.VISIBLE);
-                        holder.transactionCard.setBackground(ContextCompat.getDrawable(v.getContext(), R.drawable.rounded_rectangular_gray));
 
                         // Start long press detection
                         handler.postDelayed(() -> {
-                            isLongPress = true; // Mark long press as true
-                            showTransactionDetails(transaction, v.getContext()); // Show popup after 1500ms
+                            isLongPress = true;
+                            showTransactionDetails(transaction, v.getContext());
                         }, 500);
                         break;
 
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         holder.hoverMessage.setVisibility(View.GONE);
-                        holder.transactionCard.setBackground(ContextCompat.getDrawable(v.getContext(), R.drawable.rounded_rectangle));
-
                         // Cancel long press if user lifts the finger early
                         handler.removeCallbacksAndMessages(null);
                         break;
                 }
-                return true;
+                return false; // Return false to allow MaterialCardView to handle ripples
             }
         });
         // Debugging Log to check what is being retrieved
@@ -155,7 +138,7 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
         TextView textReceiver, textAmount, textDate;
         ImageView iconChat;
         TextView hoverMessage;
-        FrameLayout transactionCard;
+        MaterialCardView transactionCard;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);

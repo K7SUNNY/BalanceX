@@ -20,7 +20,6 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.SearchView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -42,7 +41,12 @@ import java.util.Collections;
 import java.util.List;
 import android.widget.Toast;
 
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.search.SearchBar;
+import com.google.android.material.search.SearchView;
 
 //History page
 public class TransactionActivity extends AppCompatActivity {
@@ -51,8 +55,10 @@ public class TransactionActivity extends AppCompatActivity {
     private TransactionAdapter adapter;
     private List<Transaction> transactionList;
     private List<Transaction> filteredList;
-    private TextView textAll, textCredits, textDebits;
-    private SearchView searchBox;
+    private ChipGroup filterChipGroup;
+    private SearchBar searchBar;
+    private com.google.android.material.search.SearchView searchView;
+    private MaterialToolbar toolbar;
     private LinearLayout navHome, navTransactions, navEntry;
     private ImageView filterByDateIcon;
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -68,11 +74,18 @@ public class TransactionActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        textAll = findViewById(R.id.textAll);
-        textCredits = findViewById(R.id.textCredits);
-        textDebits = findViewById(R.id.textDebits);
-        searchBox = findViewById(R.id.searchBox);
+        toolbar = findViewById(R.id.toolbar);
+        searchBar = findViewById(R.id.search_bar);
+        searchView = findViewById(R.id.search_view);
+        filterChipGroup = findViewById(R.id.filter_chip_group);
         filterByDateIcon = findViewById(R.id.filter_by_date);
+
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
+
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
         navHome = findViewById(R.id.navHome);
         navTransactions = findViewById(R.id.navTransactions);
@@ -88,21 +101,31 @@ public class TransactionActivity extends AppCompatActivity {
         loadTransactionsFromFile();
         filterTransactions("All");
 
-        textAll.setOnClickListener(v -> filterTransactions("All"));
-        textCredits.setOnClickListener(v -> filterTransactions("Credit"));
-        textDebits.setOnClickListener(v -> filterTransactions("Debit"));
-
-        searchBox.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                searchTransaction(query);
-                return true;
+        filterChipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) return;
+            int checkedId = checkedIds.get(0);
+            if (checkedId == R.id.chip_all) {
+                filterTransactions("All");
+            } else if (checkedId == R.id.chip_income) {
+                filterTransactions("Credit");
+            } else if (checkedId == R.id.chip_expenses) {
+                filterTransactions("Debit");
             }
+        });
 
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                searchTransaction(newText);
-                return true;
+        searchView.getEditText().setOnEditorActionListener((v, actionId, event) -> {
+            String query = searchView.getText().toString();
+            searchBar.setText(query);
+            searchTransaction(query);
+            searchView.hide();
+            return false;
+        });
+
+        searchView.addTransitionListener((searchView1, previousState, newState) -> {
+            if (newState == com.google.android.material.search.SearchView.TransitionState.HIDDEN) {
+                String query = searchView.getText().toString();
+                searchBar.setText(query);
+                searchTransaction(query);
             }
         });
 
@@ -129,8 +152,6 @@ public class TransactionActivity extends AppCompatActivity {
         });
 
         filterByDateIcon.setOnClickListener(v -> showFilterPopup(v));
-
-        findViewById(R.id.backButton).setOnClickListener(v -> onBackPressed());
 
         // Pull-to-Refresh Listener
         swipeRefreshLayout.setOnRefreshListener(() -> {
@@ -317,47 +338,24 @@ public class TransactionActivity extends AppCompatActivity {
             swipeRefreshLayout.bringToFront();
         }
 
+        // Animate list items (keeping the subtle animation)
         recyclerView.post(() -> {
             for (int i = 0; i < recyclerView.getChildCount(); i++) {
                 View child = recyclerView.getChildAt(i);
                 if (child != null) {
-                    child.setTranslationY(200f);
+                    child.setTranslationY(100f);
                     child.setAlpha(0f);
 
                     child.animate()
                             .translationY(0f)
                             .alpha(1f)
-                            .setStartDelay(i * 150L)
-                            .setDuration(500)
+                            .setStartDelay(i * 50L)
+                            .setDuration(400)
                             .setInterpolator(new DecelerateInterpolator())
                             .start();
                 }
             }
         });
-        // Animate category selection with a subtle scale effect
-        animateSelection(textAll, type.equals("All"));
-        animateSelection(textCredits, type.equals("Credit"));
-        animateSelection(textDebits, type.equals("Debit"));
-    }
-    // Helper method to apply smooth text size and scaling animation
-    private void animateSelection(TextView textView, boolean isSelected) {
-        float scaleFactor = isSelected ? 1.1f : 1f;
-        long duration = isSelected ? 300 : 250;
-
-        textView.animate()
-                .scaleX(scaleFactor)
-                .scaleY(scaleFactor)
-                .setDuration(duration)
-                .setInterpolator(new OvershootInterpolator()) // Smooth effect
-                .start();
-
-        textView.setPadding(isSelected ? 10 : 5, 5, isSelected ? 10 : 5, 5); // Adjust padding instead of text size
-
-        // Keep background size fixed while changing color
-        int selectedColor = ContextCompat.getColor(this, R.color.selection_tab_selected_text);
-        int unselectedColor = ContextCompat.getColor(this, R.color.selection_tab_unselected_text);
-        textView.setTextColor(isSelected ? selectedColor : unselectedColor);
-        textView.setBackgroundResource(isSelected ? R.drawable.selected_title : android.R.color.transparent);
     }
     private void sortTransactions(boolean isOldestToNewest) {
         if (!filteredList.isEmpty() && filteredList.get(0).getEntryId() != 0) { // Check if entryId exists
