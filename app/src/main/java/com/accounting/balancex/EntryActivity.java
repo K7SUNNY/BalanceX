@@ -567,7 +567,7 @@ public class EntryActivity extends AppCompatActivity {
 
         // Set buttons initially (without actions)
         warningBuilder.setNegativeButton("Go Back", (dialog, which) -> dialog.dismiss());
-        warningBuilder.setPositiveButton("Go (5)", null); // Set initial text but no action yet
+        warningBuilder.setPositiveButton("Go (3)", null); // Set initial text but no action yet
 
         warningDialog = warningBuilder.create();
         warningDialog.show();
@@ -578,7 +578,7 @@ public class EntryActivity extends AppCompatActivity {
 
         // Start a countdown timer for 5 seconds
         AlertDialog finalWarningDialog = warningDialog;
-        new CountDownTimer(5000, 1000) {
+        new CountDownTimer(3000, 1000) {
             public void onTick(long millisUntilFinished) {
                 goButton.setText("Go (" + (millisUntilFinished / 1000) + ")");
             }
