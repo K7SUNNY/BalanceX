@@ -13,45 +13,45 @@ flowchart TD
     classDef user fill:#ffebee,stroke:#d32f2f,stroke-width:3px,color:#000
 
     %% User
-    User((👤 User)):::user
+    User(("👤 User")):::user
     
-    subgraph App [BalanceX Android Application]
+    subgraph App
         direction TB
         
         %% Authentication
-        Auth{Biometric<br/>Auth}:::logic
+        Auth{"Biometric Auth"}:::logic
 
         %% UI Layer
-        subgraph UI_Layer [UI Layer (Material 3 XML & Jetpack Compose)]
+        subgraph UI_Layer
             direction LR
-            Dashboard[📊 Dashboard / Home]:::ui
-            ManualEntry[✍️ Manual Entry Form]:::ui
-            SmartEntry[🤖 Smart Add (Text/Voice)]:::ui
-            ReceiptScan[📷 Scan Receipt]:::ui
-            Goals[🏆 Goals & Gamification]:::ui
+            Dashboard["📊 Dashboard / Home"]:::ui
+            ManualEntry["✍️ Manual Entry Form"]:::ui
+            SmartEntry["🤖 Smart Add (Text/Voice)"]:::ui
+            ReceiptScan["📷 Scan Receipt"]:::ui
+            Goals["🏆 Goals and Gamification"]:::ui
         end
 
         %% AI Intelligence Layer
-        subgraph AI_Layer [On-Device Intelligence Layer]
+        subgraph AI_Layer
             direction TB
-            OCR[ML Kit Text Recognition]:::ai
-            PromptEngine[Prompt Builder & JSON Parser]:::ai
-            LLM[[🧠 Local LLM Engine<br/>e.g., GGUF Qwen 0.5B]]:::ai
+            OCR["ML Kit Text Recognition"]:::ai
+            PromptEngine["Prompt Builder and JSON Parser"]:::ai
+            LLM[["🧠 Local LLM Engine"]]:::ai
         end
         
         %% Business Logic Layer
-        subgraph Logic_Layer [Business Logic (Java MVVM)]
+        subgraph Logic_Layer
             direction TB
-            VM[ViewModels]:::logic
-            Repo[Data Repository]:::logic
-            Statement[PDF Statement Generator]:::logic
+            VM["ViewModels"]:::logic
+            Repo["Data Repository"]:::logic
+            Statement["PDF Statement Generator"]:::logic
         end
         
         %% Data Layer
-        subgraph Data_Layer [Local Storage Layer]
+        subgraph Data_Layer
             direction TB
-            SQLC>SQLCipher Encryption]:::data
-            Room[(Room Database<br/>SQLite)]:::data
+            SQLC>"SQLCipher Encryption"]:::data
+            Room[("Room Database")]:::data
         end
     end
 
@@ -72,23 +72,23 @@ flowchart TD
     ManualEntry -- Validated Form Data --> VM
     
     %% Smart AI Flow
-    SmartEntry -- "Natural Language Text" --> PromptEngine
-    PromptEngine -- "Strict System Prompt + Text" --> LLM
-    LLM -- "Raw JSON String" --> PromptEngine
-    PromptEngine -- "Parsed Transaction Object" --> VM
+    SmartEntry -- Natural Language Text --> PromptEngine
+    PromptEngine -- Strict System Prompt --> LLM
+    LLM -- Raw JSON String --> PromptEngine
+    PromptEngine -- Parsed Transaction Object --> VM
     
     %% Receipt OCR Flow
-    ReceiptScan -- "Image" --> OCR
-    OCR -- "Extracted Text" --> PromptEngine
+    ReceiptScan -- Image --> OCR
+    OCR -- Extracted Text --> PromptEngine
     
     %% Logic to Data Flow
     VM <--> Repo
     Repo <--> SQLC
     SQLC <--> Room
     
-    %% Data to UI Flow (Observing Room via LiveData/Flow)
-    Repo -. "Live Data Updates" .-> Dashboard
-    Repo -. "Live Data Updates" .-> Goals
+    %% Data to UI Flow
+    Repo -. Live Data Updates .-> Dashboard
+    Repo -. Live Data Updates .-> Goals
 ```
 
 ## How to Read the Diagram
