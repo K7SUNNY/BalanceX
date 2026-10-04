@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/app_background"
+    android:background="@color/surface_background"
     android:fitsSystemWindows="true"
     android:orientation="vertical"
     tools:context=".EntryActivity">
@@ -45,7 +45,7 @@
             android:background="?attr/selectableItemBackground"
             android:padding="8dp"
             android:text="@string/clear"
-            android:textColor="@color/colorAccent"
+            android:textColor="@color/color_accent"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -69,7 +69,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/card_bg"
+                app:cardBackgroundColor="@color/surface_card"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
@@ -88,13 +88,13 @@
                         android:layout_weight="1"
                         android:text="@string/recent"
                         android:textAllCaps="false"
-                        android:textColor="@color/colorAccent" />
+                        android:textColor="@color/color_accent" />
 
                     <View
                         android:layout_width="1dp"
                         android:layout_height="24dp"
                         android:layout_gravity="center_vertical"
-                        android:background="@color/divider" />
+                        android:background="@color/border_subtle" />
 
                     <Button
                         android:id="@+id/addFromContactButton"
@@ -104,15 +104,15 @@
                         android:layout_weight="1"
                         android:text="@string/contacts"
                         android:textAllCaps="false"
-                        android:textColor="@color/colorAccent"
+                        android:textColor="@color/color_accent"
                         app:icon="@drawable/contact_new_svgrepo_com"
-                        app:iconTint="@color/colorAccent" />
+                        app:iconTint="@color/color_accent" />
 
                     <View
                         android:layout_width="1dp"
                         android:layout_height="24dp"
                         android:layout_gravity="center_vertical"
-                        android:background="@color/divider" />
+                        android:background="@color/border_subtle" />
 
                     <Button
                         android:id="@+id/button_attach_receipt"
@@ -122,9 +122,9 @@
                         android:layout_weight="1"
                         android:text="@string/scan"
                         android:textAllCaps="false"
-                        android:textColor="@color/colorAccent"
+                        android:textColor="@color/color_accent"
                         app:icon="@drawable/camera_svgrepo_com"
-                        app:iconTint="@color/colorAccent" />
+                        app:iconTint="@color/color_accent" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -134,7 +134,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/card_bg"
+                app:cardBackgroundColor="@color/surface_card"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="4dp"
                 app:strokeWidth="0dp">
@@ -178,7 +178,7 @@
                         android:inputType="numberDecimal"
                         android:padding="14dp"
                         android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_hint" />
+                        android:textColorHint="@color/text_tertiary" />
 
                     <EditText
                         android:id="@+id/receiverName"
@@ -190,7 +190,7 @@
                         android:inputType="text"
                         android:padding="14dp"
                         android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_hint" />
+                        android:textColorHint="@color/text_tertiary" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -264,7 +264,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:visibility="gone"
-                app:cardBackgroundColor="@color/card_bg"
+                app:cardBackgroundColor="@color/surface_card"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="4dp"
                 app:strokeWidth="0dp">
@@ -294,7 +294,7 @@
                         android:inputType="number"
                         android:padding="14dp"
                         android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_hint" />
+                        android:textColorHint="@color/text_tertiary" />
 
                     <EditText
                         android:id="@+id/transactionId"
@@ -305,7 +305,7 @@
                         android:inputType="text"
                         android:padding="14dp"
                         android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_hint" />
+                        android:textColorHint="@color/text_tertiary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -315,7 +315,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/card_bg"
+                app:cardBackgroundColor="@color/surface_card"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="4dp"
                 app:strokeWidth="0dp">
@@ -345,7 +345,7 @@
                         android:inputType="text"
                         android:padding="14dp"
                         android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_hint" />
+                        android:textColorHint="@color/text_tertiary" />
 
                     <EditText
                         android:id="@+id/comments"
@@ -357,7 +357,7 @@
                         android:inputType="text"
                         android:padding="14dp"
                         android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_hint" />
+                        android:textColorHint="@color/text_tertiary" />
 
                     <EditText
                         android:id="@+id/inputCategory"
@@ -368,7 +368,7 @@
                         android:inputType="text"
                         android:padding="14dp"
                         android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_hint" />
+                        android:textColorHint="@color/text_tertiary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

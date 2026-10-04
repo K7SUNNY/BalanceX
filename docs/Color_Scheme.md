@@ -1,6 +1,6 @@
-# BalanceX - Color Scheme & Theme Guide
+# BalanceX - Modern Fintech Color Scheme & Design System
 
-This document provides a complete reference for the current Day (Light) and Night (Dark) color palettes, Material 3 theme mappings, and UI component styling in BalanceX.
+This document provides a complete reference for the Material 3-aligned modern fintech design system in BalanceX.
 
 ---
 
@@ -16,86 +16,88 @@ This document provides a complete reference for the current Day (Light) and Nigh
 
 ---
 
-## 2. Master Color Palette Comparison
+## 2. Canonical Color Token Palette
 
-| Token / Resource Name | Day (Light Mode) | Night (Dark Mode) | Purpose / Visual Description |
+| Token / Resource Name | Day Mode (Light) | Night Mode (Dark) | Role / Usage |
 | :--- | :--- | :--- | :--- |
-| **`colorPrimary`** | `#0D47A1` | `#90CAF9` | Primary brand blue; top bars, key callouts |
-| **`colorPrimaryDark`** | `#002171` | `#002171` | Deep midnight navy (legacy status bar) |
-| **`colorAccent`** | `#1E90FF` | `#64B5F6` | Interactive links, focus rings, highlights |
-| **`colorSecondary`** | `#03DAC5` | `#03DAC6` | Teal accent color |
-| **`colorSecondaryVariant`** | `#018786` | `#018786` | Darker secondary teal variant |
-| **`app_background`** | `#F8FCFF` | `#121212` | Main screen and window background |
-| **`card_bg`** | `#FFFFFF` | `#1E1E1E` | Card surfaces, dialog backgrounds, sheets |
-| **`text_primary`** | `#000000` | `#E1E1E1` | Main headings, title text, prominent figures |
-| **`text_secondary`** | `#757575` | `#B0B0B0` | Subtitles, body labels, secondary descriptions |
-| **`text_on_primary`** | `#FFFFFF` | `#000000` | Text/icons displayed over `colorPrimary` |
-| **`text_on_surface`** | `#000000` | `#E1E1E1` | Text displayed over card/dialog surfaces |
-| **`text_hint`** | `#A6A6A6` | `#757575` | Placeholder and inactive input text |
-| **`divider`** | `#BDBDBD` | `#323232` | Line dividers, outline borders (`colorOutline`) |
+| **`color_primary`** | `#1B4B82` | `#A1C9FF` | Primary brand accent; app headers, primary actions |
+| **`color_primary_dark`** | `#0B2545` | `#081A33` | Deep brand shade for status bars / high-contrast elements |
+| **`color_primary_container`** | `#D5E3FF` | `#00315B` | Tonal containers for primary action cards & badges |
+| **`color_on_primary`** | `#FFFFFF` | `#00315B` | High-contrast text/icon color on `color_primary` |
+| **`color_on_primary_container`** | `#001C3B` | `#D5E3FF` | Text/icon color on `color_primary_container` |
+| **`color_accent`** | `#2B6CB0` | `#70B2FF` | Interactive links, active filter pills, buttons |
+| **`color_secondary`** | `#51606F` | `#B9C8DA` | Secondary UI controls and neutral badges |
+| **`surface_background`** | `#F7F9FC` | `#0E1217` | Window & root view background |
+| **`surface_card`** | `#FFFFFF` | `#171D25` | Elevated cards, dialog boxes, bottom sheets |
+| **`surface_input`** | `#EEF2F6` | `#222933` | Text input fills, search fields, unselected pills |
+| **`border_subtle`** | `#DDE3EA` | `#2D3542` | Hairline card borders, list dividers, subtle strokes |
+| **`text_primary`** | `#111827` | `#F1F5F9` | Primary headings, transaction titles, amounts |
+| **`text_secondary`** | `#64748B` | `#94A3B8` | Body labels, dates, secondary descriptions |
+| **`text_tertiary`** | `#94A3B8` | `#64748B` | Input hints, disabled placeholders, timestamps |
 
 ---
 
-## 3. Financial & Transaction Colors
+## 3. Financial Semantics & Data Visualization
 
-| Category | Token | Day Mode | Night Mode | Usage Context |
-| :--- | :--- | :--- | :--- | :--- |
-| **Income / Credit** | `chart_credit` | `#1E90FF` | `#64B5F6` | Chart credit bars & graph fill |
-| | `green` | `#2E7D32` | `#81C784` | Income amount chips & badges |
-| **Expense / Debit** | `chart_debit` | `#3700B3` | `#BB86FC` | Chart debit bars & graph fill |
-| | `red` | `#C62828` | `#E57373` | Expense amount chips & badges |
-| **Chart Elements** | `chart_text` | `#000000` | `#E1E1E1` | Axis labels, graph values |
-| | `chart_grid` | `#E0E0E0` | `#323232` | Gridlines and axis ticks |
-
----
-
-## 4. UI Components, Controls & Gradients
-
-| Component Area | Token Name | Day Mode | Night Mode | Usage |
-| :--- | :--- | :--- | :--- | :--- |
-| **Header Gradient** | `header_gradient_start`<br>`header_gradient_end` | `#00B7EB`<br>`#0D47A1` | `#1F1F1F`<br>`#121212` | Gradient background used on top dashboard headers |
-| **Navbar Gradient** | `navbar_gradient_start`<br>`navbar_gradient_end` | `#2196F3`<br>`#00B7EB` | `#1F1F1F`<br>`#121212` | Bottom / Top navigation bar backgrounds |
-| **Navbar Solid** | `navbar_bg` | `#0D47A1` | `#1F1F1F` | Fallback solid navbar color |
-| **Input Fields** | `input_bg` | `#F0EFEE` | `#2C2C2C` | Background for text inputs and search bars |
-| **Selection Tabs** | `selection_tab_selected_bg`<br>`selection_tab_selected_text`<br>`selection_tab_unselected_text` | `#FFFFFF`<br>`#1E90FF`<br>`#000000` | `#3D3D3D`<br>`#64B5F6`<br>`#E1E1E1` | Segmented controls and filter buttons |
-| **Filters & Timeline** | `filter_stroke`<br>`timeline_bg` | `#A9A9A9`<br>`#E9E9E9` | `#444444`<br>`#2C2C2C` | Chip border strokes and timeline dividers |
-| **Navigation Links** | `see_all_link` | `#1E90FF` | `#64B5F6` | "See All", "View More" interactive text links |
+| Token / Role | Day Mode | Night Mode | Usage Context |
+| :--- | :--- | :--- | :--- |
+| **`finance_income`** | `#137A4B` | `#5CD892` | Positive balances, credit badges, income chart bars |
+| **`finance_income_container`** | `#DCFCE7` | `#0A331D` | Pill background for credit transaction tags |
+| **`finance_expense`** | `#B91C1C` | `#F87171` | Negative balances, debit badges, expense chart bars |
+| **`finance_expense_container`** | `#FEE2E2` | `#3C1010` | Pill background for debit transaction tags |
+| **`chart_grid_line`** | `#E2E8F0` | `#252D3B` | Chart grid lines, axis guidelines |
+| **`chart_axis_label`** | `#64748B` | `#94A3B8` | Chart axis labels and data markers |
+| **`header_gradient_start`** | `#1B4B82` | `#1A2330` | Top toolbar & bottom navigation start gradient |
+| **`header_gradient_end`** | `#0D2D52` | `#111720` | Top toolbar & bottom navigation end gradient |
 
 ---
 
-## 5. Material 3 Theme Attributes Mapping
+## 4. Material 3 Theme Attributes Mapping
 
-Defined in [`themes.xml`](file:///c:/Users/sunny/StudioProjects/BalanceX/app/src/main/res/values/themes.xml) and [`values-night/themes.xml`](file:///c:/Users/sunny/StudioProjects/BalanceX/app/src/main/res/values-night/themes.xml):
+The base application theme maps system attributes directly to canonical tokens:
 
 ```xml
 <style name="Theme.BalanceX" parent="Theme.Material3.DayNight.NoActionBar">
-    <!-- Brand colors -->
-    <item name="colorPrimary">@color/colorPrimary</item>
-    <item name="colorOnPrimary">@color/text_on_primary</item>
-    <item name="colorSecondary">@color/colorSecondary</item>
-    <item name="colorOnSecondary">@color/black (Day) / @color/white (Night)</item>
-
+    <!-- Brand / Primary -->
+    <item name="colorPrimary">@color/color_primary</item>
+    <item name="colorOnPrimary">@color/color_on_primary</item>
+    <item name="colorPrimaryContainer">@color/color_primary_container</item>
+    <item name="colorOnPrimaryContainer">@color/color_on_primary_container</item>
+    
+    <!-- Secondary -->
+    <item name="colorSecondary">@color/color_secondary</item>
+    
     <!-- Surfaces & Windows -->
-    <item name="android:windowBackground">@color/app_background</item>
-    <item name="colorSurface">@color/card_bg</item>
-    <item name="colorOnSurface">@color/text_on_surface</item>
-    <item name="colorOutline">@color/divider</item>
+    <item name="android:windowBackground">@color/surface_background</item>
+    <item name="colorSurface">@color/surface_card</item>
+    <item name="colorOnSurface">@color/text_primary</item>
+    <item name="colorOutline">@color/border_subtle</item>
 
     <!-- System Bars -->
-    <item name="android:statusBarColor">?attr/colorSurface</item>
-    <item name="android:windowLightStatusBar">true (Day) / false (Night)</item>
+    <item name="android:statusBarColor">@color/surface_background</item>
+    <!-- Day: true | Night: false -->
+    <item name="android:windowLightStatusBar">true</item>
 </style>
 ```
 
 ---
 
-## 6. Recommendations for Modernization (Phase 2)
+## 5. Token Migration Reference
 
-1. **Unify Semantic Status Colors:**
-   - Consolidate legacy colors (`green`, `red`, `blue`, `lime`) and chart tokens into standard semantic aliases:
-     - `@color/income` (Day: `#2E7D32`, Night: `#81C784`)
-     - `@color/expense` (Day: `#C62828`, Night: `#E57373`)
-2. **Material 3 Container Tokens:**
-   - Leverage `colorSurfaceContainer`, `colorSurfaceContainerHigh`, and `colorSurfaceContainerLow` for layered elevation instead of flat `#1E1E1E` in dark mode.
-3. **High Contrast Accessibility:**
-   - Ensure text contrast ratios on all card backgrounds meet WCAG AA standards (4.5:1 for body, 3:1 for large headers).
+| Legacy Token | New Semantic Token | Note |
+| :--- | :--- | :--- |
+| `@color/colorPrimary` | `@color/color_primary` | Standardized to snake_case |
+| `@color/colorPrimaryDark` | `@color/color_primary_dark` | Darker contrast container |
+| `@color/colorAccent` | `@color/color_accent` | Brand interactive accent |
+| `@color/colorSecondary` | `@color/color_secondary` | Muted secondary controls |
+| `@color/app_background` | `@color/surface_background` | Surface background semantic |
+| `@color/card_bg` | `@color/surface_card` | Card & dialog elevation surface |
+| `@color/input_bg` | `@color/surface_input` | Text field & pill input background |
+| `@color/divider`, `@color/filter_stroke` | `@color/border_subtle` | Unified subtle borders |
+| `@color/text_hint` | `@color/text_tertiary` | Tertiary text hierarchy |
+| `@color/text_on_primary` | `@color/color_on_primary` | Contrast text on primary |
+| `@color/green`, `@color/chart_credit` | `@color/finance_income` | Income semantic |
+| `@color/red`, `@color/chart_debit` | `@color/finance_expense` | Expense semantic |
+| `@color/chart_grid` | `@color/chart_grid_line` | Chart grid line |
+| `@color/chart_text` | `@color/chart_axis_label` | Chart axis label |
+| `@color/see_all_link`, `@color/blue` | `@color/color_accent` / `@color/color_primary` | Unified accent/primary |

@@ -40,12 +40,12 @@ public class TransactionDetailsAdapter extends RecyclerView.Adapter<TransactionD
         if (isCredit) {
             params.gravity = Gravity.START;
             holder.textType.setText("Credit");
-            holder.textType.setTextColor(ContextCompat.getColor(context, R.color.green));
+            holder.textType.setTextColor(ContextCompat.getColor(context, R.color.finance_income));
             holder.textType.setBackgroundResource(R.drawable.bg_credit);
         } else {
             params.gravity = Gravity.END;
             holder.textType.setText("Debit");
-            holder.textType.setTextColor(ContextCompat.getColor(context, R.color.red));
+            holder.textType.setTextColor(ContextCompat.getColor(context, R.color.finance_expense));
             holder.textType.setBackgroundResource(R.drawable.bg_debit);
         }
         holder.cardBubble.setLayoutParams(params);

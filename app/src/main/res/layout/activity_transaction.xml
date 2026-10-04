@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/app_background"
+    android:background="@color/surface_background"
     android:fitsSystemWindows="true"
     tools:context=".TransactionActivity">
 
@@ -167,7 +167,7 @@
                 android:layout_gravity="bottom|end"
                 android:layout_margin="16dp"
                 android:contentDescription="@string/scroll_to_top"
-                app:backgroundTint="@color/colorPrimary"
+                app:backgroundTint="@color/color_primary"
                 app:srcCompat="@drawable/up_arrow_svgrepo_com"
                 app:tint="@android:color/white"
                 android:visibility="gone" />

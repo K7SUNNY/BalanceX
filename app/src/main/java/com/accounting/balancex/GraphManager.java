@@ -181,9 +181,9 @@ public class GraphManager {
         }
 
         // Data sets for Credit and Debit
-        int creditColor = ContextCompat.getColor(context, R.color.chart_credit);
-        int debitColor = ContextCompat.getColor(context, R.color.chart_debit);
-        int textColor = ContextCompat.getColor(context, R.color.chart_text);
+        int creditColor = ContextCompat.getColor(context, R.color.finance_income);
+        int debitColor = ContextCompat.getColor(context, R.color.finance_expense);
+        int textColor = ContextCompat.getColor(context, R.color.chart_axis_label);
 
         BarDataSet creditSet = new BarDataSet(creditEntries, "Credit");
         creditSet.setColor(creditColor);
@@ -216,7 +216,7 @@ public class GraphManager {
         // Y-Axis Customization
         barChart.getAxisLeft().setTextColor(textColor);
         barChart.getAxisLeft().setDrawGridLines(true);
-        barChart.getAxisLeft().setGridColor(ContextCompat.getColor(context, R.color.chart_grid));
+        barChart.getAxisLeft().setGridColor(ContextCompat.getColor(context, R.color.chart_grid_line));
         barChart.getAxisRight().setEnabled(false);
         barChart.getLegend().setEnabled(false); // Hide legend if not needed
 
@@ -243,9 +243,9 @@ public class GraphManager {
         lineChart.setVisibility(View.VISIBLE);
 
         // Create Line DataSets
-        int creditColor = ContextCompat.getColor(context, R.color.chart_credit);
-        int debitColor = ContextCompat.getColor(context, R.color.chart_debit);
-        int textColor = ContextCompat.getColor(context, R.color.chart_text);
+        int creditColor = ContextCompat.getColor(context, R.color.finance_income);
+        int debitColor = ContextCompat.getColor(context, R.color.finance_expense);
+        int textColor = ContextCompat.getColor(context, R.color.chart_axis_label);
 
         LineDataSet creditSet = new LineDataSet(creditEntries, "Credit");
         creditSet.setColor(creditColor);
@@ -283,7 +283,7 @@ public class GraphManager {
         // Y-Axis Customization
         lineChart.getAxisLeft().setTextColor(textColor);
         lineChart.getAxisLeft().setDrawGridLines(true);
-        lineChart.getAxisLeft().setGridColor(ContextCompat.getColor(context, R.color.chart_grid));
+        lineChart.getAxisLeft().setGridColor(ContextCompat.getColor(context, R.color.chart_grid_line));
         lineChart.getAxisRight().setEnabled(false);
         lineChart.getLegend().setTextColor(textColor);
         lineChart.getLegend().setEnabled(true);

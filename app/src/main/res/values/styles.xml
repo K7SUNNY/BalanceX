@@ -9,7 +9,7 @@
         <item name="android:popupBackground">?attr/colorSurface</item>
     </style>
     <style name="CustomSearchView" parent="Theme.MaterialComponents.DayNight">
-        <item name="android:textColorHint">@color/text_hint</item>
+        <item name="android:textColorHint">@color/text_tertiary</item>
         <item name="android:editTextColor">@color/text_primary</item>
     </style>
 </resources>

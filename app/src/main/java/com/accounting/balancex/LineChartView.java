@@ -20,7 +20,7 @@ public class LineChartView extends View {
     // i don't know why this file is here
     private void init() {
         Context context = getContext();
-        int creditColor = ContextCompat.getColor(context, R.color.chart_credit);
+        int creditColor = ContextCompat.getColor(context, R.color.finance_income);
         int textColor = ContextCompat.getColor(context, R.color.text_primary);
 
         // Line paint

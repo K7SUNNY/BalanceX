@@ -1,45 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary Colors (Dark Mode) -->
-    <color name="colorPrimary">#90CAF9</color>
-    <color name="colorPrimaryDark">#002171</color>
-    <color name="colorAccent">#64B5F6</color>
-    <color name="colorSecondary">#03DAC6</color>
+    <!-- Brand / Primary -->
+    <color name="color_primary">#A1C9FF</color>
+    <color name="color_primary_dark">#081A33</color>
+    <color name="color_primary_container">#00315B</color>
+    <color name="color_on_primary">#00315B</color>
+    <color name="color_on_primary_container">#D5E3FF</color>
+
+    <color name="color_accent">#70B2FF</color>
+    <color name="color_secondary">#B9C8DA</color>
+
+    <!-- Surfaces -->
+    <color name="surface_background">#0E1217</color>
+    <color name="surface_card">#171D25</color>
+    <color name="surface_input">#222933</color>
+    <color name="border_subtle">#2D3542</color>
+
+    <!-- Typography -->
+    <color name="text_primary">#F1F5F9</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="text_tertiary">#64748B</color>
+
+    <!-- Financial Semantics -->
+    <color name="finance_income">#5CD892</color>
+    <color name="finance_income_container">#0A331D</color>
+    <color name="finance_expense">#F87171</color>
+    <color name="finance_expense_container">#3C1010</color>
+
+    <!-- Charts & Controls -->
+    <color name="chart_grid_line">#252D3B</color>
+    <color name="chart_axis_label">#94A3B8</color>
+    <color name="header_gradient_start">#1A2330</color>
+    <color name="header_gradient_end">#111720</color>
+
+    <!-- Common / Base Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- Backward Compatibility Aliases -->
+    <color name="colorPrimary">@color/color_primary</color>
+    <color name="colorPrimaryDark">@color/color_primary_dark</color>
+    <color name="colorAccent">@color/color_accent</color>
+    <color name="colorSecondary">@color/color_secondary</color>
     <color name="colorSecondaryVariant">#018786</color>
-
-    <!-- Semantic Colors (Dark Theme) -->
-    <color name="app_background">#121212</color>
-    <color name="card_bg">#1E1E1E</color>
-    <color name="text_primary">#E1E1E1</color>
-    <color name="text_secondary">#B0B0B0</color>
-    <color name="text_on_primary">#000000</color>
-    <color name="text_on_surface">#E1E1E1</color>
-    <color name="divider">#323232</color>
-
-    <!-- Specific UI Colors -->
-    <color name="header_gradient_start">#1F1F1F</color>
-    <color name="header_gradient_end">#121212</color>
-    <color name="navbar_bg">#1F1F1F</color>
-    <color name="navbar_gradient_start">#1F1F1F</color>
-    <color name="navbar_gradient_end">#121212</color>
-    <color name="see_all_link">#64B5F6</color>
-    <color name="timeline_bg">#2C2C2C</color>
-    <color name="text_hint">#757575</color>
-    <color name="input_bg">#2C2C2C</color>
-    <color name="selection_bg">#2C2C2C</color>
-    <color name="selection_tab_selected_bg">#3D3D3D</color>
-    <color name="selection_tab_selected_text">#64B5F6</color>
-    <color name="selection_tab_unselected_text">#E1E1E1</color>
-    <color name="filter_stroke">#444444</color>
-    <color name="chart_credit">#64B5F6</color>
-    <color name="chart_debit">#BB86FC</color>
-    <color name="chart_text">#E1E1E1</color>
-    <color name="chart_grid">#323232</color>
-
-    <!-- Legacy / Re-mapped for Dark Mode -->
-    <color name="blue">#64B5F6</color>
-    <color name="light_gray">#323232</color>
-    <color name="grey">#757575</color>
-    <color name="green">#81C784</color>
-    <color name="red">#E57373</color>
+    <color name="app_background">@color/surface_background</color>
+    <color name="card_bg">@color/surface_card</color>
+    <color name="input_bg">@color/surface_input</color>
+    <color name="divider">@color/border_subtle</color>
+    <color name="filter_stroke">@color/border_subtle</color>
+    <color name="text_hint">@color/text_tertiary</color>
+    <color name="text_on_primary">@color/color_on_primary</color>
+    <color name="text_on_surface">@color/text_primary</color>
+    <color name="green">@color/finance_income</color>
+    <color name="chart_credit">@color/finance_income</color>
+    <color name="red">@color/finance_expense</color>
+    <color name="chart_debit">@color/finance_expense</color>
+    <color name="chart_grid">@color/chart_grid_line</color>
+    <color name="chart_text">@color/chart_axis_label</color>
+    <color name="see_all_link">@color/color_accent</color>
+    <color name="blue">@color/color_primary</color>
+    <color name="lime">@color/finance_income</color>
+    <color name="grey">@color/text_secondary</color>
+    <color name="light_gray">@color/surface_input</color>
+    <color name="timeline_bg">@color/surface_input</color>
+    <color name="selection_bg">@color/surface_input</color>
+    <color name="selection_tab_selected_bg">@color/surface_card</color>
+    <color name="selection_tab_selected_text">@color/color_accent</color>
+    <color name="selection_tab_unselected_text">@color/text_secondary</color>
+    <color name="navbar_bg">@color/header_gradient_start</color>
+    <color name="navbar_gradient_start">@color/header_gradient_start</color>
+    <color name="navbar_gradient_end">@color/header_gradient_end</color>
 </resources>

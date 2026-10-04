@@ -56,9 +56,9 @@ public class RecentTransactionsAdapter extends RecyclerView.Adapter<RecentTransa
 
         // Change text color based on transaction type
         if (transaction.getType().equalsIgnoreCase("Credit")) {
-            holder.textViewType.setTextColor(ContextCompat.getColor(context, R.color.green)); // Green for Credit
+            holder.textViewType.setTextColor(ContextCompat.getColor(context, R.color.finance_income)); // Income for Credit
         } else if (transaction.getType().equalsIgnoreCase("Debit")) {
-            holder.textViewType.setTextColor(ContextCompat.getColor(context, R.color.red)); // Red for Debit
+            holder.textViewType.setTextColor(ContextCompat.getColor(context, R.color.finance_expense)); // Expense for Debit
         }
     }
 

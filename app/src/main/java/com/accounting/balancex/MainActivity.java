@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
     private BarChart barChart;
     private LineChart lineChart;
     private DrawerLayout drawerLayout;
-    private ImageView menuButton,notificationButton;
+    private ImageView menuButton, notificationButton;
     private NavigationView navigationView;
     // Back Press Handling
     private boolean backPressedOnce = false;
@@ -97,21 +97,20 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main_drawer);
 
         // 1. Initialize the Repository
-com.accounting.balancex.data.repository.TransactionRepository repo = 
-    new com.accounting.balancex.data.repository.TransactionRepository(this);
+        com.accounting.balancex.data.repository.TransactionRepository repo = new com.accounting.balancex.data.repository.TransactionRepository(
+                this);
 
-// 2. Trigger the JSON to Room migration
-com.accounting.balancex.data.db.DatabaseMigrator.migrateJsonToRoomIfNeeded(this, repo);
+        // 2. Trigger the JSON to Room migration
+        com.accounting.balancex.data.db.DatabaseMigrator.migrateJsonToRoomIfNeeded(this, repo);
 
-// 3. Query the encrypted database to verify data is there
-repo.getAllTransactions(transactions -> {
-    android.util.Log.d("RoomTest", "Total transactions in Room: " + transactions.size());
-    for(int i = 0; i < Math.min(transactions.size(), 3); i++) {
-        android.util.Log.d("RoomTest", "Transaction: " + transactions.get(i).description + 
-            " | Amount: " + transactions.get(i).amount);
-    }
-});
-
+        // 3. Query the encrypted database to verify data is there
+        repo.getAllTransactions(transactions -> {
+            android.util.Log.d("RoomTest", "Total transactions in Room: " + transactions.size());
+            for (int i = 0; i < Math.min(transactions.size(), 3); i++) {
+                android.util.Log.d("RoomTest", "Transaction: " + transactions.get(i).description +
+                        " | Amount: " + transactions.get(i).amount);
+            }
+        });
 
         hideNavText(); // Hide text initially
 
@@ -264,11 +263,11 @@ repo.getAllTransactions(transactions -> {
                     Log.d("navigationView", "onNavigationItemSelected: about balanceX");
                     startActivity(new Intent(MainActivity.this, AboutActivity.class));
                     return true;
-                }else if (itemId == R.id.help_support) {
+                } else if (itemId == R.id.help_support) {
                     sendEmail("Help & Support");
                 } else if (itemId == R.id.feedback) {
                     sendEmail("Feedback");
-                }else if (itemId == R.id.export_data) {
+                } else if (itemId == R.id.export_data) {
                     showExportBottomSheet();
                 }
                 return false;
@@ -276,7 +275,7 @@ repo.getAllTransactions(transactions -> {
         });
 
         notificationButton = findViewById(R.id.notificationButton);
-        notificationButton.setOnClickListener( v -> {
+        notificationButton.setOnClickListener(v -> {
             startActivity(new Intent(this, NotificationActivity.class));
             vibrateDevice();
         });
@@ -295,6 +294,7 @@ repo.getAllTransactions(transactions -> {
         // Load Profile Data
         loadProfileData();
     }
+
     private void loadProfileData() {
         SharedPreferences sharedPreferences = getSharedPreferences("UserProfile", MODE_PRIVATE);
 
@@ -325,6 +325,7 @@ repo.getAllTransactions(transactions -> {
             Log.e("ProfileImage", "Profile image URI is empty.");
         }
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -332,6 +333,7 @@ repo.getAllTransactions(transactions -> {
             loadProfileData(); // Reload updated data
         }
     }
+
     @Override
     public void onBackPressed() {
         if (backPressedOnce) {
@@ -345,10 +347,11 @@ repo.getAllTransactions(transactions -> {
         // Reset flag after 2 seconds
         new Handler().postDelayed(() -> backPressedOnce = false, 2000);
     }
+
     private void sendEmail(String subject) {
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("message/rfc822"); // Ensures only email apps handle it
-        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"sunnyk7rajput@gmail.com"});
+        intent.putExtra(Intent.EXTRA_EMAIL, new String[] { "sunnyk7rajput@gmail.com" });
         intent.putExtra(Intent.EXTRA_SUBJECT, subject);
 
         try {
@@ -374,6 +377,7 @@ repo.getAllTransactions(transactions -> {
         textView.setVisibility(View.VISIBLE);
         textView.startAnimation(slideUp);
     }
+
     private void updateTimelineSelection(TextView selected, TextView... others) {
         selected.setBackgroundResource(R.drawable.selected_title);
         selected.setTextColor(ContextCompat.getColor(this, R.color.selection_tab_selected_text));
@@ -383,16 +387,17 @@ repo.getAllTransactions(transactions -> {
             other.setTextColor(ContextCompat.getColor(this, R.color.selection_tab_unselected_text));
         }
     }
+
     private void updateGraphTypeSelection(ImageView selected, ImageView other) {
         selected.setBackgroundResource(R.drawable.selected_title);
         other.setBackgroundResource(android.R.color.transparent);
     }
 
-
     private void loadBalanceData() {
         try {
             File file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
-            if (!file.exists()) return;
+            if (!file.exists())
+                return;
 
             FileReader reader = new FileReader(file);
             char[] buffer = new char[(int) file.length()];
@@ -411,8 +416,13 @@ repo.getAllTransactions(transactions -> {
 
                 dateSet.add(date);
 
-                if (type.equalsIgnoreCase("credit")) { totalCredit += amount; totalBalance += amount; }
-                else if (type.equalsIgnoreCase("debit")) { totalDebit += amount; totalBalance -= amount; }
+                if (type.equalsIgnoreCase("credit")) {
+                    totalCredit += amount;
+                    totalBalance += amount;
+                } else if (type.equalsIgnoreCase("debit")) {
+                    totalDebit += amount;
+                    totalBalance -= amount;
+                }
             }
 
             textTotalBalance.setText("₹" + totalBalance);
@@ -421,9 +431,12 @@ repo.getAllTransactions(transactions -> {
 
             transactionDates = new ArrayList<>(dateSet);
             Collections.sort(transactionDates, Collections.reverseOrder());
-        } catch (IOException | org.json.JSONException e) { e.printStackTrace(); }
+        } catch (IOException | org.json.JSONException e) {
+            e.printStackTrace();
+        }
         Log.e("LoadTransactions", "Transaction file not found!");
     }
+
     private void loadTransactionsFromStorage() {
         File file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
 
@@ -457,7 +470,7 @@ repo.getAllTransactions(transactions -> {
                 String date = transaction.getString("date");
                 String amount = transaction.getString("amount");
                 String type = transaction.getString("textType"); // credit/debit
-                long entryId = transaction.getLong("entryId");  // Get entry ID as long
+                long entryId = transaction.getLong("entryId"); // Get entry ID as long
 
                 recentTransactions.add(new RecentTransactionModel(receiver, date, amount, type, entryId));
             }
@@ -465,9 +478,8 @@ repo.getAllTransactions(transactions -> {
             // 🔹 SORT transactions by Entry ID in DESCENDING ORDER (latest first)
             Collections.sort(recentTransactions, (t1, t2) -> Long.compare(t2.getEntryId(), t1.getEntryId()));
 
-            adapter.notifyDataSetChanged();  // Update RecyclerView after sorting and loading
+            adapter.notifyDataSetChanged(); // Update RecyclerView after sorting and loading
             Log.d("Transactions", "Loaded Transactions: " + recentTransactions.size());
-
 
         } catch (Exception e) {
             Log.e("LoadTransactions", "Error parsing JSON", e);
@@ -482,7 +494,8 @@ repo.getAllTransactions(transactions -> {
         scrollRunnable = new Runnable() {
             @Override
             public void run() {
-                if (transactionDates == null || transactionDates.isEmpty()) return; // Prevent crashes
+                if (transactionDates == null || transactionDates.isEmpty())
+                    return; // Prevent crashes
 
                 // 🔹 Smooth scroll normally
                 if (scrollPosition < transactionDates.size() - 1) {
@@ -523,6 +536,7 @@ repo.getAllTransactions(transactions -> {
         adapter.notifyDataSetChanged(); // Refresh data
         scrollPosition = 0; // Reset scrolling position
     }
+
     // Initialize PieChart
     private ArrayList<PieModel> loadPieChartData() {
         ArrayList<PieModel> pieDataList = new ArrayList<>();
@@ -530,7 +544,8 @@ repo.getAllTransactions(transactions -> {
 
         try {
             File file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
-            if (!file.exists()) return pieDataList; // Return empty if no data
+            if (!file.exists())
+                return pieDataList; // Return empty if no data
 
             BufferedReader reader = new BufferedReader(new FileReader(file));
             StringBuilder jsonContent = new StringBuilder();
@@ -566,6 +581,7 @@ repo.getAllTransactions(transactions -> {
 
         return pieDataList;
     }
+
     private void setupPieChart() {
         ArrayList<PieModel> pieDataList = loadPieChartData(); // Load data
 
@@ -586,6 +602,7 @@ repo.getAllTransactions(transactions -> {
         pieChart.setEntryLabelColor(textColor);
         pieChart.invalidate(); // Refresh chart
     }
+
     public void vibrateDevice() {
         Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         if (vibrator != null && vibrator.hasVibrator()) {
@@ -596,9 +613,10 @@ repo.getAllTransactions(transactions -> {
             }
         }
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.slide_menu_items, menu);  // Inflates your menu XML
+        getMenuInflater().inflate(R.menu.slide_menu_items, menu); // Inflates your menu XML
         return true;
     }
 
@@ -635,6 +653,7 @@ repo.getAllTransactions(transactions -> {
 
         bottomSheetDialog.show();
     }
+
     public List<JSONObject> getFilteredTransactions(String filterKey) {
         List<JSONObject> filteredList = new ArrayList<>();
 
@@ -642,7 +661,8 @@ repo.getAllTransactions(transactions -> {
             File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
                     + "/Accounting/transactions.json");
 
-            if (!file.exists()) return filteredList;
+            if (!file.exists())
+                return filteredList;
 
             String json = null;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -690,6 +710,7 @@ repo.getAllTransactions(transactions -> {
 
         return filteredList;
     }
+
     private void exportData(String filterKey) {
         List<JSONObject> transactions = getFilteredTransactions(filterKey);
         if (transactions.isEmpty()) {

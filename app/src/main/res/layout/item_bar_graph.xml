@@ -20,7 +20,7 @@
             android:layout_width="0dp"
             android:layout_height="100dp"
             android:layout_weight="1"
-            android:background="@color/chart_credit"/>
+            android:background="@color/finance_income"/>
 
         <!-- Space between bars -->
         <View
@@ -33,6 +33,6 @@
             android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_weight="1"
-            android:background="@color/chart_debit"/>
+            android:background="@color/finance_expense"/>
     </LinearLayout>
 </LinearLayout>

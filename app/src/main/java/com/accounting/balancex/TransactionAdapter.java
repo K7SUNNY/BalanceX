@@ -82,11 +82,11 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
 
         if (transaction.getTransactionType().equalsIgnoreCase("Credit")) {
             holder.textType.setText("Credit");
-            holder.textType.setTextColor(ContextCompat.getColor(context, R.color.green));
+            holder.textType.setTextColor(ContextCompat.getColor(context, R.color.finance_income));
             holder.textType.setBackgroundResource(R.drawable.bg_credit);
         } else {
             holder.textType.setText("Debit");
-            holder.textType.setTextColor(ContextCompat.getColor(context, R.color.red));
+            holder.textType.setTextColor(ContextCompat.getColor(context, R.color.finance_expense));
             holder.textType.setBackgroundResource(R.drawable.bg_debit);
         }
 

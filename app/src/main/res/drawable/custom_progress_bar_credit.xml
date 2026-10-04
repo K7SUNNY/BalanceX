@@ -2,14 +2,14 @@
     <item android:id="@android:id/background">
         <shape android:shape="rectangle">
             <corners android:radius="8dp"/>
-            <solid android:color="@color/chart_grid"/> <!-- Background color -->
+            <solid android:color="@color/chart_grid_line"/> <!-- Background color -->
         </shape>
     </item>
     <item android:id="@android:id/progress">
         <clip android:clipOrientation="vertical" android:gravity="bottom">
             <shape android:shape="rectangle">
                 <corners android:radius="8dp"/>
-                <solid android:color="@color/chart_credit"/> <!-- Credit bar color -->
+                <solid android:color="@color/finance_income"/> <!-- Credit bar color -->
             </shape>
         </clip>
     </item>
