@@ -29,7 +29,7 @@
         android:id="@+id/group5">
         <item
             android:id="@+id/help_support"
-            android:title="Hepl &amp; Support"/>
+            android:title="Help &amp; Support"/>
     </group>
     <group
         android:id="@+id/group6">

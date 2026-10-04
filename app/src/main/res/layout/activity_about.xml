@@ -1,110 +1,139 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/app_background"
     android:fitsSystemWindows="true">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:background="@color/app_background"
+        app:elevation="0dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="About BalanceX"
+            app:titleCentered="true"
+            app:titleTextColor="@color/text_primary"
+            app:navigationIcon="@drawable/back_svgrepo_com"
+            app:layout_scrollFlags="scroll|enterAlways" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_gravity="center">
-            <!-- Back Button -->
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:gravity="center_horizontal">
+            
             <ImageView
-                android:id="@+id/imageViewBack"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:src="@drawable/back_svgrepo_com"
-                android:contentDescription="Back"
-                android:padding="10dp"/>
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:src="@drawable/ic_logo_playstore"
+                android:layout_marginBottom="16dp"
+                android:layout_marginTop="20dp"/>
 
-            <!-- About Section -->
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="About BalanceX"
-                android:textSize="24sp"
-                android:layout_weight="1"
+                android:text="BalanceX"
+                android:textSize="28sp"
                 android:textStyle="bold"
-                android:gravity="center"
-                android:layout_gravity="center"/>
-            <ImageView
-                android:layout_width="50dp"
-                android:layout_height="match_parent"
-                android:src="@drawable/ic_logo_playstore"/>
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="32dp"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/divider"
+                app:cardBackgroundColor="?attr/colorSurface"
+                android:layout_marginBottom="24dp">
+                
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+                    
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="BalanceX is a simple yet powerful accounting app designed to help users manage their finances with ease. It offers transaction tracking, financial insights, and an intuitive UI to keep your accounts in check."
+                        android:textSize="16sp"
+                        android:lineSpacingExtra="4dp"
+                        android:textColor="@color/text_secondary"
+                        android:gravity="center_horizontal"/>
+
+                    <TextView
+                        android:id="@+id/versionText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Version: 1.0.0"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/colorPrimary"
+                        android:paddingTop="16dp"
+                        android:gravity="center" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Terms &amp; Conditions"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="16dp"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/divider"
+                app:cardBackgroundColor="?attr/colorSurface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="1. BalanceX is provided as-is without any warranty.\n\n2. All user data is stored locally; the app does not send financial data to external servers.\n\n3. The developers are not responsible for any financial losses resulting from app usage.\n\n4. By using BalanceX, you agree to these terms."
+                        android:textSize="14sp"
+                        android:lineSpacingExtra="6dp"
+                        android:textColor="@color/text_secondary"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+    
+    <!-- Hidden original back button ID to prevent Java crashes if previously bound -->
+    <ImageView
+        android:id="@+id/imageViewBack"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"/>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="BalanceX is a simple yet powerful accounting app designed to help users manage their finances with ease. It offers transaction tracking, financial insights, and an intuitive UI to keep your accounts in check."
-            android:textSize="16sp"
-            android:paddingTop="10dp"
-            android:gravity="center"
-            android:layout_marginTop="20dp"/>
-
-        <TextView
-            android:id="@+id/versionText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Version: 1.0.0"
-            android:textSize="14sp"
-            android:paddingTop="10dp"
-            android:gravity="center" />
-
-        <!-- Divider -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/divider"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="10dp"/>
-
-        <!-- Terms & Conditions Section -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Terms &amp; Conditions"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:paddingTop="10dp"
-            android:gravity="center" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="1. BalanceX is provided as-is without any warranty.\n\n"
-            android:textSize="14sp"
-            android:paddingTop="10dp"
-            android:gravity="start" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="2. All user data is stored locally; the app does not send financial data to external servers.\n\n"
-            android:textSize="14sp"
-            android:gravity="start" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="3. The developers are not responsible for any financial losses resulting from app usage.\n\n"
-            android:textSize="14sp"
-            android:gravity="start" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="4. By using BalanceX, you agree to these terms."
-            android:textSize="14sp"
-            android:gravity="start" />
-
-    </LinearLayout>
-</ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

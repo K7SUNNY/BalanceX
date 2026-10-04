@@ -96,6 +96,23 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_drawer);
 
+        // 1. Initialize the Repository
+com.accounting.balancex.data.repository.TransactionRepository repo = 
+    new com.accounting.balancex.data.repository.TransactionRepository(this);
+
+// 2. Trigger the JSON to Room migration
+com.accounting.balancex.data.db.DatabaseMigrator.migrateJsonToRoomIfNeeded(this, repo);
+
+// 3. Query the encrypted database to verify data is there
+repo.getAllTransactions(transactions -> {
+    android.util.Log.d("RoomTest", "Total transactions in Room: " + transactions.size());
+    for(int i = 0; i < Math.min(transactions.size(), 3); i++) {
+        android.util.Log.d("RoomTest", "Transaction: " + transactions.get(i).description + 
+            " | Amount: " + transactions.get(i).amount);
+    }
+});
+
+
         hideNavText(); // Hide text initially
 
         // Apply animation to the correct tab

@@ -2,56 +2,64 @@ package com.accounting.balancex;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class NotificationActivity extends AppCompatActivity {
-    private Button buttonRead, buttonUnread;
+    
+    private TabLayout tabLayout;
     private RecyclerView recyclerView;
+    private LinearLayout emptyStateLayout;
     private NotificationAdapter adapter;
     private List<NotificationModel> notificationList = new ArrayList<>();
     private List<NotificationModel> filteredList = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notification);
 
-        buttonRead = findViewById(R.id.buttonRead);
-        buttonUnread = findViewById(R.id.buttonUnread);
+        tabLayout = findViewById(R.id.tabLayout);
         recyclerView = findViewById(R.id.recyclerViewNotifications);
+        emptyStateLayout = findViewById(R.id.emptyStateLayout);
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
 
-        // Set default selection to Unread
-        buttonUnread.setBackgroundResource(R.drawable.selected_title);
-        buttonUnread.setBackgroundTintList(null); // This fixes the initial purple tint
-        buttonRead.setBackgroundResource(0);
-        buttonRead.setBackgroundTintList(null);
-
-        // Back button functionality
-        ImageView backButton = findViewById(R.id.imageViewbackbutton);
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish(); // Closes the notification activity and returns to the previous screen
-            }
-        });
+        // Back button functionality via the Toolbar
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         // Set up RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        
         // Load notifications (dummy data)
         loadNotifications();
 
-        // Default: Show Unread
+        // Default: Show Unread (false means it is not read)
         filterNotifications(false);
 
-        buttonUnread.setOnClickListener(v -> filterNotifications(false));
-        buttonRead.setOnClickListener(v -> filterNotifications(true));
+        // Handle Tab Selection
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                // Assuming Tab 0 is Unread, Tab 1 is Read
+                boolean isReadTab = tab.getPosition() == 1;
+                filterNotifications(isReadTab);
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
     }
+
     private void loadNotifications() {
         notificationList.add(new NotificationModel("New Transaction", "You added ₹500 to your balance.", false));
         notificationList.add(new NotificationModel("Payment Received", "₹250 received from John.", false));
@@ -68,16 +76,20 @@ public class NotificationActivity extends AppCompatActivity {
             }
         }
 
-        adapter = new NotificationAdapter(filteredList);
-        recyclerView.setAdapter(adapter);
-
-        // 🔥 Update button background on selection
-        if (showRead) {
-            buttonRead.setBackgroundResource(R.drawable.selected_title);
-            buttonUnread.setBackgroundResource(0);
+        if (adapter == null) {
+            adapter = new NotificationAdapter(filteredList);
+            recyclerView.setAdapter(adapter);
         } else {
-            buttonUnread.setBackgroundResource(R.drawable.selected_title);
-            buttonRead.setBackgroundResource(0);
+            adapter.notifyDataSetChanged();
+        }
+
+        // Handle empty state visibility
+        if (filteredList.isEmpty()) {
+            recyclerView.setVisibility(View.GONE);
+            emptyStateLayout.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            emptyStateLayout.setVisibility(View.GONE);
         }
     }
 }

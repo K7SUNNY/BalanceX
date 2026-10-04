@@ -1,122 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/app_background"
     android:fitsSystemWindows="true">
 
-    <LinearLayout
-        android:id="@+id/main_body"
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginStart="1dp"
+        android:layout_height="wrap_content"
         android:background="@color/app_background"
-        android:orientation="vertical"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:elevation="0dp">
 
-        <LinearLayout
-            android:id="@+id/header"
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:padding="10dp"
-            android:background="@drawable/rectangular_bg"
-            android:elevation="4dp">
-<!--            back button-->
-            <ImageView
-                android:id="@+id/imageViewbackbutton"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:scaleType="center"
-                app:srcCompat="@drawable/back_svgrepo_com" />
-
-            <Space
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1" />
-<!--            Notification header Text: nothing to do-->
-            <TextView
-                android:id="@+id/textViewnotications"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="Notifications"
-                android:textAlignment="center"
-                android:textColor="@color/text_primary"
-                android:textSize="24sp"
-                android:textStyle="bold"/>
-
-            <Space
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1" />
-<!--            Account Image-->
+            android:layout_height="?attr/actionBarSize"
+            app:title="Notifications"
+            app:titleCentered="true"
+            app:titleTextColor="@color/text_primary"
+            app:navigationIcon="@drawable/back_svgrepo_com"
+            app:layout_scrollFlags="scroll|enterAlways|snap">
+            
             <ImageView
                 android:id="@+id/imageViewAccount_Image"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="end"
+                android:layout_marginEnd="16dp"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 app:srcCompat="@drawable/account_svgrepo_com" />
-        </LinearLayout>
-<!--        Read and Unread button layout-->
-        <LinearLayout
-            android:id="@+id/read_unread_buttons"
+                
+        </com.google.android.material.appbar.MaterialToolbar>
+
+        <!-- Modern Material 3 Tab Layout for Read/Unread toggling -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="10dp">
+            android:background="@color/app_background"
+            app:tabIndicatorColor="@color/colorPrimary"
+            app:tabSelectedTextColor="@color/colorPrimary"
+            app:tabTextColor="@color/text_secondary"
+            app:tabMode="fixed">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/notification_read_unread_main_background"
-                android:orientation="horizontal"
-                android:padding="3dp">
+                android:text="Unread" />
 
-<!--                Unread button-->
-                <Button
-                    android:id="@+id/buttonUnread"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:text="Unread"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:backgroundTint="@null"/>
-<!--                Read button-->
-                <Button
-                    android:id="@+id/buttonRead"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:text="Read"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:backgroundTint="@null"/>
-            </LinearLayout>
-        </LinearLayout>
-<!--        Main body to show Notifications-->
-        <LinearLayout
-            android:id="@+id/main_notification_body"
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Read" />
+        </com.google.android.material.tabs.TabLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <!-- RecyclerView for Notifications -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewNotifications"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:padding="12dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+            
+        <LinearLayout
+            android:id="@+id/emptyStateLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
-            <!-- RecyclerView for Notifications -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewNotifications"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:layout_margin="10dp"/>
+            <com.airbnb.lottie.LottieAnimationView
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                app:lottie_rawRes="@raw/empty_notification"
+                app:lottie_autoPlay="true"
+                app:lottie_loop="true" />
+                <!-- Note: Ensure empty_notification.json exists in res/raw -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="You're all caught up!"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:layout_marginTop="16dp" />
+                
         </LinearLayout>
-    </LinearLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
