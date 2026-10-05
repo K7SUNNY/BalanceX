@@ -14,6 +14,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -79,7 +80,7 @@ public class DatabaseMigrator {
         });
     }
 
-    private static String makeSignature(String date, String amount, String receiver, String textType, String description) {
+    public static String makeSignature(String date, String amount, String receiver, String textType, String description) {
         return (date != null ? date : "") + "|"
                 + (amount != null ? amount : "") + "|"
                 + (receiver != null ? receiver : "") + "|"
@@ -212,5 +213,43 @@ public class DatabaseMigrator {
             ));
         }
         return transactions;
+    }
+
+    public static boolean saveEntitiesToJson(Context context, List<TransactionEntity> entities) {
+        if (context == null || entities == null) return false;
+        try {
+            File targetFile = findJsonFile(context);
+            if (targetFile == null) {
+                File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Accounting");
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
+                targetFile = new File(dir, "transactions.json");
+            }
+            JSONArray array = new JSONArray();
+            for (TransactionEntity e : entities) {
+                JSONObject obj = new JSONObject();
+                obj.put("entryId", e.entryId);
+                obj.put("date", e.date != null ? e.date : "N/A");
+                obj.put("amount", e.amount != null ? e.amount : "0");
+                obj.put("receiver", e.receiver != null ? e.receiver : "Unknown");
+                obj.put("description", e.description != null ? e.description : "");
+                obj.put("utr", e.utr != null ? e.utr : "");
+                obj.put("transactionId", e.transactionId != null ? e.transactionId : "");
+                obj.put("comments", e.comments != null ? e.comments : "");
+                obj.put("category", e.category != null ? e.category : "General");
+                obj.put("paymentMethod", e.paymentMethod != null ? e.paymentMethod : "Cash");
+                obj.put("textType", e.textType != null ? e.textType : "Debit");
+                array.put(obj);
+            }
+            try (FileWriter writer = new FileWriter(targetFile)) {
+                writer.write(array.toString(4));
+            }
+            Log.d(TAG, "Successfully wrote " + entities.size() + " records to " + targetFile.getAbsolutePath());
+            return true;
+        } catch (Exception ex) {
+            Log.e(TAG, "Failed to save entities to JSON", ex);
+            return false;
+        }
     }
 }

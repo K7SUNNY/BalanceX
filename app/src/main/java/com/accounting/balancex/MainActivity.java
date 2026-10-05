@@ -47,7 +47,10 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 
+import android.database.Cursor;
+import android.provider.OpenableColumns;
 import android.os.Looper;
 import java.nio.charset.StandardCharsets;
 
@@ -356,13 +359,13 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        // 2. Backup Ledger -> Share Encrypted JSON Snapshot
+        // 2. Backup Ledger -> Vault Backup Bottom Sheet
         View btnBackup = findViewById(R.id.btnDrawerBackup);
         if (btnBackup != null) {
             btnBackup.setOnClickListener(v -> {
                 vibrateDevice();
                 closeDrawerIfOpen();
-                backupLedgerData();
+                showBackupBottomSheet();
             });
         }
 
@@ -376,23 +379,23 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        // 4. Categories & Budgets -> Categories Dialog
+        // 4. Categories & Budgets -> Categories Bottom Sheet
         View btnCategories = findViewById(R.id.btnDrawerCategories);
         if (btnCategories != null) {
             btnCategories.setOnClickListener(v -> {
                 vibrateDevice();
                 closeDrawerIfOpen();
-                showCategoriesOverviewDialog();
+                showCategoriesBottomSheet();
             });
         }
 
-        // 5. Payment Accounts -> Accounts Dialog
+        // 5. Payment Accounts -> Accounts Bottom Sheet
         View btnAccounts = findViewById(R.id.btnDrawerAccounts);
         if (btnAccounts != null) {
             btnAccounts.setOnClickListener(v -> {
                 vibrateDevice();
                 closeDrawerIfOpen();
-                showPaymentAccountsDialog();
+                showPaymentAccountsBottomSheet();
             });
         }
 
@@ -518,44 +521,235 @@ public class MainActivity extends AppCompatActivity {
         }));
     }
 
-    private void backupLedgerData() {
-        com.accounting.balancex.data.repository.TransactionRepository repo = 
+    private void showBackupBottomSheet() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet_backup, null);
+        dialog.setContentView(view);
+
+        View btnClose = view.findViewById(R.id.btnCloseBackup);
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        TextView textRecordCount = view.findViewById(R.id.textBackupRecordCount);
+        com.accounting.balancex.data.repository.TransactionRepository repo =
                 new com.accounting.balancex.data.repository.TransactionRepository(this);
+
         repo.getAllTransactions(transactions -> {
-            if (transactions == null || transactions.isEmpty()) {
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "No transactions to backup.", Toast.LENGTH_SHORT).show());
-                return;
+            int count = (transactions != null) ? transactions.size() : 0;
+            runOnUiThread(() -> {
+                if (textRecordCount != null) {
+                    textRecordCount.setText(count + (count == 1 ? " Transaction Recorded" : " Transactions Recorded"));
+                }
+            });
+
+            View btnShare = view.findViewById(R.id.btnShareBackupSnapshot);
+            if (btnShare != null) {
+                btnShare.setOnClickListener(v -> {
+                    vibrateDevice();
+                    dialog.dismiss();
+                    if (count == 0) {
+                        Toast.makeText(MainActivity.this, "No transactions to backup.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    shareBackupFile(transactions);
+                });
             }
-            try {
-                com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
-                String json = gson.toJson(transactions);
-                File backupDir = new File(getCacheDir(), "backups");
-                if (!backupDir.exists()) {
-                    backupDir.mkdirs();
-                }
-                File backupFile = new File(backupDir, "BalanceX_Ledger_Backup.json");
-                try (FileOutputStream fos = new FileOutputStream(backupFile)) {
-                    fos.write(json.getBytes(StandardCharsets.UTF_8));
-                }
 
-                Uri fileUri = FileProvider.getUriForFile(
-                        MainActivity.this,
-                        getPackageName() + ".provider",
-                        backupFile);
-
-                Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                shareIntent.setType("application/json");
-                shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
-                shareIntent.putExtra(Intent.EXTRA_SUBJECT, "BalanceX Ledger Backup");
-                shareIntent.putExtra(Intent.EXTRA_TEXT, "Here is the JSON ledger backup from BalanceX (" + transactions.size() + " records).");
-                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                runOnUiThread(() -> startActivity(Intent.createChooser(shareIntent, "Share Ledger Backup")));
-            } catch (Exception e) {
-                Log.e("Backup", "Error creating backup", e);
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to create backup: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            View btnSave = view.findViewById(R.id.btnSaveBackupToDevice);
+            if (btnSave != null) {
+                btnSave.setOnClickListener(v -> {
+                    vibrateDevice();
+                    dialog.dismiss();
+                    if (count == 0) {
+                        Toast.makeText(MainActivity.this, "No transactions to backup.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    saveBackupToDevice(transactions);
+                });
             }
         });
+
+        dialog.show();
+    }
+
+    private void shareBackupFile(List<com.accounting.balancex.data.entity.TransactionEntity> transactions) {
+        try {
+            com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+            String json = gson.toJson(transactions);
+            File backupDir = new File(getCacheDir(), "backups");
+            if (!backupDir.exists()) {
+                backupDir.mkdirs();
+            }
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(new Date());
+            File backupFile = new File(backupDir, "BalanceX_Backup_" + timeStamp + ".json");
+            try (FileOutputStream fos = new FileOutputStream(backupFile)) {
+                fos.write(json.getBytes(StandardCharsets.UTF_8));
+            }
+
+            Uri fileUri = FileProvider.getUriForFile(
+                    this,
+                    getPackageName() + ".provider",
+                    backupFile);
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("application/json");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "BalanceX Ledger Backup (" + timeStamp + ")");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "Here is the offline JSON ledger backup from BalanceX (" + transactions.size() + " records).");
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            startActivity(Intent.createChooser(shareIntent, "Share Ledger Backup"));
+        } catch (Exception e) {
+            Log.e("Backup", "Error sharing backup", e);
+            Toast.makeText(this, "Failed to share backup: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void saveBackupToDevice(List<com.accounting.balancex.data.entity.TransactionEntity> transactions) {
+        try {
+            com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+            String json = gson.toJson(transactions);
+
+            File targetDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Accounting/Backups");
+            if (!targetDir.exists()) {
+                targetDir.mkdirs();
+            }
+            if (!targetDir.canWrite()) {
+                targetDir = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "Backups");
+                if (!targetDir.exists()) {
+                    targetDir.mkdirs();
+                }
+            }
+
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+            String fileName = "BalanceX_Backup_" + timeStamp + ".json";
+            File backupFile = new File(targetDir, fileName);
+
+            try (FileOutputStream fos = new FileOutputStream(backupFile)) {
+                fos.write(json.getBytes(StandardCharsets.UTF_8));
+            }
+
+            vibrateDevice();
+            Toast.makeText(this, "Backup saved to Documents/Accounting/Backups/" + fileName, Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Log.e("Backup", "Error saving backup to device", e);
+            Toast.makeText(this, "Failed to save backup: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showCategoriesBottomSheet() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet_categories, null);
+        dialog.setContentView(view);
+
+        View btnClose = view.findViewById(R.id.btnCloseCategories);
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        View layoutEmpty = view.findViewById(R.id.layoutEmptyCategories);
+        View scrollCategories = view.findViewById(R.id.scrollCategories);
+        android.widget.LinearLayout container = view.findViewById(R.id.containerCategoryItems);
+        TextView subtitle = view.findViewById(R.id.textCategoriesTotalSubtitle);
+
+        com.accounting.balancex.data.repository.TransactionRepository repo =
+                new com.accounting.balancex.data.repository.TransactionRepository(this);
+
+        repo.getAllTransactions(transactions -> runOnUiThread(() -> {
+            if (transactions == null || transactions.isEmpty()) {
+                if (layoutEmpty != null) layoutEmpty.setVisibility(View.VISIBLE);
+                if (scrollCategories != null) scrollCategories.setVisibility(View.GONE);
+                if (subtitle != null) subtitle.setText("No expense records recorded");
+                dialog.show();
+                return;
+            }
+
+            if (layoutEmpty != null) layoutEmpty.setVisibility(View.GONE);
+            if (scrollCategories != null) scrollCategories.setVisibility(View.VISIBLE);
+
+            class CatStat {
+                String name;
+                double total = 0;
+                int count = 0;
+            }
+
+            Map<String, CatStat> map = new HashMap<>();
+            double grandTotalOutflow = 0;
+
+            for (com.accounting.balancex.data.entity.TransactionEntity t : transactions) {
+                String cat = (t.category != null && !t.category.trim().isEmpty() && !t.category.equalsIgnoreCase("NA")) 
+                        ? t.category.trim() : "General";
+                double amt = 0;
+                try {
+                    amt = Double.parseDouble(t.amount.replaceAll("[^0-9.]", ""));
+                } catch (Exception ignored) {}
+
+                CatStat stat = map.get(cat);
+                if (stat == null) {
+                    stat = new CatStat();
+                    stat.name = cat;
+                    map.put(cat, stat);
+                }
+                stat.count++;
+                stat.total += amt;
+                grandTotalOutflow += amt;
+            }
+
+            List<CatStat> list = new ArrayList<>(map.values());
+            Collections.sort(list, (a, b) -> Double.compare(b.total, a.total));
+
+            String symbol = SettingsManager.getCurrencySymbol(MainActivity.this);
+            if (subtitle != null) {
+                subtitle.setText("Total Outflow: " + symbol + String.format(Locale.getDefault(), "%,.2f", grandTotalOutflow));
+            }
+
+            if (container != null) {
+                container.removeAllViews();
+                for (CatStat stat : list) {
+                    View item = getLayoutInflater().inflate(R.layout.item_category_breakdown, container, false);
+                    TextView textName = item.findViewById(R.id.textCatName);
+                    TextView textCount = item.findViewById(R.id.textCatCount);
+                    TextView textAmount = item.findViewById(R.id.textCatAmount);
+                    LinearProgressIndicator progress = item.findViewById(R.id.progressCat);
+                    ImageView imgIcon = item.findViewById(R.id.imgCatIcon);
+
+                    int pct = grandTotalOutflow > 0 ? (int) Math.round((stat.total / grandTotalOutflow) * 100) : 0;
+                    if (pct < 1 && stat.total > 0) pct = 1;
+
+                    if (textName != null) textName.setText(stat.name);
+                    if (textCount != null) {
+                        textCount.setText(stat.count + (stat.count == 1 ? " entry" : " entries") + " • " + pct + "%");
+                    }
+                    if (textAmount != null) {
+                        textAmount.setText(symbol + String.format(Locale.getDefault(), "%,.2f", stat.total));
+                    }
+                    if (progress != null) {
+                        progress.setProgress(pct);
+                    }
+                    if (imgIcon != null) {
+                        String lower = stat.name.toLowerCase();
+                        if (lower.contains("food") || lower.contains("dine") || lower.contains("meal") || lower.contains("snack")) {
+                            imgIcon.setImageResource(R.drawable.ic_cash);
+                        } else if (lower.contains("bill") || lower.contains("recharge") || lower.contains("rent") || lower.contains("electric")) {
+                            imgIcon.setImageResource(R.drawable.ic_payment);
+                        } else if (lower.contains("shop") || lower.contains("market") || lower.contains("cloth") || lower.contains("buy")) {
+                            imgIcon.setImageResource(R.drawable.ic_wallet);
+                        } else if (lower.contains("salary") || lower.contains("income") || lower.contains("profit")) {
+                            imgIcon.setImageResource(R.drawable.ic_arrow_down_left);
+                        } else if (lower.contains("transfer") || lower.contains("send") || lower.contains("upi")) {
+                            imgIcon.setImageResource(R.drawable.ic_arrow_up_right);
+                        } else {
+                            imgIcon.setImageResource(R.drawable.ic_filter);
+                        }
+                    }
+
+                    container.addView(item);
+                }
+            }
+
+            dialog.show();
+        }));
     }
 
     private void shareAppRecommendation() {
@@ -590,8 +784,29 @@ public class MainActivity extends AppCompatActivity {
             while ((line = reader.readLine()) != null) {
                 sb.append(line);
             }
-            JSONArray array = new JSONArray(sb.toString().trim());
-            List<com.accounting.balancex.data.entity.TransactionEntity> entities = new ArrayList<>();
+            String rawJson = sb.toString().trim();
+            if (rawJson.isEmpty() || (!rawJson.startsWith("[") && !rawJson.startsWith("{"))) {
+                Toast.makeText(this, "The selected file is not a valid JSON ledger file.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            JSONArray array;
+            if (rawJson.startsWith("{")) {
+                JSONObject root = new JSONObject(rawJson);
+                if (root.has("transactions")) {
+                    array = root.getJSONArray("transactions");
+                } else {
+                    array = new JSONArray();
+                    array.put(root);
+                }
+            } else {
+                array = new JSONArray(rawJson);
+            }
+
+            List<com.accounting.balancex.data.entity.TransactionEntity> importedEntities = new ArrayList<>();
+            double totalInflow = 0;
+            double totalOutflow = 0;
+
             for (int i = 0; i < array.length(); i++) {
                 JSONObject obj = array.getJSONObject(i);
                 com.accounting.balancex.data.entity.TransactionEntity entity = new com.accounting.balancex.data.entity.TransactionEntity();
@@ -606,80 +821,291 @@ public class MainActivity extends AppCompatActivity {
                 entity.category = obj.optString("category", "General");
                 entity.paymentMethod = obj.optString("paymentMethod", "Cash");
                 entity.textType = obj.optString("textType", obj.optString("transactionType", "Debit"));
-                entities.add(entity);
+
+                double parsedAmt = 0;
+                try {
+                    parsedAmt = Double.parseDouble(entity.amount.replaceAll("[^0-9.]", ""));
+                } catch (Exception ignored) {}
+
+                if ("credit".equalsIgnoreCase(entity.textType)) {
+                    totalInflow += parsedAmt;
+                } else {
+                    totalOutflow += parsedAmt;
+                }
+
+                importedEntities.add(entity);
             }
 
-            if (!entities.isEmpty()) {
-                com.accounting.balancex.data.repository.TransactionRepository repo =
-                        new com.accounting.balancex.data.repository.TransactionRepository(this);
-                repo.insertAll(entities, () -> runOnUiThread(() -> {
-                    Toast.makeText(MainActivity.this, "Successfully restored " + entities.size() + " transactions into local vault!", Toast.LENGTH_LONG).show();
-                    updateDrawerStats();
-                    loadBalanceData();
-                    loadTransactionsFromStorage();
-                    setupPieChart();
-                }));
-            } else {
+            if (importedEntities.isEmpty()) {
                 Toast.makeText(this, "The selected file did not contain any valid transactions.", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            // Extract file name
+            String fileName = "backup.json";
+            try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (nameIndex >= 0) {
+                        String name = cursor.getString(nameIndex);
+                        if (name != null && !name.trim().isEmpty()) {
+                            fileName = name;
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            showRestoreBottomSheet(importedEntities, fileName, totalInflow, totalOutflow);
+
         } catch (Exception e) {
-            Log.e("Restore", "Failed to import backup", e);
-            Toast.makeText(this, "Failed to restore backup: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("Restore", "Failed to parse backup", e);
+            Toast.makeText(this, "Failed to parse backup file: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
-    private void showCategoriesOverviewDialog() {
+    private void showRestoreBottomSheet(List<com.accounting.balancex.data.entity.TransactionEntity> importedEntities,
+                                         String fileName, double totalInflow, double totalOutflow) {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet_restore, null);
+        dialog.setContentView(view);
+
+        View btnClose = view.findViewById(R.id.btnCloseRestore);
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        TextView textCount = view.findViewById(R.id.textRestoreRecordCount);
+        TextView textFile = view.findViewById(R.id.textRestoreFileName);
+        TextView textInflow = view.findViewById(R.id.textRestoreInflow);
+        TextView textOutflow = view.findViewById(R.id.textRestoreOutflow);
+
+        String symbol = SettingsManager.getCurrencySymbol(this);
+        if (textCount != null) {
+            textCount.setText(importedEntities.size() + (importedEntities.size() == 1 ? " Entry Ready to Import" : " Entries Ready to Import"));
+        }
+        if (textFile != null) {
+            textFile.setText(fileName);
+        }
+        if (textInflow != null) {
+            textInflow.setText("+" + symbol + String.format(Locale.getDefault(), "%,.2f", totalInflow));
+        }
+        if (textOutflow != null) {
+            textOutflow.setText("-" + symbol + String.format(Locale.getDefault(), "%,.2f", totalOutflow));
+        }
+
         com.accounting.balancex.data.repository.TransactionRepository repo =
                 new com.accounting.balancex.data.repository.TransactionRepository(this);
-        repo.getAllTransactions(transactions -> runOnUiThread(() -> {
-            if (transactions == null || transactions.isEmpty()) {
-                Toast.makeText(this, "No transactions recorded yet.", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            Map<String, Integer> categoryCount = new HashMap<>();
-            for (com.accounting.balancex.data.entity.TransactionEntity t : transactions) {
-                String cat = (t.category != null && !t.category.trim().isEmpty()) ? t.category : "General";
-                categoryCount.put(cat, categoryCount.getOrDefault(cat, 0) + 1);
-            }
-            StringBuilder sb = new StringBuilder();
-            for (Map.Entry<String, Integer> entry : categoryCount.entrySet()) {
-                sb.append("• ").append(entry.getKey()).append(": ").append(entry.getValue()).append(" transactions\n");
-            }
-            new androidx.appcompat.app.AlertDialog.Builder(this)
-                    .setTitle("Categories & Budgets")
-                    .setMessage(sb.toString().trim())
-                    .setPositiveButton("Close", null)
-                    .show();
-        }));
+
+        // Action 1: Merge
+        View btnMerge = view.findViewById(R.id.btnRestoreMerge);
+        if (btnMerge != null) {
+            btnMerge.setOnClickListener(v -> {
+                dialog.dismiss();
+                repo.getAllTransactions(existingList -> {
+                    Set<String> existingSigs = new HashSet<>();
+                    long maxId = 0;
+                    if (existingList != null) {
+                        for (com.accounting.balancex.data.entity.TransactionEntity ex : existingList) {
+                            existingSigs.add(com.accounting.balancex.data.db.DatabaseMigrator.makeSignature(
+                                    ex.date, ex.amount, ex.receiver, ex.textType, ex.description));
+                            if (ex.entryId > maxId) {
+                                maxId = ex.entryId;
+                            }
+                        }
+                    }
+
+                    List<com.accounting.balancex.data.entity.TransactionEntity> toAdd = new ArrayList<>();
+                    for (com.accounting.balancex.data.entity.TransactionEntity imp : importedEntities) {
+                        String sig = com.accounting.balancex.data.db.DatabaseMigrator.makeSignature(
+                                imp.date, imp.amount, imp.receiver, imp.textType, imp.description);
+                        if (!existingSigs.contains(sig)) {
+                            maxId++;
+                            imp.entryId = maxId;
+                            toAdd.add(imp);
+                            existingSigs.add(sig);
+                        }
+                    }
+
+                    if (toAdd.isEmpty()) {
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this, 
+                                "All " + importedEntities.size() + " records in this snapshot are already in your vault.", 
+                                Toast.LENGTH_SHORT).show());
+                        return;
+                    }
+
+                    repo.insertAll(toAdd, () -> {
+                        repo.getAllTransactions(fullList -> {
+                            com.accounting.balancex.data.db.DatabaseMigrator.saveEntitiesToJson(MainActivity.this, fullList);
+                        });
+                        runOnUiThread(() -> {
+                            vibrateDevice();
+                            Toast.makeText(MainActivity.this, 
+                                    "Successfully merged " + toAdd.size() + " new entries into your vault!", 
+                                    Toast.LENGTH_LONG).show();
+                            updateDrawerStats();
+                            loadBalanceData();
+                            loadTransactionsFromStorage();
+                            setupPieChart();
+                        });
+                    });
+                });
+            });
+        }
+
+        // Action 2: Replace
+        View btnReplace = view.findViewById(R.id.btnRestoreReplace);
+        if (btnReplace != null) {
+            btnReplace.setOnClickListener(v -> {
+                new androidx.appcompat.app.AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Replace Vault?")
+                        .setMessage("This will replace all your current records with the " + importedEntities.size() + " records from " + fileName + ". This cannot be undone.")
+                        .setPositiveButton("Replace", (d, w) -> {
+                            dialog.dismiss();
+                            repo.deleteAll(() -> {
+                                repo.insertAll(importedEntities, () -> {
+                                    com.accounting.balancex.data.db.DatabaseMigrator.saveEntitiesToJson(MainActivity.this, importedEntities);
+                                    runOnUiThread(() -> {
+                                        vibrateDevice();
+                                        Toast.makeText(MainActivity.this, 
+                                                "Vault replaced with " + importedEntities.size() + " transactions!", 
+                                                Toast.LENGTH_LONG).show();
+                                        updateDrawerStats();
+                                        loadBalanceData();
+                                        loadTransactionsFromStorage();
+                                        setupPieChart();
+                                    });
+                                });
+                            });
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            });
+        }
+
+        dialog.show();
     }
 
-    private void showPaymentAccountsDialog() {
+    private void showPaymentAccountsBottomSheet() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet_accounts, null);
+        dialog.setContentView(view);
+
+        View btnClose = view.findViewById(R.id.btnCloseAccounts);
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        View layoutEmpty = view.findViewById(R.id.layoutEmptyAccounts);
+        View scrollAccounts = view.findViewById(R.id.scrollAccounts);
+        android.widget.LinearLayout container = view.findViewById(R.id.containerAccountItems);
+        TextView subtitle = view.findViewById(R.id.textAccountsTotalSubtitle);
+
         com.accounting.balancex.data.repository.TransactionRepository repo =
                 new com.accounting.balancex.data.repository.TransactionRepository(this);
+
         repo.getAllTransactions(transactions -> runOnUiThread(() -> {
             if (transactions == null || transactions.isEmpty()) {
-                Toast.makeText(this, "No transactions recorded yet.", Toast.LENGTH_SHORT).show();
+                if (layoutEmpty != null) layoutEmpty.setVisibility(View.VISIBLE);
+                if (scrollAccounts != null) scrollAccounts.setVisibility(View.GONE);
+                if (subtitle != null) subtitle.setText("No account records recorded");
+                dialog.show();
                 return;
             }
-            Map<String, Double> methodTotals = new HashMap<>();
+
+            if (layoutEmpty != null) layoutEmpty.setVisibility(View.GONE);
+            if (scrollAccounts != null) scrollAccounts.setVisibility(View.VISIBLE);
+
+            class AccountStat {
+                String name;
+                double totalVolume = 0;
+                double creditVolume = 0;
+                double debitVolume = 0;
+                int count = 0;
+            }
+
+            Map<String, AccountStat> map = new HashMap<>();
+            double grandTotalVolume = 0;
+
             for (com.accounting.balancex.data.entity.TransactionEntity t : transactions) {
-                String method = (t.paymentMethod != null && !t.paymentMethod.trim().isEmpty()) ? t.paymentMethod : "Cash";
+                String method = (t.paymentMethod != null && !t.paymentMethod.trim().isEmpty() && !t.paymentMethod.equalsIgnoreCase("NA"))
+                        ? t.paymentMethod.trim() : "Cash";
                 double amt = 0;
                 try {
                     amt = Double.parseDouble(t.amount.replaceAll("[^0-9.]", ""));
                 } catch (Exception ignored) {}
-                methodTotals.put(method, methodTotals.getOrDefault(method, 0.0) + amt);
+
+                AccountStat stat = map.get(method);
+                if (stat == null) {
+                    stat = new AccountStat();
+                    stat.name = method;
+                    map.put(method, stat);
+                }
+                stat.count++;
+                stat.totalVolume += amt;
+                grandTotalVolume += amt;
+                if ("credit".equalsIgnoreCase(t.textType)) {
+                    stat.creditVolume += amt;
+                } else {
+                    stat.debitVolume += amt;
+                }
             }
-            StringBuilder sb = new StringBuilder();
-            String symbol = SettingsManager.getCurrencySymbol(this);
-            for (Map.Entry<String, Double> entry : methodTotals.entrySet()) {
-                sb.append("• ").append(entry.getKey()).append(": ").append(symbol).append(String.format(Locale.getDefault(), "%.2f", entry.getValue())).append("\n");
+
+            List<AccountStat> list = new ArrayList<>(map.values());
+            Collections.sort(list, (a, b) -> Double.compare(b.totalVolume, a.totalVolume));
+
+            String symbol = SettingsManager.getCurrencySymbol(MainActivity.this);
+            if (subtitle != null) {
+                subtitle.setText("Total Channel Volume: " + symbol + String.format(Locale.getDefault(), "%,.2f", grandTotalVolume));
             }
-            new androidx.appcompat.app.AlertDialog.Builder(this)
-                    .setTitle("Payment Accounts")
-                    .setMessage(sb.toString().trim())
-                    .setPositiveButton("Close", null)
-                    .show();
+
+            if (container != null) {
+                container.removeAllViews();
+                for (AccountStat stat : list) {
+                    View item = getLayoutInflater().inflate(R.layout.item_account_breakdown, container, false);
+                    TextView textName = item.findViewById(R.id.textAccName);
+                    TextView textCount = item.findViewById(R.id.textAccCount);
+                    TextView textAmount = item.findViewById(R.id.textAccAmount);
+                    TextView textFlow = item.findViewById(R.id.textAccFlowTag);
+                    LinearProgressIndicator progress = item.findViewById(R.id.progressAcc);
+                    ImageView imgIcon = item.findViewById(R.id.imgAccIcon);
+
+                    int pct = grandTotalVolume > 0 ? (int) Math.round((stat.totalVolume / grandTotalVolume) * 100) : 0;
+                    if (pct < 1 && stat.totalVolume > 0) pct = 1;
+
+                    if (textName != null) textName.setText(stat.name);
+                    if (textCount != null) {
+                        textCount.setText(stat.count + (stat.count == 1 ? " transaction" : " transactions") + " • " + pct + "% volume");
+                    }
+                    if (textAmount != null) {
+                        textAmount.setText(symbol + String.format(Locale.getDefault(), "%,.2f", stat.totalVolume));
+                    }
+                    if (textFlow != null) {
+                        textFlow.setText("+" + symbol + String.format(Locale.getDefault(), "%,.0f", stat.creditVolume) 
+                                + " / -" + symbol + String.format(Locale.getDefault(), "%,.0f", stat.debitVolume));
+                    }
+                    if (progress != null) {
+                        progress.setProgress(pct);
+                    }
+                    if (imgIcon != null) {
+                        String lower = stat.name.toLowerCase();
+                        if (lower.contains("upi") || lower.contains("gpay") || lower.contains("phonepe") || lower.contains("paytm")) {
+                            imgIcon.setImageResource(R.drawable.ic_arrow_up_right);
+                        } else if (lower.contains("cash")) {
+                            imgIcon.setImageResource(R.drawable.ic_cash);
+                        } else if (lower.contains("bank") || lower.contains("net banking") || lower.contains("neft") || lower.contains("rtgs") || lower.contains("imps")) {
+                            imgIcon.setImageResource(R.drawable.ic_wallet);
+                        } else if (lower.contains("card") || lower.contains("credit") || lower.contains("debit")) {
+                            imgIcon.setImageResource(R.drawable.ic_payment);
+                        } else {
+                            imgIcon.setImageResource(R.drawable.ic_payment);
+                        }
+                    }
+
+                    container.addView(item);
+                }
+            }
+
+            dialog.show();
         }));
     }
 
