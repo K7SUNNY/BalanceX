@@ -122,6 +122,7 @@ public class ReportsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        SettingsManager.applyTheme(this);
         setContentView(R.layout.activity_reports);
 
         loadPreferences();
@@ -140,14 +141,14 @@ public class ReportsActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        SettingsManager.applyTheme(this);
         loadPreferences();
         loadTransactions();
     }
 
     private void loadPreferences() {
-        SharedPreferences prefs = getSharedPreferences("balancex_settings", MODE_PRIVATE);
-        currencySymbol = prefs.getString("currency_symbol", "₹");
-        isHapticEnabled = prefs.getBoolean("haptic_feedback", true);
+        currencySymbol = SettingsManager.getCurrencySymbol(this);
+        isHapticEnabled = SettingsManager.isHapticsEnabled(this);
     }
 
     private void setupWindowInsets() {
@@ -1217,16 +1218,6 @@ public class ReportsActivity extends AppCompatActivity {
     }
 
     private void vibrateDevice() {
-        if (!isHapticEnabled) return;
-        try {
-            Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-            if (vibrator != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    vibrator.vibrate(VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE));
-                } else {
-                    vibrator.vibrate(20);
-                }
-            }
-        } catch (Exception ignored) {}
+        SettingsManager.vibrate(this);
     }
 }

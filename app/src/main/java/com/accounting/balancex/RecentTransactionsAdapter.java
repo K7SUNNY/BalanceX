@@ -51,7 +51,8 @@ public class RecentTransactionsAdapter extends RecyclerView.Adapter<RecentTransa
         // ✅ Format the date before displaying
         holder.textViewDate.setText(formatDate(transaction.getDate()));
 
-        holder.textViewAmount.setText("₹" + transaction.getAmount());
+        String symbol = SettingsManager.getCurrencySymbol(context);
+        holder.textViewAmount.setText(symbol + transaction.getAmount());
         holder.textViewType.setText(transaction.getType());
 
         // Change text color based on transaction type

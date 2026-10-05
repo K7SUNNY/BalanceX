@@ -237,28 +237,59 @@
                         android:textSize="12sp"
                         android:layout_marginBottom="4dp"/>
 
-                    <RadioGroup
-                        android:id="@+id/paymentMethodGroup"
+                    <HorizontalScrollView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:scrollbars="none"
+                        android:fillViewport="true">
 
-                        <RadioButton
-                            android:id="@+id/radioButtonCash"
-                            android:layout_width="0dp"
+                        <RadioGroup
+                            android:id="@+id/paymentMethodGroup"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Cash"
-                            android:textColor="@color/text_primary" />
+                            android:orientation="horizontal">
 
-                        <RadioButton
-                            android:id="@+id/radioButtonUPI"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="UPI"
-                            android:textColor="@color/text_primary" />
-                    </RadioGroup>
+                            <RadioButton
+                                android:id="@+id/radioButtonUPI"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingEnd="14dp"
+                                android:text="UPI"
+                                android:textColor="@color/text_primary" />
+
+                            <RadioButton
+                                android:id="@+id/radioButtonCash"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingEnd="14dp"
+                                android:text="Cash"
+                                android:textColor="@color/text_primary" />
+
+                            <RadioButton
+                                android:id="@+id/radioButtonCard"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingEnd="14dp"
+                                android:text="Card"
+                                android:textColor="@color/text_primary" />
+
+                            <RadioButton
+                                android:id="@+id/radioButtonNetBanking"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingEnd="14dp"
+                                android:text="Net Banking"
+                                android:textColor="@color/text_primary" />
+
+                            <RadioButton
+                                android:id="@+id/radioButtonCheque"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingEnd="8dp"
+                                android:text="Cheque"
+                                android:textColor="@color/text_primary" />
+                        </RadioGroup>
+                    </HorizontalScrollView>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

@@ -24,6 +24,7 @@ public class NotificationActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        SettingsManager.applyTheme(this);
         setContentView(R.layout.activity_notification);
 
         tabLayout = findViewById(R.id.tabLayout);
@@ -61,8 +62,9 @@ public class NotificationActivity extends AppCompatActivity {
     }
 
     private void loadNotifications() {
-        notificationList.add(new NotificationModel("New Transaction", "You added ₹500 to your balance.", false));
-        notificationList.add(new NotificationModel("Payment Received", "₹250 received from John.", false));
+        String sym = SettingsManager.getCurrencySymbol(this);
+        notificationList.add(new NotificationModel("New Transaction", "You added " + sym + "500 to your balance.", false));
+        notificationList.add(new NotificationModel("Payment Received", sym + "250 received from John.", false));
         notificationList.add(new NotificationModel("Reminder", "Check your monthly report.", true));
         notificationList.add(new NotificationModel("Offer", "Get 10% cashback on your next transaction.", true));
     }

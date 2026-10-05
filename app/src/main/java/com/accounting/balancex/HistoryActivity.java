@@ -85,6 +85,7 @@ public class HistoryActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        SettingsManager.applyTheme(this);
         setContentView(R.layout.activity_history);
 
         setupWindowInsets();
@@ -347,7 +348,10 @@ public class HistoryActivity extends AppCompatActivity {
         loadingText.setVisibility(View.VISIBLE);
         allTransactions.clear();
 
-        File file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
+        File file = com.accounting.balancex.data.db.DatabaseMigrator.findJsonFile(this);
+        if (file == null) {
+            file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
+        }
         if (!file.exists()) {
             loadingText.setVisibility(View.GONE);
             applyFiltersAndSort();
@@ -510,11 +514,19 @@ public class HistoryActivity extends AppCompatActivity {
             }
         }
 
-        textSummaryIncome.setText("+₹" + String.format(Locale.getDefault(), "%,.2f", totalInflow));
+        String symbol = SettingsManager.getCurrencySymbol(this);
+        textSummaryIncome.setText("+" + symbol + String.format(Locale.getDefault(), "%,.2f", totalInflow));
         textCountIncome.setText(countInflow + (countInflow == 1 ? " entry" : " entries"));
 
-        textSummaryExpense.setText("-₹" + String.format(Locale.getDefault(), "%,.2f", totalOutflow));
+        textSummaryExpense.setText("-" + symbol + String.format(Locale.getDefault(), "%,.2f", totalOutflow));
         textCountExpense.setText(countOutflow + (countOutflow == 1 ? " entry" : " entries"));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SettingsManager.applyTheme(this);
+        loadTransactionsFromFile();
     }
 
     private void showFilterSortMenu(View anchor) {
@@ -607,13 +619,6 @@ public class HistoryActivity extends AppCompatActivity {
     }
 
     public void vibrateDevice() {
-        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        if (vibrator != null && vibrator.hasVibrator()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE));
-            } else {
-                vibrator.vibrate(20);
-            }
-        }
+        SettingsManager.vibrate(this);
     }
 }

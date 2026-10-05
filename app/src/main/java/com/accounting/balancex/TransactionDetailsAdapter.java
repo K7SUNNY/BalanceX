@@ -50,7 +50,8 @@ public class TransactionDetailsAdapter extends RecyclerView.Adapter<TransactionD
         }
         holder.cardBubble.setLayoutParams(params);
 
-        holder.textAmount.setText("₹" + transaction.getAmount());
+        String symbol = SettingsManager.getCurrencySymbol(context);
+        holder.textAmount.setText(symbol + transaction.getAmount());
         holder.textDate.setText(transaction.getDate());
         holder.textPaymentMethod.setText(transaction.getPaymentMethod());
         

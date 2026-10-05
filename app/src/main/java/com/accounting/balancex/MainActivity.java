@@ -28,7 +28,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
+import androidx.core.view.GravityCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -45,7 +47,9 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.navigation.NavigationView;
+
+import android.os.Looper;
+import java.nio.charset.StandardCharsets;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -87,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
     private LineChart lineChart;
     private DrawerLayout drawerLayout;
     private ImageView menuButton, notificationButton;
-    private NavigationView navigationView;
     // Back Press Handling
     private boolean backPressedOnce = false;
     private static final int EDIT_PROFILE_REQUEST = 1;
@@ -95,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        SettingsManager.applyTheme(this);
         setContentView(R.layout.activity_main_drawer);
 
         drawerLayout = findViewById(R.id.drawerlayout);
@@ -105,6 +109,24 @@ public class MainActivity extends AppCompatActivity {
                 View mainView = findViewById(R.id.main);
                 if (mainView != null) {
                     mainView.setPadding(insets.left, insets.top, insets.right, 0);
+                }
+                View drawerHeader = findViewById(R.id.drawerHeaderProfile);
+                if (drawerHeader != null) {
+                    int baseTop = (int) (20 * getResources().getDisplayMetrics().density);
+                    drawerHeader.setPadding(
+                            drawerHeader.getPaddingLeft(),
+                            baseTop + insets.top,
+                            drawerHeader.getPaddingRight(),
+                            drawerHeader.getPaddingBottom());
+                }
+                View drawerFooter = findViewById(R.id.drawerFooter);
+                if (drawerFooter != null) {
+                    int baseBottom = (int) (12 * getResources().getDisplayMetrics().density);
+                    drawerFooter.setPadding(
+                            drawerFooter.getPaddingLeft(),
+                            drawerFooter.getPaddingTop(),
+                            drawerFooter.getPaddingRight(),
+                            baseBottom + insets.bottom);
                 }
                 View navbar = findViewById(R.id.navbar);
                 if (navbar != null) {
@@ -124,8 +146,10 @@ public class MainActivity extends AppCompatActivity {
         com.accounting.balancex.data.repository.TransactionRepository repo = new com.accounting.balancex.data.repository.TransactionRepository(
                 this);
 
-        // 2. Trigger the JSON to Room migration
-        com.accounting.balancex.data.db.DatabaseMigrator.migrateJsonToRoomIfNeeded(this, repo);
+        // 2. Trigger the JSON to Room migration with live stats update
+        com.accounting.balancex.data.db.DatabaseMigrator.migrateJsonToRoomIfNeeded(this, repo, () -> {
+            runOnUiThread(this::updateDrawerStats);
+        });
 
         // 3. Query the encrypted database to verify data is there
         repo.getAllTransactions(transactions -> {
@@ -290,93 +314,384 @@ public class MainActivity extends AppCompatActivity {
             graphManager.updateGraph(selectedTimeline, graphType);
         });
 
-        drawerLayout = findViewById(R.id.drawerlayout);
-        menuButton = findViewById(R.id.menu_button);
-        menuButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                drawerLayout.open();
-            }
-        });
-        navigationView = findViewById(R.id.navigationView);
-        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                int itemId = item.getItemId();
-                if (itemId == R.id.my_profile) {
-                    Log.d("navigationView", "onNavigationItemSelected: my profile");
-                    startActivity(new Intent(MainActivity.this, ProfileActivity.class));
-                } else if (itemId == R.id.about_BalanceX) {
-                    Log.d("navigationView", "onNavigationItemSelected: about balanceX");
-                    startActivity(new Intent(MainActivity.this, AboutActivity.class));
-                    return true;
-                } else if (itemId == R.id.help_support) {
-                    sendEmail("Help & Support");
-                } else if (itemId == R.id.feedback) {
-                    sendEmail("Feedback");
-                } else if (itemId == R.id.export_data) {
-                    startActivity(new Intent(MainActivity.this, ReportsActivity.class));
-                }
-                return false;
-            }
-        });
-
-        notificationButton = findViewById(R.id.notificationButton);
-        notificationButton.setOnClickListener(v -> {
-            startActivity(new Intent(this, NotificationActivity.class));
-            vibrateDevice();
-        });
-
-        NavigationView navigationView = findViewById(R.id.navigationView);
-
-        View headerView = navigationView.getHeaderView(0);
-
-        TextView userNameText = headerView.findViewById(R.id.user_name);
-        TextView bioText = headerView.findViewById(R.id.bio);
-        ImageView profileImage = headerView.findViewById(R.id.profileImage);
-
-        // Initialize SharedPreferences
-        SharedPreferences sharedPreferences = getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
-
-        // Load Profile Data
+        setupCustomDrawer();
         loadProfileData();
 
+        notificationButton = findViewById(R.id.notificationButton);
+        if (notificationButton != null) {
+            notificationButton.setOnClickListener(v -> {
+                startActivity(new Intent(this, NotificationActivity.class));
+                vibrateDevice();
+            });
+        }
+
         TextView seeAllButton = findViewById(R.id.seeAllButton);
-        seeAllButton.setOnClickListener(v -> {
-            startActivity(new Intent(this, HistoryActivity.class));
-            vibrateDevice();
-        });
+        if (seeAllButton != null) {
+            seeAllButton.setOnClickListener(v -> {
+                startActivity(new Intent(this, HistoryActivity.class));
+                vibrateDevice();
+            });
+        }
+    }
+
+    private void setupCustomDrawer() {
+        drawerLayout = findViewById(R.id.drawerlayout);
+        menuButton = findViewById(R.id.menu_button);
+        if (menuButton != null) {
+            menuButton.setOnClickListener(v -> {
+                vibrateDevice();
+                if (drawerLayout != null) {
+                    drawerLayout.openDrawer(GravityCompat.START);
+                }
+            });
+        }
+
+        // 1. Profile Header -> ProfileActivity
+        View drawerProfile = findViewById(R.id.drawerHeaderProfile);
+        if (drawerProfile != null) {
+            drawerProfile.setOnClickListener(v -> {
+                vibrateDevice();
+                closeDrawerIfOpen();
+                startActivity(new Intent(MainActivity.this, ProfileActivity.class));
+            });
+        }
+
+        // 2. Backup Ledger -> Share Encrypted JSON Snapshot
+        View btnBackup = findViewById(R.id.btnDrawerBackup);
+        if (btnBackup != null) {
+            btnBackup.setOnClickListener(v -> {
+                vibrateDevice();
+                closeDrawerIfOpen();
+                backupLedgerData();
+            });
+        }
+
+        // 3. Restore / Import Ledger -> File Picker
+        View btnRestore = findViewById(R.id.btnDrawerRestore);
+        if (btnRestore != null) {
+            btnRestore.setOnClickListener(v -> {
+                vibrateDevice();
+                closeDrawerIfOpen();
+                openRestoreFilePicker();
+            });
+        }
+
+        // 4. Categories & Budgets -> Categories Dialog
+        View btnCategories = findViewById(R.id.btnDrawerCategories);
+        if (btnCategories != null) {
+            btnCategories.setOnClickListener(v -> {
+                vibrateDevice();
+                closeDrawerIfOpen();
+                showCategoriesOverviewDialog();
+            });
+        }
+
+        // 5. Payment Accounts -> Accounts Dialog
+        View btnAccounts = findViewById(R.id.btnDrawerAccounts);
+        if (btnAccounts != null) {
+            btnAccounts.setOnClickListener(v -> {
+                vibrateDevice();
+                closeDrawerIfOpen();
+                showPaymentAccountsDialog();
+            });
+        }
+
+        // 6. Vault Security & Privacy -> Security Dialog
+        View btnSecurity = findViewById(R.id.btnDrawerSecurity);
+        if (btnSecurity != null) {
+            btnSecurity.setOnClickListener(v -> {
+                vibrateDevice();
+                closeDrawerIfOpen();
+                showVaultSecurityDialog();
+            });
+        }
+
+        // 7. Help & Support -> Email
+        View btnHelp = findViewById(R.id.btnDrawerHelp);
+        if (btnHelp != null) {
+            btnHelp.setOnClickListener(v -> {
+                vibrateDevice();
+                closeDrawerIfOpen();
+                sendEmail("Help & Support - BalanceX");
+            });
+        }
+
+        // 8. Share BalanceX -> System Share Chooser
+        View btnShare = findViewById(R.id.btnDrawerShare);
+        if (btnShare != null) {
+            btnShare.setOnClickListener(v -> {
+                vibrateDevice();
+                closeDrawerIfOpen();
+                shareAppRecommendation();
+            });
+        }
+
+        // 9. About BalanceX -> AboutActivity
+        View btnAbout = findViewById(R.id.btnDrawerAbout);
+        if (btnAbout != null) {
+            btnAbout.setOnClickListener(v -> {
+                vibrateDevice();
+                closeDrawerIfOpen();
+                startActivity(new Intent(MainActivity.this, AboutActivity.class));
+            });
+        }
+
+        // 10. Dynamic App Version
+        TextView drawerVersion = findViewById(R.id.drawerVersionName);
+        if (drawerVersion != null) {
+            try {
+                String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+                drawerVersion.setText("BalanceX v" + versionName);
+            } catch (Exception e) {
+                drawerVersion.setText("BalanceX v1.0");
+            }
+        }
+
+        // 11. Ensure drawer container consumes all touch events so main screen buttons behind it are not clicked
+        View drawerContainer = findViewById(R.id.customDrawerContainer);
+        if (drawerContainer != null) {
+            drawerContainer.setClickable(true);
+            drawerContainer.setFocusable(true);
+        }
+        View drawerInner = findViewById(R.id.drawerInnerLayout);
+        if (drawerInner != null) {
+            drawerInner.setClickable(true);
+            drawerInner.setFocusable(true);
+        }
+    }
+
+    private void closeDrawerIfOpen() {
+        if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+        }
     }
 
     private void loadProfileData() {
         SharedPreferences sharedPreferences = getSharedPreferences("UserProfile", MODE_PRIVATE);
 
-        // Get NavigationView
-        NavigationView navigationView = findViewById(R.id.navigationView);
-        View headerView = navigationView.getHeaderView(0); // Get the first (default) header
+        TextView userNameText = findViewById(R.id.drawerUserName);
+        TextView bioText = findViewById(R.id.drawerUserBio);
+        ImageView profileImage = findViewById(R.id.drawerProfileImage);
 
-        // Find views in header
-        TextView userNameText = headerView.findViewById(R.id.user_name);
-        TextView bioText = headerView.findViewById(R.id.bio);
-        ImageView profileImage = headerView.findViewById(R.id.profileImage);
-
-        // Load and set text data
-        userNameText.setText(sharedPreferences.getString("userName", "User Name"));
-        bioText.setText(sharedPreferences.getString("bio", "Your Bio"));
-
-        // Load and set profile image
-        String imageUriString = sharedPreferences.getString("profileImageUri", "");
-        if (!imageUriString.isEmpty()) {
-            try {
-                Uri imageUri = Uri.parse(imageUriString);
-                profileImage.setImageURI(imageUri);
-            } catch (SecurityException e) {
-                Log.e("ProfileImage", "Permission denied for URI: " + imageUriString, e);
-                profileImage.setImageResource(R.drawable.ic_account); // Fallback to default
-            }
-        } else {
-            Log.e("ProfileImage", "Profile image URI is empty.");
+        if (userNameText != null) {
+            userNameText.setText(sharedPreferences.getString("userName", "User Name"));
         }
+        if (bioText != null) {
+            bioText.setText(sharedPreferences.getString("bio", "Personal Ledger"));
+        }
+
+        if (profileImage != null) {
+            String imageUriString = sharedPreferences.getString("profileImageUri", "");
+            if (!imageUriString.isEmpty()) {
+                try {
+                    Uri imageUri = Uri.parse(imageUriString);
+                    profileImage.setImageURI(imageUri);
+                } catch (SecurityException e) {
+                    Log.e("ProfileImage", "Permission denied for URI: " + imageUriString, e);
+                    profileImage.setImageResource(R.drawable.ic_account);
+                }
+            } else {
+                profileImage.setImageResource(R.drawable.ic_account);
+            }
+        }
+
+        updateDrawerStats();
+    }
+
+    private void updateDrawerStats() {
+        com.accounting.balancex.data.repository.TransactionRepository repo = 
+                new com.accounting.balancex.data.repository.TransactionRepository(this);
+        repo.getAllTransactions(transactions -> runOnUiThread(() -> {
+            int count = transactions != null ? transactions.size() : 0;
+            TextView statTrans = findViewById(R.id.drawerStatTransactions);
+            if (statTrans != null) {
+                statTrans.setText(count + (count == 1 ? " Entry" : " Entries"));
+            }
+            TextView ledgerCount = findViewById(R.id.drawerLedgerRecordCount);
+            if (ledgerCount != null) {
+                if (count > 0) {
+                    ledgerCount.setText(count + " records available to backup");
+                } else {
+                    ledgerCount.setText("Share encrypted JSON snapshot");
+                }
+            }
+        }));
+    }
+
+    private void backupLedgerData() {
+        com.accounting.balancex.data.repository.TransactionRepository repo = 
+                new com.accounting.balancex.data.repository.TransactionRepository(this);
+        repo.getAllTransactions(transactions -> {
+            if (transactions == null || transactions.isEmpty()) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "No transactions to backup.", Toast.LENGTH_SHORT).show());
+                return;
+            }
+            try {
+                com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+                String json = gson.toJson(transactions);
+                File backupDir = new File(getCacheDir(), "backups");
+                if (!backupDir.exists()) {
+                    backupDir.mkdirs();
+                }
+                File backupFile = new File(backupDir, "BalanceX_Ledger_Backup.json");
+                try (FileOutputStream fos = new FileOutputStream(backupFile)) {
+                    fos.write(json.getBytes(StandardCharsets.UTF_8));
+                }
+
+                Uri fileUri = FileProvider.getUriForFile(
+                        MainActivity.this,
+                        getPackageName() + ".provider",
+                        backupFile);
+
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("application/json");
+                shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, "BalanceX Ledger Backup");
+                shareIntent.putExtra(Intent.EXTRA_TEXT, "Here is the JSON ledger backup from BalanceX (" + transactions.size() + " records).");
+                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                runOnUiThread(() -> startActivity(Intent.createChooser(shareIntent, "Share Ledger Backup")));
+            } catch (Exception e) {
+                Log.e("Backup", "Error creating backup", e);
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to create backup: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        });
+    }
+
+    private void shareAppRecommendation() {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "BalanceX - Private Offline Finance");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, 
+                "Manage your personal finances with BalanceX — 100% offline, private, and secure expense manager.\nTrack expenses, generate PDF statements, and keep complete control of your financial data.");
+        startActivity(Intent.createChooser(shareIntent, "Share BalanceX"));
+    }
+
+    private static final int RESTORE_FILE_REQUEST = 1001;
+
+    private void openRestoreFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        String[] mimeTypes = {"application/json", "text/plain", "application/octet-stream"};
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+        try {
+            startActivityForResult(intent, RESTORE_FILE_REQUEST);
+        } catch (Exception e) {
+            Toast.makeText(this, "No document picker found to select backup file.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void importBackupFromUri(Uri uri) {
+        try (java.io.InputStream is = getContentResolver().openInputStream(uri);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+            JSONArray array = new JSONArray(sb.toString().trim());
+            List<com.accounting.balancex.data.entity.TransactionEntity> entities = new ArrayList<>();
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject obj = array.getJSONObject(i);
+                com.accounting.balancex.data.entity.TransactionEntity entity = new com.accounting.balancex.data.entity.TransactionEntity();
+                entity.entryId = obj.optLong("entryId", i + 1);
+                entity.date = obj.optString("date", "");
+                entity.amount = obj.has("amount") ? String.valueOf(obj.get("amount")) : "0";
+                entity.receiver = obj.optString("receiver", obj.optString("receiverName", "Unknown"));
+                entity.description = obj.optString("description", "");
+                entity.utr = obj.optString("utr", "");
+                entity.transactionId = obj.optString("transactionId", obj.optString("transactionID", ""));
+                entity.comments = obj.optString("comments", "");
+                entity.category = obj.optString("category", "General");
+                entity.paymentMethod = obj.optString("paymentMethod", "Cash");
+                entity.textType = obj.optString("textType", obj.optString("transactionType", "Debit"));
+                entities.add(entity);
+            }
+
+            if (!entities.isEmpty()) {
+                com.accounting.balancex.data.repository.TransactionRepository repo =
+                        new com.accounting.balancex.data.repository.TransactionRepository(this);
+                repo.insertAll(entities, () -> runOnUiThread(() -> {
+                    Toast.makeText(MainActivity.this, "Successfully restored " + entities.size() + " transactions into local vault!", Toast.LENGTH_LONG).show();
+                    updateDrawerStats();
+                    loadBalanceData();
+                    loadTransactionsFromStorage();
+                    setupPieChart();
+                }));
+            } else {
+                Toast.makeText(this, "The selected file did not contain any valid transactions.", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Log.e("Restore", "Failed to import backup", e);
+            Toast.makeText(this, "Failed to restore backup: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void showCategoriesOverviewDialog() {
+        com.accounting.balancex.data.repository.TransactionRepository repo =
+                new com.accounting.balancex.data.repository.TransactionRepository(this);
+        repo.getAllTransactions(transactions -> runOnUiThread(() -> {
+            if (transactions == null || transactions.isEmpty()) {
+                Toast.makeText(this, "No transactions recorded yet.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Map<String, Integer> categoryCount = new HashMap<>();
+            for (com.accounting.balancex.data.entity.TransactionEntity t : transactions) {
+                String cat = (t.category != null && !t.category.trim().isEmpty()) ? t.category : "General";
+                categoryCount.put(cat, categoryCount.getOrDefault(cat, 0) + 1);
+            }
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, Integer> entry : categoryCount.entrySet()) {
+                sb.append("• ").append(entry.getKey()).append(": ").append(entry.getValue()).append(" transactions\n");
+            }
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Categories & Budgets")
+                    .setMessage(sb.toString().trim())
+                    .setPositiveButton("Close", null)
+                    .show();
+        }));
+    }
+
+    private void showPaymentAccountsDialog() {
+        com.accounting.balancex.data.repository.TransactionRepository repo =
+                new com.accounting.balancex.data.repository.TransactionRepository(this);
+        repo.getAllTransactions(transactions -> runOnUiThread(() -> {
+            if (transactions == null || transactions.isEmpty()) {
+                Toast.makeText(this, "No transactions recorded yet.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Map<String, Double> methodTotals = new HashMap<>();
+            for (com.accounting.balancex.data.entity.TransactionEntity t : transactions) {
+                String method = (t.paymentMethod != null && !t.paymentMethod.trim().isEmpty()) ? t.paymentMethod : "Cash";
+                double amt = 0;
+                try {
+                    amt = Double.parseDouble(t.amount.replaceAll("[^0-9.]", ""));
+                } catch (Exception ignored) {}
+                methodTotals.put(method, methodTotals.getOrDefault(method, 0.0) + amt);
+            }
+            StringBuilder sb = new StringBuilder();
+            String symbol = SettingsManager.getCurrencySymbol(this);
+            for (Map.Entry<String, Double> entry : methodTotals.entrySet()) {
+                sb.append("• ").append(entry.getKey()).append(": ").append(symbol).append(String.format(Locale.getDefault(), "%.2f", entry.getValue())).append("\n");
+            }
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Payment Accounts")
+                    .setMessage(sb.toString().trim())
+                    .setPositiveButton("Close", null)
+                    .show();
+        }));
+    }
+
+    private void showVaultSecurityDialog() {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("100% Offline Vault Guarantee")
+                .setMessage("BalanceX is built from the ground up for strict personal financial privacy.\n\n"
+                        + "🔒 All data is stored locally in an encrypted SQLite database.\n"
+                        + "🚫 No cloud servers, no account logins, and no tracking.\n"
+                        + "📦 You have 100% ownership of your ledger backups at all times.")
+                .setPositiveButton("Understood", null)
+                .show();
     }
 
     @Override
@@ -384,11 +699,18 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == EDIT_PROFILE_REQUEST && resultCode == RESULT_OK) {
             loadProfileData(); // Reload updated data
+        } else if (requestCode == RESTORE_FILE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            importBackupFromUri(data.getData());
         }
     }
 
     @Override
     public void onBackPressed() {
+        if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            return;
+        }
+
         if (backPressedOnce) {
             super.onBackPressed(); // Close the app
             return;
@@ -398,7 +720,7 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "Press back again to exit app", Toast.LENGTH_SHORT).show();
 
         // Reset flag after 2 seconds
-        new Handler().postDelayed(() -> backPressedOnce = false, 2000);
+        new Handler(Looper.getMainLooper()).postDelayed(() -> backPressedOnce = false, 2000);
     }
 
     private void sendEmail(String subject) {
@@ -434,25 +756,55 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadBalanceData() {
+        String symbol = SettingsManager.getCurrencySymbol(this);
         try {
-            File file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
-            if (!file.exists())
+            File file = com.accounting.balancex.data.db.DatabaseMigrator.findJsonFile(this);
+            if (file == null) {
+                file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
+            }
+            if (!file.exists() || file.length() == 0) {
+                totalBalance = totalCredit = totalDebit = 0;
+                textTotalBalance.setText(symbol + "0.00");
+                textNetCredit.setText("+" + symbol + "0.00");
+                textNetDebit.setText("-" + symbol + "0.00");
                 return;
+            }
 
-            FileReader reader = new FileReader(file);
-            char[] buffer = new char[(int) file.length()];
-            reader.read(buffer);
+            FileInputStream fis = new FileInputStream(file);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
             reader.close();
+            fis.close();
 
-            JSONArray transactionsArray = new JSONArray(new String(buffer));
+            String jsonStr = sb.toString().trim();
+            if (jsonStr.isEmpty() || jsonStr.equals("[]")) {
+                totalBalance = totalCredit = totalDebit = 0;
+                textTotalBalance.setText(symbol + "0.00");
+                textNetCredit.setText("+" + symbol + "0.00");
+                textNetDebit.setText("-" + symbol + "0.00");
+                return;
+            }
+
+            JSONArray transactionsArray = new JSONArray(jsonStr);
             totalBalance = totalCredit = totalDebit = 0;
             Set<String> dateSet = new HashSet<>();
 
             for (int i = 0; i < transactionsArray.length(); i++) {
                 JSONObject transaction = transactionsArray.getJSONObject(i);
-                double amount = transaction.getDouble("amount");
-                String type = transaction.getString("textType");
-                String date = transaction.getString("date");
+                double amount = 0;
+                try {
+                    amount = transaction.getDouble("amount");
+                } catch (Exception e) {
+                    try {
+                        amount = Double.parseDouble(transaction.getString("amount").replaceAll("[^0-9.]", ""));
+                    } catch (Exception ignored) {}
+                }
+                String type = transaction.optString("textType", "debit");
+                String date = transaction.optString("date", "N/A");
 
                 dateSet.add(date);
 
@@ -465,29 +817,40 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            textTotalBalance.setText("₹" + totalBalance);
-            textNetCredit.setText("₹" + totalCredit);
-            textNetDebit.setText("₹" + totalDebit);
+            textTotalBalance.setText(symbol + String.format(Locale.getDefault(), "%,.2f", totalBalance));
+            textNetCredit.setText("+" + symbol + String.format(Locale.getDefault(), "%,.2f", totalCredit));
+            textNetDebit.setText("-" + symbol + String.format(Locale.getDefault(), "%,.2f", totalDebit));
 
             transactionDates = new ArrayList<>(dateSet);
             Collections.sort(transactionDates, Collections.reverseOrder());
-        } catch (IOException | org.json.JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            totalBalance = totalCredit = totalDebit = 0;
+            textTotalBalance.setText(symbol + "0.00");
+            textNetCredit.setText("+" + symbol + "0.00");
+            textNetDebit.setText("-" + symbol + "0.00");
         }
-        Log.e("LoadTransactions", "Transaction file not found!");
     }
 
     private void loadTransactionsFromStorage() {
-        File file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
+        File file = com.accounting.balancex.data.db.DatabaseMigrator.findJsonFile(this);
+        if (file == null) {
+            file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
+        }
 
-        if (!file.exists()) {
-            Log.e("LoadTransactions", "Transaction file not found!");
+        if (recentTransactions == null) {
+            recentTransactions = new ArrayList<>();
+        }
+        recentTransactions.clear();
+
+        if (!file.exists() || file.length() == 0) {
+            if (adapter != null) adapter.notifyDataSetChanged();
             return;
         }
 
         try {
             FileInputStream fis = new FileInputStream(file);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
             String line;
 
@@ -498,19 +861,22 @@ public class MainActivity extends AppCompatActivity {
             reader.close();
             fis.close();
 
-            JSONArray transactionsArray = new JSONArray(sb.toString());
-            if (recentTransactions == null) {
-                recentTransactions = new ArrayList<>(); // ✅ Initialize if null
+            String jsonStr = sb.toString().trim();
+            if (jsonStr.isEmpty() || jsonStr.equals("[]")) {
+                if (adapter != null) adapter.notifyDataSetChanged();
+                return;
             }
-            recentTransactions.clear();
 
-            for (int i = 0; i < 5; i++) {
+            JSONArray transactionsArray = new JSONArray(jsonStr);
+            int limit = Math.min(5, transactionsArray.length());
+
+            for (int i = 0; i < limit; i++) {
                 JSONObject transaction = transactionsArray.getJSONObject(i);
-                String receiver = transaction.getString("receiver");
-                String date = transaction.getString("date");
-                String amount = transaction.getString("amount");
-                String type = transaction.getString("textType"); // credit/debit
-                long entryId = transaction.getLong("entryId"); // Get entry ID as long
+                String receiver = transaction.optString("receiver", "Unknown");
+                String date = transaction.optString("date", "N/A");
+                String amount = transaction.optString("amount", "0.00");
+                String type = transaction.optString("textType", "debit");
+                long entryId = transaction.optLong("entryId", i + 1);
 
                 recentTransactions.add(new RecentTransactionModel(receiver, date, amount, type, entryId));
             }
@@ -518,11 +884,11 @@ public class MainActivity extends AppCompatActivity {
             // 🔹 SORT transactions by Entry ID in DESCENDING ORDER (latest first)
             Collections.sort(recentTransactions, (t1, t2) -> Long.compare(t2.getEntryId(), t1.getEntryId()));
 
-            adapter.notifyDataSetChanged(); // Update RecyclerView after sorting and loading
-            Log.d("Transactions", "Loaded Transactions: " + recentTransactions.size());
-
+            if (adapter != null) {
+                adapter.notifyDataSetChanged();
+            }
         } catch (Exception e) {
-            Log.e("LoadTransactions", "Error parsing JSON", e);
+            e.printStackTrace();
         }
     }
 
@@ -561,8 +927,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        SettingsManager.applyTheme(this);
         startAutoScroll(); // Resume auto-scroll
         loadProfileData();
+        loadBalanceData();
+        loadTransactionsFromStorage();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+        com.accounting.balancex.data.repository.TransactionRepository repo = 
+                new com.accounting.balancex.data.repository.TransactionRepository(this);
+        com.accounting.balancex.data.db.DatabaseMigrator.migrateJsonToRoomIfNeeded(this, repo, () -> {
+            runOnUiThread(this::updateDrawerStats);
+        });
     }
 
     @Override
@@ -646,21 +1023,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void vibrateDevice() {
-        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        if (vibrator != null && vibrator.hasVibrator()) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE));
-            } else {
-                vibrator.vibrate(30); // Deprecated in API 26+, but works for older versions
-            }
-        }
+        SettingsManager.vibrate(this);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.slide_menu_items, menu); // Inflates your menu XML
-        return true;
-    }
+
 
 
 

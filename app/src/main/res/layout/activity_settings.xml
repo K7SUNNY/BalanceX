@@ -178,7 +178,7 @@
                                     android:layout_width="18dp"
                                     android:layout_height="18dp"
                                     android:layout_gravity="center"
-                                    app:srcCompat="@drawable/ic_notification_bell"
+                                    app:srcCompat="@drawable/ic_vibrate"
                                     app:tint="@color/finance_income" />
                             </com.google.android.material.card.MaterialCardView>
 
@@ -241,6 +241,7 @@
                                 app:strokeWidth="0dp">
 
                                 <TextView
+                                    android:id="@+id/iconCurrencySymbol"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="center"
@@ -337,7 +338,7 @@
                                     android:layout_width="18dp"
                                     android:layout_height="18dp"
                                     android:layout_gravity="center"
-                                    app:srcCompat="@drawable/ic_bar_chart"
+                                    app:srcCompat="@drawable/ic_payment"
                                     app:tint="@color/color_primary" />
                             </com.google.android.material.card.MaterialCardView>
 
@@ -404,7 +405,7 @@
                                     android:layout_width="18dp"
                                     android:layout_height="18dp"
                                     android:layout_gravity="center"
-                                    app:srcCompat="@drawable/ic_arrow_up_right"
+                                    app:srcCompat="@drawable/ic_transaction"
                                     app:tint="@color/finance_expense" />
                             </com.google.android.material.card.MaterialCardView>
 
@@ -495,7 +496,7 @@
                                     android:layout_width="18dp"
                                     android:layout_height="18dp"
                                     android:layout_gravity="center"
-                                    app:srcCompat="@drawable/ic_export"
+                                    app:srcCompat="@drawable/ic_download"
                                     app:tint="@color/color_primary" />
                             </com.google.android.material.card.MaterialCardView>
 
@@ -516,14 +517,15 @@
 
                                 <TextView
                                     android:id="@+id/textStoragePath"
-                                    android:layout_width="wrap_content"
+                                    android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
                                     android:ellipsize="middle"
                                     android:maxLines="1"
                                     android:text="Documents/Accounting/transactions.json"
                                     android:textColor="@color/text_secondary"
-                                    android:textSize="12sp" />
+                                    android:textSize="12sp"
+                                    android:layout_marginEnd="16dp"/>
                             </LinearLayout>
 
                             <ImageView
@@ -563,7 +565,7 @@
                                     android:layout_width="18dp"
                                     android:layout_height="18dp"
                                     android:layout_gravity="center"
-                                    app:srcCompat="@drawable/ic_calendar"
+                                    app:srcCompat="@drawable/ic_cash"
                                     app:tint="@color/finance_income" />
                             </com.google.android.material.card.MaterialCardView>
 
@@ -942,7 +944,7 @@
                     </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
 
-                <!-- 4. Export -->
+                <!-- 4. Report -->
                 <LinearLayout
                     android:id="@+id/navExport"
                     android:layout_width="0dp"
@@ -960,7 +962,7 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:contentDescription="@string/nav_export"
-                        app:srcCompat="@drawable/ic_export"
+                        app:srcCompat="@drawable/ic_report"
                         app:tint="@color/nav_item_inactive" />
 
                     <TextView

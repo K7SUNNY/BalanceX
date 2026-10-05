@@ -41,6 +41,13 @@ public class TransactionRepository {
         });
     }
 
+    public void deleteAll(Runnable onSuccess) {
+        executorService.execute(() -> {
+            transactionDao.deleteAll();
+            if (onSuccess != null) onSuccess.run();
+        });
+    }
+
     public interface OnDataLoaded {
         void onDataLoaded(List<TransactionEntity> transactions);
     }

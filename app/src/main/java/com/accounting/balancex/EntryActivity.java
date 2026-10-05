@@ -85,6 +85,7 @@ public class EntryActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        SettingsManager.applyTheme(this);
         setContentView(R.layout.activity_entry);
 
         View entryRoot = findViewById(R.id.entry_root);
@@ -136,32 +137,30 @@ public class EntryActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 if (checkedId == R.id.radioButtonUPI) {
-                    // Slide in moreDetailsUPI
-                    moreDetailsUPI.setVisibility(View.VISIBLE);
-                    moreDetailsUPI.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_in));
+                    if (moreDetailsUPI.getVisibility() != View.VISIBLE) {
+                        moreDetailsUPI.setVisibility(View.VISIBLE);
+                        moreDetailsUPI.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_in));
+                        transactionDetail.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_up));
+                    }
+                } else {
+                    if (moreDetailsUPI.getVisibility() == View.VISIBLE) {
+                        Animation slideOut = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_out);
+                        moreDetailsUPI.startAnimation(slideOut);
+                        slideOut.setAnimationListener(new Animation.AnimationListener() {
+                            @Override
+                            public void onAnimationStart(Animation animation) {}
 
-                    // Move the transactionDetail layout with same timing
-                    transactionDetail.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_up));
-                } else if (checkedId == R.id.radioButtonCash) {
-                    // Slide out moreDetailsUPI
-                    Animation slideOut = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_out);
-                    moreDetailsUPI.startAnimation(slideOut);
-                    slideOut.setAnimationListener(new Animation.AnimationListener() {
-                        @Override
-                        public void onAnimationStart(Animation animation) {}
+                            @Override
+                            public void onAnimationEnd(Animation animation) {
+                                moreDetailsUPI.setVisibility(View.GONE);
+                            }
 
-                        @Override
-                        public void onAnimationEnd(Animation animation) {
-                            moreDetailsUPI.setVisibility(View.GONE);
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animation animation) {}
-                    });
-
-                    // Slide transactionDetail layout down to adjust
-                    Animation slideDown = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_down);
-                    transactionDetail.startAnimation(slideDown);
+                            @Override
+                            public void onAnimationRepeat(Animation animation) {}
+                        });
+                        Animation slideDown = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.slide_down);
+                        transactionDetail.startAnimation(slideDown);
+                    }
                 }
             }
         });
@@ -258,6 +257,32 @@ public class EntryActivity extends AppCompatActivity {
         attachReceiptButton.setOnClickListener(v -> showImageSourceDialog());
 
         findViewById(R.id.backButton).setOnClickListener(v -> onBackPressed());
+
+        // Apply defaults configured in Settings
+        applySettingsDefaults();
+    }
+
+    private void applySettingsDefaults() {
+        String symbol = SettingsManager.getCurrencySymbol(this);
+        amountInput.setHint("Amount (" + symbol + ")");
+
+        String defaultType = SettingsManager.getDefaultTransactionType(this);
+        if (defaultType != null && defaultType.toLowerCase().contains("credit")) {
+            selectTransactionType("Credit");
+        } else {
+            selectTransactionType("Debit");
+        }
+
+        String defaultMethod = SettingsManager.getDefaultPaymentMethod(this);
+        selectPaymentMethod(defaultMethod);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SettingsManager.applyTheme(this);
+        String symbol = SettingsManager.getCurrencySymbol(this);
+        amountInput.setHint("Amount (" + symbol + ")");
     }
 
     private void setNavigationListeners() {
@@ -480,6 +505,26 @@ public class EntryActivity extends AppCompatActivity {
             try (FileWriter writer = new FileWriter(file)) {
                 writer.write(transactionsArray.toString(4));
             }
+
+            // Also keep Room database in sync
+            try {
+                com.accounting.balancex.data.repository.TransactionRepository repo = 
+                        new com.accounting.balancex.data.repository.TransactionRepository(this);
+                com.accounting.balancex.data.entity.TransactionEntity entity = 
+                        new com.accounting.balancex.data.entity.TransactionEntity();
+                entity.entryId = Long.parseLong(entryId);
+                entity.date = selectedDate.isEmpty() ? "N/A" : selectedDate;
+                entity.amount = getOrNA(amountInput);
+                entity.receiver = getOrNA(receiverName);
+                entity.description = getOrNA(description);
+                entity.utr = getOrNA(utr);
+                entity.transactionId = getOrNA(transactionId);
+                entity.comments = getOrNA(comments);
+                entity.category = getOrNA(categoryInput);
+                entity.textType = transactionType;
+                entity.paymentMethod = paymentMethod;
+                repo.insert(entity, null);
+            } catch (Exception ignored) {}
 
             Toast.makeText(this, "Transaction saved successfully!", Toast.LENGTH_SHORT).show();
 
@@ -744,26 +789,34 @@ public class EntryActivity extends AppCompatActivity {
 
         Log.d("Tesseract", "Form updated with extracted data.");
     }
-        // Function to auto-select a payment method in RadioGroup
+    // Function to auto-select a payment method in RadioGroup
     private void selectPaymentMethod(String method) {
+        if (method == null) return;
         for (int i = 0; i < paymentMethodGroup.getChildCount(); i++) {
             View view = paymentMethodGroup.getChildAt(i);
-                if (view instanceof RadioButton) {
-                    RadioButton radioButton = (RadioButton) view;
-                    if (radioButton.getText().toString().equalsIgnoreCase(method)) {
-                        radioButton.setChecked(true);
-                        break;
+            if (view instanceof RadioButton) {
+                RadioButton radioButton = (RadioButton) view;
+                if (radioButton.getText().toString().equalsIgnoreCase(method.trim())) {
+                    radioButton.setChecked(true);
+                    if (radioButton.getId() == R.id.radioButtonUPI) {
+                        moreDetailsUPI.setVisibility(View.VISIBLE);
+                    } else {
+                        moreDetailsUPI.setVisibility(View.GONE);
                     }
+                    break;
                 }
             }
         }
+    }
+
     // Function to auto-select a transaction type in RadioGroup
     private void selectTransactionType(String type) {
+        if (type == null) return;
         for (int i = 0; i < transactionTypeGroup.getChildCount(); i++) {
             View view = transactionTypeGroup.getChildAt(i);
             if (view instanceof RadioButton) {
                 RadioButton radioButton = (RadioButton) view;
-                if (radioButton.getText().toString().equalsIgnoreCase(type)) {
+                if (radioButton.getText().toString().toLowerCase().contains(type.toLowerCase())) {
                     radioButton.setChecked(true);
                     break;
                 }
@@ -804,20 +857,12 @@ public class EntryActivity extends AppCompatActivity {
         calendar = Calendar.getInstance();
         dateTextView.setText(sdf.format(calendar.getTime()));
 
-        // Uncheck selected radio buttons
-        transactionTypeGroup.clearCheck();
-        paymentMethodGroup.clearCheck();
+        // Re-apply user defaults
+        applySettingsDefaults();
 
         Toast.makeText(this, "All fields cleared!", Toast.LENGTH_SHORT).show();
     }
     public void vibrateDevice() {
-        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        if (vibrator != null && vibrator.hasVibrator()) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE));
-            } else {
-                vibrator.vibrate(30); // Deprecated in API 26+, but works for older versions
-            }
-        }
+        SettingsManager.vibrate(this);
     }
 }

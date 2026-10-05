@@ -628,7 +628,7 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:contentDescription="@string/nav_export"
-                        app:srcCompat="@drawable/ic_export"
+                        app:srcCompat="@drawable/ic_report"
                         app:tint="@color/nav_item_inactive" />
 
                     <TextView

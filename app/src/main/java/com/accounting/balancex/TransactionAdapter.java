@@ -62,7 +62,8 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
             holder.textType.setTextColor(ContextCompat.getColor(context, R.color.finance_income));
             holder.textType.setBackground(null);
 
-            holder.textAmount.setText("+₹" + formatAmount(transaction.getAmount()));
+            String symbol = SettingsManager.getCurrencySymbol(context);
+            holder.textAmount.setText("+" + symbol + formatAmount(transaction.getAmount()));
             holder.textAmount.setTextColor(ContextCompat.getColor(context, R.color.finance_income));
         } else {
             holder.cardIconContainer.setCardBackgroundColor(
@@ -75,7 +76,8 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
             holder.textType.setTextColor(ContextCompat.getColor(context, R.color.text_secondary));
             holder.textType.setBackground(null);
 
-            holder.textAmount.setText("-₹" + formatAmount(transaction.getAmount()));
+            String symbol = SettingsManager.getCurrencySymbol(context);
+            holder.textAmount.setText("-" + symbol + formatAmount(transaction.getAmount()));
             holder.textAmount.setTextColor(ContextCompat.getColor(context, R.color.finance_expense));
         }
 
@@ -114,7 +116,8 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
             if (toCopy != null && !toCopy.trim().isEmpty() && !toCopy.equalsIgnoreCase("N/A")) {
                 copyToClipboard(context, "Reference", toCopy);
             } else {
-                copyToClipboard(context, "Transaction", transaction.getReceiverName() + " - ₹" + transaction.getAmount());
+                String symbol = SettingsManager.getCurrencySymbol(context);
+                copyToClipboard(context, "Transaction", transaction.getReceiverName() + " - " + symbol + transaction.getAmount());
             }
             return true;
         });
@@ -177,17 +180,18 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
         boolean isCredit = transaction.getTransactionType() != null &&
                 transaction.getTransactionType().equalsIgnoreCase("Credit");
 
+        String symbol = SettingsManager.getCurrencySymbol(ctx);
         if (isCredit) {
             bsTextType.setText("CREDIT / RECEIVED");
             bsTextType.setTextColor(ContextCompat.getColor(ctx, R.color.finance_income));
             bsTextType.setBackgroundResource(R.drawable.bg_credit);
-            bsTextAmount.setText("+₹" + formatAmount(transaction.getAmount()));
+            bsTextAmount.setText("+" + symbol + formatAmount(transaction.getAmount()));
             bsTextAmount.setTextColor(ContextCompat.getColor(ctx, R.color.finance_income));
         } else {
             bsTextType.setText("DEBIT / SENT");
             bsTextType.setTextColor(ContextCompat.getColor(ctx, R.color.finance_expense));
             bsTextType.setBackgroundResource(R.drawable.bg_debit);
-            bsTextAmount.setText("-₹" + formatAmount(transaction.getAmount()));
+            bsTextAmount.setText("-" + symbol + formatAmount(transaction.getAmount()));
             bsTextAmount.setTextColor(ContextCompat.getColor(ctx, R.color.finance_expense));
         }
 
@@ -230,7 +234,7 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
             String shareBody = "BalanceX Transaction Receipt:\n" +
                     "Party: " + transaction.getReceiverName() + "\n" +
                     "Type: " + transaction.getTransactionType() + "\n" +
-                    "Amount: ₹" + transaction.getAmount() + "\n" +
+                    "Amount: " + symbol + transaction.getAmount() + "\n" +
                     "Date: " + transaction.getDate() + "\n" +
                     "Ref / UTR: " + transaction.getUtr() + "\n" +
                     "Payment Method: " + transaction.getPaymentMethod();
@@ -275,14 +279,7 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
     }
 
     private void vibrate(Context ctx) {
-        Vibrator vibrator = (Vibrator) ctx.getSystemService(Context.VIBRATOR_SERVICE);
-        if (vibrator != null && vibrator.hasVibrator()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createOneShot(25, VibrationEffect.DEFAULT_AMPLITUDE));
-            } else {
-                vibrator.vibrate(25);
-            }
-        }
+        SettingsManager.vibrate(ctx);
     }
 
     private String formatAmount(String amountStr) {

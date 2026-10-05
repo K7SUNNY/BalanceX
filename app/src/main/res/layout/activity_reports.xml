@@ -1178,7 +1178,7 @@
                             android:textSize="13sp"
                             android:textStyle="bold"
                             app:cornerRadius="14dp"
-                            app:icon="@drawable/ic_export"
+                            app:icon="@drawable/ic_download"
                             app:iconGravity="textStart"
                             app:iconSize="18dp"
                             app:iconTint="@color/text_primary"
@@ -1198,7 +1198,7 @@
                             android:textSize="13sp"
                             android:textStyle="bold"
                             app:cornerRadius="14dp"
-                            app:icon="@drawable/ic_export"
+                            app:icon="@drawable/ic_share"
                             app:iconGravity="textStart"
                             app:iconSize="18dp"
                             app:iconTint="@color/nav_fab_icon" />
@@ -1344,7 +1344,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:contentDescription="@string/nav_reports"
-                        app:srcCompat="@drawable/ic_export"
+                        app:srcCompat="@drawable/ic_report"
                         app:tint="@color/nav_item_active" />
 
                     <TextView
