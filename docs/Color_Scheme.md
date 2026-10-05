@@ -27,6 +27,10 @@ This document provides a complete reference for the Material 3-aligned modern fi
 | **`color_on_primary_container`** | `#001C3B` | `#D5E3FF` | Text/icon color on `color_primary_container` |
 | **`color_accent`** | `#2B6CB0` | `#70B2FF` | Interactive links, active filter pills, buttons |
 | **`color_secondary`** | `#51606F` | `#B9C8DA` | Secondary UI controls and neutral badges |
+| **`color_tertiary`** | `#B45309` | `#FBBF24` | Warm tertiary accent for profile / alert highlights |
+| **`color_tertiary_container`** | `#FEF3C7` | `#3D2406` | Tonal container for tertiary action items |
+| **`color_on_tertiary`** | `#FFFFFF` | `#451A03` | High-contrast text/icon color on tertiary |
+| **`color_on_tertiary_container`** | `#451A03` | `#FEF3C7` | High-contrast text/icon color on tertiary container |
 | **`surface_background`** | `#F7F9FC` | `#0E1217` | Window & root view background |
 | **`surface_card`** | `#FFFFFF` | `#171D25` | Elevated cards, dialog boxes, bottom sheets |
 | **`surface_input`** | `#EEF2F6` | `#222933` | Text input fills, search fields, unselected pills |
@@ -46,9 +50,13 @@ This document provides a complete reference for the Material 3-aligned modern fi
 | **`finance_expense`** | `#B91C1C` | `#F87171` | Negative balances, debit badges, expense chart bars |
 | **`finance_expense_container`** | `#FEE2E2` | `#3C1010` | Pill background for debit transaction tags |
 | **`chart_grid_line`** | `#E2E8F0` | `#252D3B` | Chart grid lines, axis guidelines |
-| **`chart_axis_label`** | `#64748B` | `#94A3B8` | Chart axis labels and data markers |
-| **`header_gradient_start`** | `#1B4B82` | `#1A2330` | Top toolbar & bottom navigation start gradient |
-| **`header_gradient_end`** | `#0D2D52` | `#111720` | Top toolbar & bottom navigation end gradient |
+| **`chart_axis_label`** | `#475569` | `#94A3B8` | Chart axis labels and data markers |
+| **`selection_tab_selected_bg`** | `#FFFFFF` | `#2C3647` | Selected pill background in timeline selectors |
+| **`selection_tab_selected_text`** | `#1B4B82` | `#F1F5F9` | Selected tab text in timeline selectors |
+| **`selection_tab_unselected_text`** | `#64748B` | `#94A3B8` | Unselected tab text in timeline selectors |
+| **`navbar_background`** | `#0B2545` | `#131922` | Solid continuous background for bottom nav and system bar |
+| **`header_gradient_start`** | `#1B4B82` | `#1A2330` | Top toolbar header start gradient |
+| **`header_gradient_end`** | `#0D2D52` | `#111720` | Top toolbar header end gradient |
 
 ---
 
@@ -73,10 +81,11 @@ The base application theme maps system attributes directly to canonical tokens:
     <item name="colorOnSurface">@color/text_primary</item>
     <item name="colorOutline">@color/border_subtle</item>
 
-    <!-- System Bars -->
+    <!-- System Bars (Seamless Edge-to-Edge) -->
     <item name="android:statusBarColor">@color/surface_background</item>
-    <!-- Day: true | Night: false -->
-    <item name="android:windowLightStatusBar">true</item>
+    <item name="android:windowLightStatusBar">true</item> <!-- Day: true | Night: false -->
+    <item name="android:navigationBarColor">@color/navbar_background</item>
+    <item name="android:windowLightNavigationBar">false</item>
 </style>
 ```
 

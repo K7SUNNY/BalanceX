@@ -9,6 +9,10 @@
 
     <color name="color_accent">#2B6CB0</color>
     <color name="color_secondary">#51606F</color>
+    <color name="color_tertiary">#B45309</color>
+    <color name="color_tertiary_container">#FEF3C7</color>
+    <color name="color_on_tertiary">#FFFFFF</color>
+    <color name="color_on_tertiary_container">#451A03</color>
 
     <!-- Surfaces -->
     <color name="surface_background">#F7F9FC</color>
@@ -29,7 +33,7 @@
 
     <!-- Charts & Controls -->
     <color name="chart_grid_line">#E2E8F0</color>
-    <color name="chart_axis_label">#64748B</color>
+    <color name="chart_axis_label">#475569</color>
     <color name="header_gradient_start">#1B4B82</color>
     <color name="header_gradient_end">#0D2D52</color>
 
@@ -66,9 +70,10 @@
     <color name="timeline_bg">@color/surface_input</color>
     <color name="selection_bg">@color/surface_input</color>
     <color name="selection_tab_selected_bg">@color/surface_card</color>
-    <color name="selection_tab_selected_text">@color/color_accent</color>
+    <color name="selection_tab_selected_text">@color/color_primary</color>
     <color name="selection_tab_unselected_text">@color/text_secondary</color>
-    <color name="navbar_bg">@color/header_gradient_start</color>
-    <color name="navbar_gradient_start">@color/header_gradient_start</color>
-    <color name="navbar_gradient_end">@color/header_gradient_end</color>
+    <color name="navbar_background">#0B2545</color>
+    <color name="navbar_bg">@color/navbar_background</color>
+    <color name="navbar_gradient_start">@color/navbar_background</color>
+    <color name="navbar_gradient_end">@color/navbar_background</color>
 </resources>

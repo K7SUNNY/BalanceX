@@ -21,3 +21,6 @@ captures/
 *~
 Thumbs.db
 desktop.ini
+.agents/
+UI_referene/
+.kilo/

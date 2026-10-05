@@ -183,15 +183,18 @@ public class GraphManager {
         // Data sets for Credit and Debit
         int creditColor = ContextCompat.getColor(context, R.color.finance_income);
         int debitColor = ContextCompat.getColor(context, R.color.finance_expense);
-        int textColor = ContextCompat.getColor(context, R.color.chart_axis_label);
+        int valueTextColor = ContextCompat.getColor(context, R.color.text_primary);
+        int axisTextColor = ContextCompat.getColor(context, R.color.chart_axis_label);
 
         BarDataSet creditSet = new BarDataSet(creditEntries, "Credit");
         creditSet.setColor(creditColor);
-        creditSet.setValueTextColor(textColor);
+        creditSet.setValueTextColor(valueTextColor);
+        creditSet.setValueTextSize(11f);
 
         BarDataSet debitSet = new BarDataSet(debitEntries, "Debit");
         debitSet.setColor(debitColor);
-        debitSet.setValueTextColor(textColor);
+        debitSet.setValueTextColor(valueTextColor);
+        debitSet.setValueTextSize(11f);
 
         // Group the bars
         float groupSpace = 0.2f; // Space between groups
@@ -203,6 +206,8 @@ public class GraphManager {
         barChart.setData(barData);
         barChart.setBackgroundColor(Color.TRANSPARENT);
         barChart.setDrawGridBackground(false);
+        barChart.getDescription().setEnabled(false);
+        barChart.setExtraBottomOffset(12f);
 
         // X-Axis Customization
         XAxis xAxis = barChart.getXAxis();
@@ -211,10 +216,12 @@ public class GraphManager {
         xAxis.setCenterAxisLabels(true);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(false);
-        xAxis.setTextColor(textColor);
+        xAxis.setTextColor(axisTextColor);
+        xAxis.setTextSize(11f);
 
         // Y-Axis Customization
-        barChart.getAxisLeft().setTextColor(textColor);
+        barChart.getAxisLeft().setTextColor(axisTextColor);
+        barChart.getAxisLeft().setTextSize(11f);
         barChart.getAxisLeft().setDrawGridLines(true);
         barChart.getAxisLeft().setGridColor(ContextCompat.getColor(context, R.color.chart_grid_line));
         barChart.getAxisRight().setEnabled(false);
@@ -245,7 +252,8 @@ public class GraphManager {
         // Create Line DataSets
         int creditColor = ContextCompat.getColor(context, R.color.finance_income);
         int debitColor = ContextCompat.getColor(context, R.color.finance_expense);
-        int textColor = ContextCompat.getColor(context, R.color.chart_axis_label);
+        int valueTextColor = ContextCompat.getColor(context, R.color.text_primary);
+        int axisTextColor = ContextCompat.getColor(context, R.color.chart_axis_label);
 
         LineDataSet creditSet = new LineDataSet(creditEntries, "Credit");
         creditSet.setColor(creditColor);
@@ -253,7 +261,8 @@ public class GraphManager {
         creditSet.setLineWidth(2f);
         creditSet.setCircleRadius(5f);
         creditSet.setDrawValues(true);
-        creditSet.setValueTextColor(textColor);
+        creditSet.setValueTextColor(valueTextColor);
+        creditSet.setValueTextSize(11f);
         creditSet.setMode(LineDataSet.Mode.CUBIC_BEZIER); // Smooth curve
 
         LineDataSet debitSet = new LineDataSet(debitEntries, "Debit");
@@ -262,7 +271,8 @@ public class GraphManager {
         debitSet.setLineWidth(2f);
         debitSet.setCircleRadius(5f);
         debitSet.setDrawValues(true);
-        debitSet.setValueTextColor(textColor);
+        debitSet.setValueTextColor(valueTextColor);
+        debitSet.setValueTextSize(11f);
         debitSet.setMode(LineDataSet.Mode.CUBIC_BEZIER); // Smooth curve
 
         // Apply dataset to LineData
@@ -270,6 +280,8 @@ public class GraphManager {
         lineChart.setData(lineData);
         lineChart.setBackgroundColor(Color.TRANSPARENT);
         lineChart.setDrawGridBackground(false);
+        lineChart.getDescription().setEnabled(false);
+        lineChart.setExtraBottomOffset(12f);
 
         // X-Axis Customization (Add Labels like Bar Chart)
         XAxis xAxis = lineChart.getXAxis();
@@ -277,15 +289,18 @@ public class GraphManager {
         xAxis.setGranularity(1f);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(false);
-        xAxis.setTextColor(textColor);
+        xAxis.setTextColor(axisTextColor);
+        xAxis.setTextSize(11f);
         xAxis.setLabelRotationAngle(-45);
 
         // Y-Axis Customization
-        lineChart.getAxisLeft().setTextColor(textColor);
+        lineChart.getAxisLeft().setTextColor(axisTextColor);
+        lineChart.getAxisLeft().setTextSize(11f);
         lineChart.getAxisLeft().setDrawGridLines(true);
         lineChart.getAxisLeft().setGridColor(ContextCompat.getColor(context, R.color.chart_grid_line));
         lineChart.getAxisRight().setEnabled(false);
-        lineChart.getLegend().setTextColor(textColor);
+        lineChart.getLegend().setTextColor(axisTextColor);
+        lineChart.getLegend().setTextSize(11f);
         lineChart.getLegend().setEnabled(true);
 
         // Apply animations

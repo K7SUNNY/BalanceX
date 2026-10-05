@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.graphics.pdf.PdfDocument;
 import android.icu.util.Calendar;
 import android.net.Uri;
@@ -30,6 +31,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSnapHelper;
@@ -95,6 +99,28 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_drawer);
+
+        drawerLayout = findViewById(R.id.drawerlayout);
+        if (drawerLayout != null) {
+            drawerLayout.setStatusBarBackgroundColor(ContextCompat.getColor(this, R.color.surface_background));
+            ViewCompat.setOnApplyWindowInsetsListener(drawerLayout, (v, windowInsets) -> {
+                Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                View mainView = findViewById(R.id.main);
+                if (mainView != null) {
+                    mainView.setPadding(insets.left, insets.top, insets.right, 0);
+                }
+                View navbar = findViewById(R.id.navbar);
+                if (navbar != null) {
+                    navbar.setPadding(
+                            navbar.getPaddingLeft(),
+                            navbar.getPaddingTop(),
+                            navbar.getPaddingRight(),
+                            insets.bottom);
+                }
+                return windowInsets;
+            });
+            ViewCompat.requestApplyInsets(drawerLayout);
+        }
 
         // 1. Initialize the Repository
         com.accounting.balancex.data.repository.TransactionRepository repo = new com.accounting.balancex.data.repository.TransactionRepository(
@@ -381,16 +407,20 @@ public class MainActivity extends AppCompatActivity {
     private void updateTimelineSelection(TextView selected, TextView... others) {
         selected.setBackgroundResource(R.drawable.selected_title);
         selected.setTextColor(ContextCompat.getColor(this, R.color.selection_tab_selected_text));
+        selected.setTypeface(null, Typeface.BOLD);
 
         for (TextView other : others) {
             other.setBackgroundColor(Color.TRANSPARENT);
             other.setTextColor(ContextCompat.getColor(this, R.color.selection_tab_unselected_text));
+            other.setTypeface(null, Typeface.NORMAL);
         }
     }
 
     private void updateGraphTypeSelection(ImageView selected, ImageView other) {
         selected.setBackgroundResource(R.drawable.selected_title);
+        selected.setColorFilter(ContextCompat.getColor(this, R.color.text_primary));
         other.setBackgroundResource(android.R.color.transparent);
+        other.setColorFilter(ContextCompat.getColor(this, R.color.text_tertiary));
     }
 
     private void loadBalanceData() {
@@ -598,6 +628,8 @@ public class MainActivity extends AppCompatActivity {
 
         PieData pieData = new PieData(dataSet);
         pieChart.setData(pieData);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setHoleColor(ContextCompat.getColor(this, R.color.surface_card));
         pieChart.getLegend().setTextColor(textColor);
         pieChart.setEntryLabelColor(textColor);
         pieChart.invalidate(); // Refresh chart

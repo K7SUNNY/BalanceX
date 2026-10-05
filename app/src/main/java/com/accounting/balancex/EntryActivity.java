@@ -88,6 +88,23 @@ public class EntryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_entry);
 
+        View entryRoot = findViewById(R.id.entry_root);
+        if (entryRoot != null) {
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(entryRoot, (v, windowInsets) -> {
+                androidx.core.graphics.Insets insets = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+                v.setPadding(insets.left, insets.top, insets.right, 0);
+                View navbar = findViewById(R.id.navbar);
+                if (navbar != null) {
+                    navbar.setPadding(
+                            navbar.getPaddingLeft(),
+                            navbar.getPaddingTop(),
+                            navbar.getPaddingRight(),
+                            insets.bottom);
+                }
+                return windowInsets;
+            });
+        }
+
         initializeUI();
         requestStoragePermission();
         setNavigationListeners();

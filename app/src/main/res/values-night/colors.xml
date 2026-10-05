@@ -9,6 +9,10 @@
 
     <color name="color_accent">#70B2FF</color>
     <color name="color_secondary">#B9C8DA</color>
+    <color name="color_tertiary">#FBBF24</color>
+    <color name="color_tertiary_container">#3D2406</color>
+    <color name="color_on_tertiary">#451A03</color>
+    <color name="color_on_tertiary_container">#FEF3C7</color>
 
     <!-- Surfaces -->
     <color name="surface_background">#0E1217</color>
@@ -65,10 +69,11 @@
     <color name="light_gray">@color/surface_input</color>
     <color name="timeline_bg">@color/surface_input</color>
     <color name="selection_bg">@color/surface_input</color>
-    <color name="selection_tab_selected_bg">@color/surface_card</color>
-    <color name="selection_tab_selected_text">@color/color_accent</color>
+    <color name="selection_tab_selected_bg">#2C3647</color>
+    <color name="selection_tab_selected_text">@color/text_primary</color>
     <color name="selection_tab_unselected_text">@color/text_secondary</color>
-    <color name="navbar_bg">@color/header_gradient_start</color>
-    <color name="navbar_gradient_start">@color/header_gradient_start</color>
-    <color name="navbar_gradient_end">@color/header_gradient_end</color>
+    <color name="navbar_background">#131922</color>
+    <color name="navbar_bg">@color/navbar_background</color>
+    <color name="navbar_gradient_start">@color/navbar_background</color>
+    <color name="navbar_gradient_end">@color/navbar_background</color>
 </resources>

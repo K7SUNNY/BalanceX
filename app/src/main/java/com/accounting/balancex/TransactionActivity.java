@@ -26,6 +26,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -70,6 +73,23 @@ public class TransactionActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transaction);
+
+        View coordinator = findViewById(R.id.coordinator);
+        if (coordinator != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(coordinator, (v, windowInsets) -> {
+                Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(insets.left, insets.top, insets.right, 0);
+                View navbar = findViewById(R.id.navbar);
+                if (navbar != null) {
+                    navbar.setPadding(
+                            navbar.getPaddingLeft(),
+                            navbar.getPaddingTop(),
+                            navbar.getPaddingRight(),
+                            insets.bottom);
+                }
+                return windowInsets;
+            });
+        }
 
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));

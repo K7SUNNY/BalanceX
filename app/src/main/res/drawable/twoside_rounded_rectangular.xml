@@ -1,8 +1,5 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <gradient
-        android:startColor="@color/header_gradient_start"
-        android:endColor="@color/header_gradient_end"
-        android:angle="90"/>
+    <solid android:color="@color/navbar_background"/>
     <corners
         android:topLeftRadius="16dp"
         android:topRightRadius="16dp"

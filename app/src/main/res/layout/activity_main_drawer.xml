@@ -8,7 +8,7 @@
     tools:openDrawer="start"
     android:id="@+id/drawerlayout"
     tools:context=".MainActivity"
-    android:fitsSystemWindows="true">
+    app:statusBarBackground="@color/surface_background">
 
     <include layout="@layout/activity_main"/>
 
