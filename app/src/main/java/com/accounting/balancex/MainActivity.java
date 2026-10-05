@@ -1364,7 +1364,12 @@ public class MainActivity extends AppCompatActivity {
         com.accounting.balancex.data.repository.TransactionRepository repo = 
                 new com.accounting.balancex.data.repository.TransactionRepository(this);
         com.accounting.balancex.data.db.DatabaseMigrator.migrateJsonToRoomIfNeeded(this, repo, () -> {
-            runOnUiThread(this::updateDrawerStats);
+            runOnUiThread(() -> {
+                loadBalanceData();
+                loadTransactionsFromStorage();
+                setupPieChart();
+                updateDrawerStats();
+            });
         });
     }
 
@@ -1386,7 +1391,10 @@ public class MainActivity extends AppCompatActivity {
         HashMap<String, Float> categoryTotals = new HashMap<>();
 
         try {
-            File file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
+            File file = com.accounting.balancex.data.db.DatabaseMigrator.findJsonFile(this);
+            if (file == null) {
+                file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
+            }
             if (!file.exists())
                 return pieDataList; // Return empty if no data
 

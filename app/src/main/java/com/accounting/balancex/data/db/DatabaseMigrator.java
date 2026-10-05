@@ -90,22 +90,34 @@ public class DatabaseMigrator {
 
     public static File findJsonFile(Context context) {
         File[] candidatePaths = new File[] {
-                // 1. Direct Documents folder (e.g. /Documents/transactions.json)
-                new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "transactions.json"),
-                new File("/storage/emulated/0/Documents/transactions.json"),
-                // 2. Accounting subdirectory (e.g. /Documents/Accounting/transactions.json)
+                // 1. Accounting subdirectory
                 new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Accounting/transactions.json"),
                 new File("/storage/emulated/0/Documents/Accounting/transactions.json"),
+                new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Accounting/transacttions.json"),
+                new File("/storage/emulated/0/Documents/Accounting/transacttions.json"),
+                // 2. Direct Documents folder
+                new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "transactions.json"),
+                new File("/storage/emulated/0/Documents/transactions.json"),
+                new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "transacttions.json"),
+                new File("/storage/emulated/0/Documents/transacttions.json"),
                 // 3. App-specific external storage
-                new File(context.getExternalFilesDir(null), "transactions.json"),
-                new File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "transactions.json"),
+                context.getExternalFilesDir(null) != null ? new File(context.getExternalFilesDir(null), "transactions.json") : null,
+                context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) != null ? new File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "transactions.json") : null,
                 // 4. Internal files directory
                 new File(context.getFilesDir(), "transactions.json")
         };
 
+        // First pass: Find any file that is populated (length > 2 bytes, ignoring empty "[]")
         for (File candidate : candidatePaths) {
-            if (candidate != null && candidate.exists() && candidate.length() > 0) {
-                Log.d(TAG, "Resolved valid transactions.json at: " + candidate.getAbsolutePath() + " (" + candidate.length() + " bytes)");
+            if (candidate != null && candidate.exists() && candidate.length() > 2) {
+                Log.d(TAG, "Resolved valid populated transactions.json at: " + candidate.getAbsolutePath() + " (" + candidate.length() + " bytes)");
+                return candidate;
+            }
+        }
+        // Second pass: Return existing file even if empty
+        for (File candidate : candidatePaths) {
+            if (candidate != null && candidate.exists()) {
+                Log.d(TAG, "Resolved existing transactions.json at: " + candidate.getAbsolutePath());
                 return candidate;
             }
         }

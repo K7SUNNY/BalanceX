@@ -37,9 +37,12 @@ import com.google.android.material.checkbox.MaterialCheckBox;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.NumberFormat;
@@ -442,19 +445,30 @@ public class ReportsActivity extends AppCompatActivity {
     private void loadTransactions() {
         allTransactions.clear();
         try {
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Accounting/transactions.json");
+            File file = com.accounting.balancex.data.db.DatabaseMigrator.findJsonFile(this);
+            if (file == null) {
+                file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Accounting/transactions.json");
+            }
             if (!file.exists()) {
                 file = new File(getFilesDir(), "transactions.json");
             }
 
-            if (file.exists()) {
+            if (file.exists() && file.length() > 2) {
                 String json;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     json = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
                 } else {
-                    json = "";
+                    FileInputStream fis = new FileInputStream(file);
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8));
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line);
+                    }
+                    reader.close();
+                    json = sb.toString();
                 }
-                JSONArray array = new JSONArray(json);
+                JSONArray array = new JSONArray(json.trim());
                 for (int i = 0; i < array.length(); i++) {
                     JSONObject obj = array.getJSONObject(i);
                     allTransactions.add(new Transaction(
@@ -474,6 +488,24 @@ public class ReportsActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             Log.e(TAG, "Error loading transactions", e);
+        }
+
+        if (allTransactions.isEmpty()) {
+            com.accounting.balancex.data.repository.TransactionRepository repo = 
+                    new com.accounting.balancex.data.repository.TransactionRepository(this);
+            repo.getAllTransactions(entities -> {
+                if (entities != null && !entities.isEmpty()) {
+                    for (com.accounting.balancex.data.entity.TransactionEntity e : entities) {
+                        allTransactions.add(new Transaction(
+                                e.date, e.amount, e.receiver, e.description,
+                                e.utr, e.comments, e.category, e.transactionId,
+                                e.paymentMethod, e.textType, e.entryId
+                        ));
+                    }
+                }
+                runOnUiThread(this::applyFiltersAndCalculate);
+            });
+            return;
         }
 
         applyFiltersAndCalculate();
@@ -979,6 +1011,26 @@ public class ReportsActivity extends AppCompatActivity {
         textPaint.setColor(Color.parseColor("#64748B"));
         String genTime = new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(new Date());
         canvas.drawText("Generated on: " + genTime + " | Period: " + textSelectedDateRange.getText().toString(), margin, currentY, textPaint);
+
+        SharedPreferences userPrefs = getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
+        boolean includeInPdf = userPrefs.getBoolean("includeInPdf", true);
+        String profileName = userPrefs.getString("userName", "").trim();
+        String profileCompany = userPrefs.getString("companyName", "").trim();
+
+        if (includeInPdf && (!profileName.isEmpty() || !profileCompany.isEmpty())) {
+            StringBuilder profileHeader = new StringBuilder();
+            if (!profileName.isEmpty()) {
+                profileHeader.append("Account Holder: ").append(profileName);
+            }
+            if (!profileCompany.isEmpty()) {
+                if (profileHeader.length() > 0) profileHeader.append("  •  ");
+                profileHeader.append("Entity: ").append(profileCompany);
+            }
+            currentY += 16;
+            textPaint.setTextSize(10);
+            textPaint.setColor(Color.parseColor("#475569"));
+            canvas.drawText(profileHeader.toString(), margin, currentY, textPaint);
+        }
 
         currentY += 24;
 

@@ -388,6 +388,27 @@ public class HistoryActivity extends AppCompatActivity {
             Log.e(TAG, "Error loading transactions from JSON file", e);
         }
 
+        if (allTransactions.isEmpty()) {
+            com.accounting.balancex.data.repository.TransactionRepository repo = 
+                    new com.accounting.balancex.data.repository.TransactionRepository(this);
+            repo.getAllTransactions(entities -> {
+                if (entities != null && !entities.isEmpty()) {
+                    for (com.accounting.balancex.data.entity.TransactionEntity e : entities) {
+                        allTransactions.add(new Transaction(
+                                e.date, e.amount, e.receiver, e.description,
+                                e.utr, e.comments, e.category, e.transactionId,
+                                e.paymentMethod, e.textType, e.entryId
+                        ));
+                    }
+                }
+                runOnUiThread(() -> {
+                    loadingText.setVisibility(View.GONE);
+                    applyFiltersAndSort();
+                });
+            });
+            return;
+        }
+
         loadingText.setVisibility(View.GONE);
         applyFiltersAndSort();
     }

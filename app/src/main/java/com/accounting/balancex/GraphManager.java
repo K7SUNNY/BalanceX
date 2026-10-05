@@ -48,7 +48,10 @@ public class GraphManager {
         List<String> labels = new ArrayList<>();
 
         try {
-            File file = new File(FILE_PATH);
+            File file = com.accounting.balancex.data.db.DatabaseMigrator.findJsonFile(context);
+            if (file == null) {
+                file = new File(FILE_PATH);
+            }
             if (!file.exists()) {
                 Log.e("GraphManager", "transactions.json not found");
                 return;

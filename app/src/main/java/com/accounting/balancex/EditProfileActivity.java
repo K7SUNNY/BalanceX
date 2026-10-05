@@ -28,34 +28,10 @@ public class EditProfileActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        SettingsManager.applyTheme(this);
-        setContentView(R.layout.activity_edit_profile);
-
-        // Find Views
-        userNameEdit = findViewById(R.id.userNameEdit);
-        bioEdit = findViewById(R.id.bioEdit);
-        companyNameEdit = findViewById(R.id.companyNameEdit);
-        emailEdit = findViewById(R.id.emailEdit);
-        phoneEdit = findViewById(R.id.phoneEdit);
-        addressEdit = findViewById(R.id.addressEdit);
-        TextView saveProfile = findViewById(R.id.saveProfile);
-        ImageView backImage = findViewById(R.id.backImage);
-        profileImage = findViewById(R.id.profileImage);
-
-        // Initialize SharedPreferences
-        sharedPreferences = getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
-
-        // Load saved data
-        loadProfileData();
-
-        // Save button click
-        saveProfile.setOnClickListener(v -> saveProfileData());
-
-        // Back button click
-        backImage.setOnClickListener(v -> finish()); // Just close the activity
-
-        // Profile image click - open gallery
-        profileImage.setOnClickListener(v -> openGallery());
+        Intent intent = new Intent(this, ProfileActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        finish();
     }
 
     private void loadProfileData() {
