@@ -563,9 +563,9 @@
                     android:textSize="11sp" />
             </LinearLayout>
 
-            <!-- 5. Profile -->
+            <!-- 5. Settings -->
             <LinearLayout
-                android:id="@+id/navProfile"
+                android:id="@+id/navSettings"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -577,19 +577,19 @@
                 android:paddingVertical="4dp">
 
                 <ImageView
-                    android:id="@+id/iconNavProfile"
+                    android:id="@+id/iconNavSettings"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:contentDescription="@string/nav_profile"
-                    app:srcCompat="@drawable/ic_account"
+                    android:contentDescription="@string/nav_settings"
+                    app:srcCompat="@drawable/ic_settings"
                     app:tint="@color/nav_item_inactive" />
 
                 <TextView
-                    android:id="@+id/textNavProfile"
+                    android:id="@+id/textNavSettings"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:text="@string/nav_profile"
+                    android:text="@string/nav_settings"
                     android:textColor="@color/nav_item_inactive"
                     android:textSize="11sp" />
             </LinearLayout>

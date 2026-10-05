@@ -333,10 +333,13 @@ public class TransactionActivity extends AppCompatActivity {
             });
         }
 
-        View navProfile = findViewById(R.id.navProfile);
-        if (navProfile != null) {
-            navProfile.setOnClickListener(v -> {
-                startActivity(new Intent(this, ProfileActivity.class));
+        View navSettings = findViewById(R.id.navSettings);
+//        if (navSettings == null) {
+//            navSettings = findViewById(R.id.navProfile);
+//        }
+        if (navSettings != null) {
+            navSettings.setOnClickListener(v -> {
+                startActivity(new Intent(this, SettingsActivity.class));
                 vibrateDevice();
             });
         }

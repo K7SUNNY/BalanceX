@@ -73,7 +73,7 @@
                     android:layout_gravity="center"
                     android:contentDescription="BalanceX Logo"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/ic_logo_playstore" />
+                    android:src="@mipmap/ic_launcher" />
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
