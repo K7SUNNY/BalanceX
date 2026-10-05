@@ -58,7 +58,7 @@
             android:windowNoTitle="true"
             android:windowSoftInputMode="adjustPan"/> <!-- Transaction Page -->
         <activity
-            android:name=".TransactionActivity"
+            android:name=".HistoryActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
             android:windowNoTitle="true"
@@ -107,5 +107,22 @@
             android:theme="@style/Theme.BalanceX"
             android:windowSoftInputMode="adjustPan"
             android:windowNoTitle="true"/>
+        <activity
+            android:name=".ReportsActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.BalanceX"
+            android:windowNoTitle="true"
+            android:windowSoftInputMode="adjustPan" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>

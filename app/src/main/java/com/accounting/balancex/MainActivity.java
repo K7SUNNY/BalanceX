@@ -136,11 +136,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Check if opened to trigger export
-        if (getIntent().getBooleanExtra("SHOW_EXPORT", false)) {
-            getIntent().removeExtra("SHOW_EXPORT");
-            showExportBottomSheet();
-        }
 
         // Quick Actions Listeners
         findViewById(R.id.action_add_transaction).setOnClickListener(v -> {
@@ -149,12 +144,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.action_history).setOnClickListener(v -> {
-            startActivity(new Intent(this, TransactionActivity.class));
+            startActivity(new Intent(this, HistoryActivity.class));
             vibrateDevice();
         });
 
         findViewById(R.id.action_export).setOnClickListener(v -> {
-            showExportBottomSheet();
+            startActivity(new Intent(this, ReportsActivity.class));
             vibrateDevice();
         });
 
@@ -174,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
         View navTransactions = findViewById(R.id.navTransactions);
         if (navTransactions != null) {
             navTransactions.setOnClickListener(v -> {
-                startActivity(new Intent(this, TransactionActivity.class));
+                startActivity(new Intent(this, HistoryActivity.class));
                 vibrateDevice();
                 finish();
             });
@@ -191,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
         View navExport = findViewById(R.id.navExport);
         if (navExport != null) {
             navExport.setOnClickListener(v -> {
-                showExportBottomSheet();
+                startActivity(new Intent(this, ReportsActivity.class));
                 vibrateDevice();
             });
         }
@@ -320,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
                 } else if (itemId == R.id.feedback) {
                     sendEmail("Feedback");
                 } else if (itemId == R.id.export_data) {
-                    showExportBottomSheet();
+                    startActivity(new Intent(MainActivity.this, ReportsActivity.class));
                 }
                 return false;
             }
@@ -348,7 +343,7 @@ public class MainActivity extends AppCompatActivity {
 
         TextView seeAllButton = findViewById(R.id.seeAllButton);
         seeAllButton.setOnClickListener(v -> {
-            startActivity(new Intent(this, TransactionActivity.class));
+            startActivity(new Intent(this, HistoryActivity.class));
             vibrateDevice();
         });
     }
@@ -667,163 +662,6 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private void showExportBottomSheet() {
-        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
-        View view = getLayoutInflater().inflate(R.layout.export_bottom_sheet, null);
-        bottomSheetDialog.setContentView(view);
 
-        // Buttons
-        view.findViewById(R.id.btn_last_10_days).setOnClickListener(v -> {
-            bottomSheetDialog.dismiss();
-            exportData("10_days");
-        });
-
-        view.findViewById(R.id.btn_last_month).setOnClickListener(v -> {
-            bottomSheetDialog.dismiss();
-            exportData("last_month");
-        });
-
-        view.findViewById(R.id.btn_last_6_months).setOnClickListener(v -> {
-            bottomSheetDialog.dismiss();
-            exportData("6_months");
-        });
-
-        view.findViewById(R.id.btn_last_year).setOnClickListener(v -> {
-            bottomSheetDialog.dismiss();
-            exportData("last_year");
-        });
-
-        view.findViewById(R.id.btn_financial_year).setOnClickListener(v -> {
-            bottomSheetDialog.dismiss();
-            exportData("financial_year");
-        });
-
-        bottomSheetDialog.show();
-    }
-
-    public List<JSONObject> getFilteredTransactions(String filterKey) {
-        List<JSONObject> filteredList = new ArrayList<>();
-
-        try {
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-                    + "/Accounting/transactions.json");
-
-            if (!file.exists())
-                return filteredList;
-
-            String json = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                json = new String(Files.readAllBytes(file.toPath()));
-            }
-            JSONArray array = new JSONArray(json);
-
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-            Calendar today = Calendar.getInstance();
-            Calendar fromDate = Calendar.getInstance();
-
-            switch (filterKey) {
-                case "10_days":
-                    fromDate.add(Calendar.DAY_OF_YEAR, -10);
-                    break;
-                case "last_month":
-                    fromDate.add(Calendar.MONTH, -1);
-                    break;
-                case "6_months":
-                    fromDate.add(Calendar.MONTH, -6);
-                    break;
-                case "last_year":
-                    fromDate.add(Calendar.YEAR, -1);
-                    break;
-                case "financial_year":
-                    int year = today.get(Calendar.YEAR);
-                    if (today.get(Calendar.MONTH) < Calendar.APRIL) {
-                        year -= 1;
-                    }
-                    fromDate.set(year, Calendar.APRIL, 1);
-                    break;
-            }
-
-            for (int i = 0; i < array.length(); i++) {
-                JSONObject obj = array.getJSONObject(i);
-                Date transactionDate = sdf.parse(obj.getString("date"));
-                if (transactionDate != null && transactionDate.after(fromDate.getTime())) {
-                    filteredList.add(obj);
-                }
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return filteredList;
-    }
-
-    private void exportData(String filterKey) {
-        List<JSONObject> transactions = getFilteredTransactions(filterKey);
-        if (transactions.isEmpty()) {
-            Toast.makeText(this, "No transactions found!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        PdfDocument pdfDocument = new PdfDocument();
-        Paint paint = new Paint();
-        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(595, 842, 1).create(); // A4 size
-        PdfDocument.Page page = pdfDocument.startPage(pageInfo);
-        Canvas canvas = page.getCanvas();
-
-        int x = 20, y = 40;
-
-        paint.setTextSize(16);
-        paint.setFakeBoldText(true);
-        canvas.drawText("BalanceX - Transaction Report", x, y, paint);
-        y += 30;
-        paint.setTextSize(12);
-        canvas.drawText("Filtered by: " + filterKey.replace("_", " "), x, y, paint);
-        y += 20;
-
-        paint.setFakeBoldText(false);
-
-        for (JSONObject transaction : transactions) {
-            try {
-                // Modify these lines to use the correct keys from your stored data
-                String line = transaction.getString("date") + " | " +
-                        transaction.getString("receiver") + " | ₹" +
-                        transaction.getString("amount") + " | " +
-                        transaction.getString("textType"); // 'textType' is the 'type' field
-
-                y += 20;
-                canvas.drawText(line, x, y, paint);
-
-                if (y > 800) {
-                    pdfDocument.finishPage(page);
-                    pageInfo = new PdfDocument.PageInfo.Builder(595, 842, pdfDocument.getPages().size() + 1).create();
-                    page = pdfDocument.startPage(pageInfo);
-                    canvas = page.getCanvas();
-                    y = 40;
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-
-        pdfDocument.finishPage(page);
-
-        // Format the current time
-        String timeStamp = new SimpleDateFormat("dd-MMM-yyyy_hh-mm-a").format(new Date());
-        // Create the file name with formatted time
-        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                "BalanceX_Export_" + timeStamp + ".pdf");
-
-        try {
-            FileOutputStream fos = new FileOutputStream(file);
-            pdfDocument.writeTo(fos);
-            Toast.makeText(this, "PDF saved to Downloads", Toast.LENGTH_SHORT).show();
-        } catch (IOException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Failed to save PDF", Toast.LENGTH_SHORT).show();
-        }
-
-        pdfDocument.close();
-    }
 
 }

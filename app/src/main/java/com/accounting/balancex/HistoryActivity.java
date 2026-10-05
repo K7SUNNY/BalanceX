@@ -49,8 +49,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class TransactionActivity extends AppCompatActivity {
-    private static final String TAG = "TransactionActivity";
+public class HistoryActivity extends AppCompatActivity {
+    private static final String TAG = "HistoryActivity";
 
     // Data lists
     private final List<Transaction> allTransactions = new ArrayList<>();
@@ -85,7 +85,7 @@ public class TransactionActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_transaction);
+        setContentView(R.layout.activity_history);
 
         setupWindowInsets();
         initializeViews();
@@ -325,9 +325,7 @@ public class TransactionActivity extends AppCompatActivity {
         View navExport = findViewById(R.id.navExport);
         if (navExport != null) {
             navExport.setOnClickListener(v -> {
-                Intent exportIntent = new Intent(this, MainActivity.class);
-                exportIntent.putExtra("SHOW_EXPORT", true);
-                startActivity(exportIntent);
+                startActivity(new Intent(this, ReportsActivity.class));
                 vibrateDevice();
                 finish();
             });

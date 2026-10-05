@@ -372,7 +372,7 @@ public class SettingsActivity extends AppCompatActivity {
         View navTransactions = findViewById(R.id.navTransactions);
         if (navTransactions != null) {
             navTransactions.setOnClickListener(v -> {
-                startActivity(new Intent(this, TransactionActivity.class));
+                startActivity(new Intent(this, HistoryActivity.class));
                 vibrateDevice();
                 finish();
             });
@@ -390,9 +390,7 @@ public class SettingsActivity extends AppCompatActivity {
         View navExport = findViewById(R.id.navExport);
         if (navExport != null) {
             navExport.setOnClickListener(v -> {
-                Intent exportIntent = new Intent(this, MainActivity.class);
-                exportIntent.putExtra("TRIGGER_EXPORT", true);
-                startActivity(exportIntent);
+                startActivity(new Intent(this, ReportsActivity.class));
                 vibrateDevice();
                 finish();
             });

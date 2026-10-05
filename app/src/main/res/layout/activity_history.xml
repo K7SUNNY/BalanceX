@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/surface_background"
-    tools:context=".TransactionActivity">
+    tools:context=".HistoryActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -345,7 +345,8 @@
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingHorizontal="20dp"
-            android:paddingVertical="2dp">
+            android:paddingVertical="2dp"
+            android:layout_marginBottom="4dp">
 
             <TextView
                 android:id="@+id/textResultsCount"
@@ -498,18 +499,18 @@
             android:layout_height="wrap_content"
             android:layout_margin="0dp"
             app:cardBackgroundColor="@color/navbar_background"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.BottomNav"
             app:cardElevation="12dp"
             app:cardUseCompatPadding="false"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.BottomNav"
             app:strokeWidth="0dp">
 
             <LinearLayout
                 android:id="@+id/navbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:minHeight="64dp"
                 android:background="@android:color/transparent"
                 android:gravity="center_vertical"
-                android:minHeight="64dp"
                 android:orientation="horizontal"
                 android:paddingHorizontal="4dp"
                 android:paddingVertical="6dp">
@@ -545,7 +546,7 @@
                         android:textSize="11sp" />
                 </LinearLayout>
 
-                <!-- 2. History (Active on TransactionActivity) -->
+                <!-- 2. History (Active on HistoryActivity) -->
                 <LinearLayout
                     android:id="@+id/navTransactions"
                     android:layout_width="0dp"
