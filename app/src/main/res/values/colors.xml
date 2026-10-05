@@ -76,4 +76,8 @@
     <color name="navbar_bg">@color/navbar_background</color>
     <color name="navbar_gradient_start">@color/navbar_background</color>
     <color name="navbar_gradient_end">@color/navbar_background</color>
+    <color name="nav_item_active">#FFFFFF</color>
+    <color name="nav_item_inactive">#8FA3BF</color>
+    <color name="nav_fab_bg">#2563EB</color>
+    <color name="nav_fab_icon">#FFFFFF</color>
 </resources>

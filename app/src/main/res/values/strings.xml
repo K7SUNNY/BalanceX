@@ -19,9 +19,12 @@
     <string name="separator">|</string>
     <string name="recent_transactions">Recent Transactions</string>
     <string name="see_all">see all</string>
-    <string name="nav_home">HOME</string>
-    <string name="nav_history">HISTORY</string>
-    <string name="nav_entry">ENTRY</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_history">History</string>
+    <string name="nav_entry">Entry</string>
+    <string name="nav_add">Add</string>
+    <string name="nav_export">Export</string>
+    <string name="nav_profile">Profile</string>
     <string name="menu_desc">Menu</string>
     <string name="notification_desc">Notifications</string>
     <string name="credit_arrow_desc">Credit Arrow</string>

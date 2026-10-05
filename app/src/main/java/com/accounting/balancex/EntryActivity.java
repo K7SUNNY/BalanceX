@@ -68,7 +68,6 @@ public class EntryActivity extends AppCompatActivity {
     private Calendar calendar;
     private static final String FOLDER_NAME = "Accounting";
     private static final String FILE_NAME = "transactions.json";
-    private LinearLayout navHome, navTransactions, navEntry;
     private static final int REQUEST_IMAGE_CAPTURE = 103;
     private static final int REQUEST_IMAGE_PICK = 104;
     private static final int CAMERA_PERMISSION_CODE = 105;
@@ -95,11 +94,12 @@ public class EntryActivity extends AppCompatActivity {
                 v.setPadding(insets.left, insets.top, insets.right, 0);
                 View navbar = findViewById(R.id.navbar);
                 if (navbar != null) {
+                    int baseBottomPadding = (int) (6 * getResources().getDisplayMetrics().density);
                     navbar.setPadding(
                             navbar.getPaddingLeft(),
                             navbar.getPaddingTop(),
                             navbar.getPaddingRight(),
-                            insets.bottom);
+                            baseBottomPadding + insets.bottom);
                 }
                 return windowInsets;
             });
@@ -181,9 +181,6 @@ public class EntryActivity extends AppCompatActivity {
         saveButton = findViewById(R.id.saveButton);
         addFromContactButton = findViewById(R.id.addFromContactButton);
         confirmCheckBox = findViewById(R.id.confirmCheckBox);
-        navHome = findViewById(R.id.navHome);
-        navTransactions = findViewById(R.id.navTransactions);
-        navEntry = findViewById(R.id.navEntry);
 //        utr_layout = findViewById(R.id.utr_layout);
 //        transactionId_layout = findViewById(R.id.transactionId_layout);
         moreDetailsUPI = findViewById(R.id.moreDetailsUPI);
@@ -262,28 +259,54 @@ public class EntryActivity extends AppCompatActivity {
 
         findViewById(R.id.backButton).setOnClickListener(v -> onBackPressed());
     }
+
     private void setNavigationListeners() {
-        hideNavText(); // Hide text initially
+        // Bottom Navigation Listeners (Home, History, Center Add FAB, Export, Profile)
+        View navHome = findViewById(R.id.navHome);
+        if (navHome != null) {
+            navHome.setOnClickListener(v -> {
+                startActivity(new Intent(this, MainActivity.class));
+                vibrateDevice();
+                finish();
+            });
+        }
 
-        // Apply animation to the correct tab
-        applyNavAnimation(findViewById(R.id.navEntry)); // Change to R.id.navEntry in EntryActivity
-        // Navigation Click Listeners
-        findViewById(R.id.navHome).setOnClickListener(v -> {
-            startActivity(new Intent(this, MainActivity.class));
-            vibrateDevice();
-            finish();
-        });
+        View navTransactions = findViewById(R.id.navTransactions);
+        if (navTransactions != null) {
+            navTransactions.setOnClickListener(v -> {
+                startActivity(new Intent(this, TransactionActivity.class));
+                vibrateDevice();
+                finish();
+            });
+        }
 
-        findViewById(R.id.navTransactions).setOnClickListener(v -> {
-            startActivity(new Intent(this, TransactionActivity.class));
-            vibrateDevice();
-            finish();
-        });
+        View navAdd = findViewById(R.id.navAdd);
+        if (navAdd != null) {
+            navAdd.setOnClickListener(v -> {
+                Toast.makeText(this, "Already on Entry Page", Toast.LENGTH_SHORT).show();
+            });
+        }
 
-        findViewById(R.id.navEntry).setOnClickListener(v -> {
-            Toast.makeText(this, "Already on Entry Page", Toast.LENGTH_SHORT).show();
-        });
+        View navExport = findViewById(R.id.navExport);
+        if (navExport != null) {
+            navExport.setOnClickListener(v -> {
+                Intent exportIntent = new Intent(this, MainActivity.class);
+                exportIntent.putExtra("SHOW_EXPORT", true);
+                startActivity(exportIntent);
+                vibrateDevice();
+                finish();
+            });
+        }
+
+        View navProfile = findViewById(R.id.navProfile);
+        if (navProfile != null) {
+            navProfile.setOnClickListener(v -> {
+                startActivity(new Intent(this, ProfileActivity.class));
+                vibrateDevice();
+            });
+        }
     }
+
     // Override onBackPressed to go back to MainActivity
     @Override
     public void onBackPressed() {
@@ -293,22 +316,7 @@ public class EntryActivity extends AppCompatActivity {
         vibrateDevice(); // Optional if you want feedback on back press
         finish();
     }
-    private void hideNavText() {
-        ((TextView) ((LinearLayout) findViewById(R.id.navHome)).getChildAt(1)).setVisibility(View.INVISIBLE);
-        ((TextView) ((LinearLayout) findViewById(R.id.navTransactions)).getChildAt(1)).setVisibility(View.INVISIBLE);
-        ((TextView) ((LinearLayout) findViewById(R.id.navEntry)).getChildAt(1)).setVisibility(View.INVISIBLE);
-    }
 
-    private void applyNavAnimation(LinearLayout selectedNavItem) {
-        // Get the TextView inside the selected navigation item
-        TextView textView = (TextView) ((LinearLayout) selectedNavItem).getChildAt(1);
-        // Load the animation
-        Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up_nav);
-
-        // Apply the animation and make it visible
-        textView.setVisibility(View.VISIBLE);
-        textView.startAnimation(slideUp);
-    }
     private void setDateField() {
         calendar = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());

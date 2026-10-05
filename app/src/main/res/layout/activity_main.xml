@@ -616,86 +616,165 @@
             android:layout_height="wrap_content"
             android:minHeight="64dp"
             android:background="@android:color/transparent"
-            android:gravity="center"
+            android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp">
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="6dp">
 
+            <!-- 1. Home (Active on MainActivity) -->
             <LinearLayout
                 android:id="@+id/navHome"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:paddingVertical="4dp">
 
                 <ImageView
+                    android:id="@+id/iconNavHome"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="@string/nav_home"
                     app:srcCompat="@drawable/ic_home"
-                    app:tint="@android:color/white" />
+                    app:tint="@color/nav_item_active" />
 
                 <TextView
+                    android:id="@+id/textNavHome"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
+                    android:layout_marginTop="3dp"
                     android:text="@string/nav_home"
-                    android:textColor="@android:color/white"
-                    android:textSize="11sp" />
+                    android:textColor="@color/nav_item_active"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- 2. History -->
             <LinearLayout
                 android:id="@+id/navTransactions"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:paddingVertical="4dp">
 
                 <ImageView
+                    android:id="@+id/iconNavTransactions"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="@string/nav_history"
                     app:srcCompat="@drawable/ic_transaction"
-                    app:tint="@android:color/white" />
+                    app:tint="@color/nav_item_inactive" />
 
                 <TextView
+                    android:id="@+id/textNavTransactions"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
+                    android:layout_marginTop="3dp"
                     android:text="@string/nav_history"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/nav_item_inactive"
                     android:textSize="11sp" />
             </LinearLayout>
 
+            <!-- 3. Center Elevated Action Button (+) -->
             <LinearLayout
-                android:id="@+id/navEntry"
+                android:id="@+id/navAdd"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:paddingVertical="2dp">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardNavAdd"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="6dp"
+                    app:cardBackgroundColor="@color/nav_fab_bg"
+                    app:strokeWidth="0dp"
+                    android:clickable="false">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@string/nav_add"
+                        app:srcCompat="@drawable/ic_add"
+                        app:tint="@color/nav_fab_icon" />
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- 4. Export -->
+            <LinearLayout
+                android:id="@+id/navExport"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="4dp">
 
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:contentDescription="@string/nav_entry"
-                    app:srcCompat="@drawable/ic_entry"
-                    app:tint="@android:color/white" />
+                    android:id="@+id/iconNavExport"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:contentDescription="@string/nav_export"
+                    app:srcCompat="@drawable/download_minimalistic"
+                    app:tint="@color/nav_item_inactive" />
 
                 <TextView
+                    android:id="@+id/textNavExport"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/nav_entry"
-                    android:textColor="@android:color/white"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/nav_export"
+                    android:textColor="@color/nav_item_inactive"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- 5. Profile -->
+            <LinearLayout
+                android:id="@+id/navProfile"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="4dp">
+
+                <ImageView
+                    android:id="@+id/iconNavProfile"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="@string/nav_profile"
+                    app:srcCompat="@drawable/account_svgrepo_com"
+                    app:tint="@color/nav_item_inactive" />
+
+                <TextView
+                    android:id="@+id/textNavProfile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/nav_profile"
+                    android:textColor="@color/nav_item_inactive"
                     android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>

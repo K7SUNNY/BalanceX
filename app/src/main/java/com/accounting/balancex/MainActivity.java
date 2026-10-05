@@ -111,11 +111,12 @@ public class MainActivity extends AppCompatActivity {
                 }
                 View navbar = findViewById(R.id.navbar);
                 if (navbar != null) {
+                    int baseBottomPadding = (int) (6 * getResources().getDisplayMetrics().density);
                     navbar.setPadding(
                             navbar.getPaddingLeft(),
                             navbar.getPaddingTop(),
                             navbar.getPaddingRight(),
-                            insets.bottom);
+                            baseBottomPadding + insets.bottom);
                 }
                 return windowInsets;
             });
@@ -138,10 +139,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        hideNavText(); // Hide text initially
-
-        // Apply animation to the correct tab
-        applyNavAnimation(findViewById(R.id.navHome));
+        // Check if opened to trigger export
+        if (getIntent().getBooleanExtra("SHOW_EXPORT", false)) {
+            getIntent().removeExtra("SHOW_EXPORT");
+            showExportBottomSheet();
+        }
 
         // Quick Actions Listeners
         findViewById(R.id.action_add_transaction).setOnClickListener(v -> {
@@ -164,22 +166,46 @@ public class MainActivity extends AppCompatActivity {
             vibrateDevice();
         });
 
-        // Navigation Click Listeners
-        findViewById(R.id.navHome).setOnClickListener(v -> {
-            Toast.makeText(this, "Already on Home Page", Toast.LENGTH_SHORT).show();
-        });
+        // Bottom Navigation Bar (5 Items: Home, History, Center Add FAB, Export, Profile)
+        View navHome = findViewById(R.id.navHome);
+        if (navHome != null) {
+            navHome.setOnClickListener(v -> {
+                Toast.makeText(this, "Already on Home Page", Toast.LENGTH_SHORT).show();
+            });
+        }
 
-        findViewById(R.id.navTransactions).setOnClickListener(v -> {
-            startActivity(new Intent(this, TransactionActivity.class));
-            vibrateDevice();
-            finish();
-        });
+        View navTransactions = findViewById(R.id.navTransactions);
+        if (navTransactions != null) {
+            navTransactions.setOnClickListener(v -> {
+                startActivity(new Intent(this, TransactionActivity.class));
+                vibrateDevice();
+                finish();
+            });
+        }
 
-        findViewById(R.id.navEntry).setOnClickListener(v -> {
-            startActivity(new Intent(this, EntryActivity.class));
-            vibrateDevice();
-            finish();
-        });
+        View navAdd = findViewById(R.id.navAdd);
+        if (navAdd != null) {
+            navAdd.setOnClickListener(v -> {
+                startActivity(new Intent(this, EntryActivity.class));
+                vibrateDevice();
+            });
+        }
+
+        View navExport = findViewById(R.id.navExport);
+        if (navExport != null) {
+            navExport.setOnClickListener(v -> {
+                showExportBottomSheet();
+                vibrateDevice();
+            });
+        }
+
+        View navProfile = findViewById(R.id.navProfile);
+        if (navProfile != null) {
+            navProfile.setOnClickListener(v -> {
+                startActivity(new Intent(this, ProfileActivity.class));
+                vibrateDevice();
+            });
+        }
 
         // Initialize Views
         textTotalBalance = findViewById(R.id.textTotalBalance);
@@ -385,23 +411,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (android.content.ActivityNotFoundException ex) {
             Toast.makeText(this, "No email apps installed.", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private void hideNavText() {
-        ((TextView) ((LinearLayout) findViewById(R.id.navHome)).getChildAt(1)).setVisibility(View.INVISIBLE);
-        ((TextView) ((LinearLayout) findViewById(R.id.navTransactions)).getChildAt(1)).setVisibility(View.INVISIBLE);
-        ((TextView) ((LinearLayout) findViewById(R.id.navEntry)).getChildAt(1)).setVisibility(View.INVISIBLE);
-    }
-
-    private void applyNavAnimation(LinearLayout selectedNavItem) {
-        // Get the TextView inside the selected navigation item
-        TextView textView = (TextView) ((LinearLayout) selectedNavItem).getChildAt(1);
-        // Load the animation
-        Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up_nav);
-
-        // Apply the animation and make it visible
-        textView.setVisibility(View.VISIBLE);
-        textView.startAnimation(slideUp);
     }
 
     private void updateTimelineSelection(TextView selected, TextView... others) {

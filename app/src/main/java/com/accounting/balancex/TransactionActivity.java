@@ -62,7 +62,6 @@ public class TransactionActivity extends AppCompatActivity {
     private SearchBar searchBar;
     private com.google.android.material.search.SearchView searchView;
     private MaterialToolbar toolbar;
-    private LinearLayout navHome, navTransactions, navEntry;
     private ImageView filterByDateIcon;
     private SwipeRefreshLayout swipeRefreshLayout;
     private String currentFilterType = "All"; // Default to All
@@ -81,11 +80,12 @@ public class TransactionActivity extends AppCompatActivity {
                 v.setPadding(insets.left, insets.top, insets.right, 0);
                 View navbar = findViewById(R.id.navbar);
                 if (navbar != null) {
+                    int baseBottomPadding = (int) (6 * getResources().getDisplayMetrics().density);
                     navbar.setPadding(
                             navbar.getPaddingLeft(),
                             navbar.getPaddingTop(),
                             navbar.getPaddingRight(),
-                            insets.bottom);
+                            baseBottomPadding + insets.bottom);
                 }
                 return windowInsets;
             });
@@ -106,10 +106,6 @@ public class TransactionActivity extends AppCompatActivity {
         }
 
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
-
-        navHome = findViewById(R.id.navHome);
-        navTransactions = findViewById(R.id.navTransactions);
-        navEntry = findViewById(R.id.navEntry);
 
         transactionList = new ArrayList<>();
         filteredList = new ArrayList<>();
@@ -149,27 +145,50 @@ public class TransactionActivity extends AppCompatActivity {
             }
         });
 
-        hideNavText(); // Hide text initially
+        // Bottom Navigation Listeners (Home, History, Center Add FAB, Export, Profile)
+        View navHome = findViewById(R.id.navHome);
+        if (navHome != null) {
+            navHome.setOnClickListener(v -> {
+                startActivity(new Intent(this, MainActivity.class));
+                vibrateDevice();
+                finish();
+            });
+        }
 
-        // Apply animation to the correct tab
-        applyNavAnimation(findViewById(R.id.navTransactions));
+        View navTransactions = findViewById(R.id.navTransactions);
+        if (navTransactions != null) {
+            navTransactions.setOnClickListener(v -> {
+                Toast.makeText(this, "Already on History Page", Toast.LENGTH_SHORT).show();
+            });
+        }
 
-        // Navigation Click Listeners
-        findViewById(R.id.navHome).setOnClickListener(v -> {
-            startActivity(new Intent(this, MainActivity.class));
-            vibrateDevice();
-            finish();
-        });
+        View navAdd = findViewById(R.id.navAdd);
+        if (navAdd != null) {
+            navAdd.setOnClickListener(v -> {
+                startActivity(new Intent(this, EntryActivity.class));
+                vibrateDevice();
+                finish();
+            });
+        }
 
-        findViewById(R.id.navTransactions).setOnClickListener(v -> {
-            Toast.makeText(this, "Already on History Page", Toast.LENGTH_SHORT).show();
-        });
+        View navExport = findViewById(R.id.navExport);
+        if (navExport != null) {
+            navExport.setOnClickListener(v -> {
+                Intent exportIntent = new Intent(this, MainActivity.class);
+                exportIntent.putExtra("SHOW_EXPORT", true);
+                startActivity(exportIntent);
+                vibrateDevice();
+                finish();
+            });
+        }
 
-        findViewById(R.id.navEntry).setOnClickListener(v -> {
-            startActivity(new Intent(this, EntryActivity.class));
-            vibrateDevice();
-            finish();
-        });
+        View navProfile = findViewById(R.id.navProfile);
+        if (navProfile != null) {
+            navProfile.setOnClickListener(v -> {
+                startActivity(new Intent(this, ProfileActivity.class));
+                vibrateDevice();
+            });
+        }
 
         filterByDateIcon.setOnClickListener(v -> showFilterPopup(v));
 
@@ -242,23 +261,6 @@ public class TransactionActivity extends AppCompatActivity {
 
         // Show the popup menu
         popupMenu.show();
-    }
-    //nav animation
-    private void hideNavText() {
-        ((TextView) ((LinearLayout) findViewById(R.id.navHome)).getChildAt(1)).setVisibility(View.INVISIBLE);
-        ((TextView) ((LinearLayout) findViewById(R.id.navTransactions)).getChildAt(1)).setVisibility(View.INVISIBLE);
-        ((TextView) ((LinearLayout) findViewById(R.id.navEntry)).getChildAt(1)).setVisibility(View.INVISIBLE);
-    }
-
-    private void applyNavAnimation(LinearLayout selectedNavItem) {
-        // Get the TextView inside the selected navigation item
-        TextView textView = (TextView) ((LinearLayout) selectedNavItem).getChildAt(1);
-        // Load the animation
-        Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up_nav);
-
-        // Apply the animation and make it visible
-        textView.setVisibility(View.VISIBLE);
-        textView.startAnimation(slideUp);
     }
 
     private void loadTransactionsFromFile() {
