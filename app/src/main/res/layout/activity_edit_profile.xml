@@ -14,7 +14,7 @@
             android:id="@+id/backImage"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:src="@drawable/back_svgrepo_com"
+            android:src="@drawable/ic_back"
             android:layout_weight="0"/>
         <TextView
             android:layout_width="wrap_content"
@@ -59,7 +59,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/account_svgrepo_com" />
+                    android:src="@drawable/ic_account" />
             </androidx.cardview.widget.CardView>
 
             <!-- Small Circular Edit Button (Overlapping Bottom-Right) -->
@@ -73,7 +73,7 @@
                 android:layout_marginBottom="4dp"
                 android:background="@drawable/circle_account"
                 android:padding="8dp"
-                android:src="@drawable/edit_pencil"
+                android:src="@drawable/ic_edit_pencil"
                 android:scaleType="centerInside"
                 android:elevation="6dp"/> <!-- Add this! -->
         </FrameLayout>

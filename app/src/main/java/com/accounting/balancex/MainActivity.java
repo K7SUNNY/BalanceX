@@ -20,10 +20,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,7 +71,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
-    private TextView textTotalBalance, textNetCredit, textNetDebit;
+    private TextView textTotalBalance, textNetCredit, textNetDebit, seeAllButton;
     private double totalBalance = 0, totalCredit = 0, totalDebit = 0;
     private ArrayList<String> transactionDates;
     private Handler handler = new Handler();
@@ -345,6 +342,12 @@ public class MainActivity extends AppCompatActivity {
 
         // Load Profile Data
         loadProfileData();
+
+        TextView seeAllButton = findViewById(R.id.seeAllButton);
+        seeAllButton.setOnClickListener(v -> {
+            startActivity(new Intent(this, TransactionActivity.class));
+            vibrateDevice();
+        });
     }
 
     private void loadProfileData() {
@@ -371,7 +374,7 @@ public class MainActivity extends AppCompatActivity {
                 profileImage.setImageURI(imageUri);
             } catch (SecurityException e) {
                 Log.e("ProfileImage", "Permission denied for URI: " + imageUriString, e);
-                profileImage.setImageResource(R.drawable.account_svgrepo_com); // Fallback to default
+                profileImage.setImageResource(R.drawable.ic_account); // Fallback to default
             }
         } else {
             Log.e("ProfileImage", "Profile image URI is empty.");
@@ -503,7 +506,7 @@ public class MainActivity extends AppCompatActivity {
             }
             recentTransactions.clear();
 
-            for (int i = 0; i < transactionsArray.length(); i++) {
+            for (int i = 0; i < 5; i++) {
                 JSONObject transaction = transactionsArray.getJSONObject(i);
                 String receiver = transaction.getString("receiver");
                 String date = transaction.getString("date");

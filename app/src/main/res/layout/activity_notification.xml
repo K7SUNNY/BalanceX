@@ -21,7 +21,7 @@
             app:title="Notifications"
             app:titleCentered="true"
             app:titleTextColor="@color/text_primary"
-            app:navigationIcon="@drawable/back_svgrepo_com"
+            app:navigationIcon="@drawable/ic_back"
             app:layout_scrollFlags="scroll|enterAlways|snap">
             
             <ImageView
@@ -32,7 +32,7 @@
                 android:layout_marginEnd="16dp"
                 android:padding="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                app:srcCompat="@drawable/account_svgrepo_com" />
+                app:srcCompat="@drawable/ic_account" />
                 
         </com.google.android.material.appbar.MaterialToolbar>
 

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,99 +8,381 @@
     android:background="@color/surface_background"
     tools:context=".TransactionActivity">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        app:elevation="0dp">
-
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:navigationIcon="@drawable/back_svgrepo_com"
-            app:navigationIconTint="@color/text_primary"
-            app:title="@string/transaction_history"
-            app:titleTextAppearance="?attr/textAppearanceTitleLarge"
-            app:titleTextColor="@color/text_primary">
-
-            <ImageView
-                android:id="@+id/filter_by_date"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_gravity="end"
-                android:layout_marginEnd="16dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/sort"
-                android:padding="6dp"
-                app:srcCompat="@drawable/filter_svgrepo_com"
-                app:tint="@color/text_primary" />
-
-        </com.google.android.material.appbar.MaterialToolbar>
-    </com.google.android.material.appbar.AppBarLayout>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:orientation="vertical">
 
-        <com.google.android.material.search.SearchBar
-            android:id="@+id/search_bar"
+        <!-- Top Header Bar -->
+        <LinearLayout
+            android:id="@+id/header_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:hint="Search transactions..." />
-
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp"
-            android:clipToPadding="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:paddingHorizontal="16dp"
-            android:scrollbars="none">
+            android:paddingTop="12dp"
+            android:paddingBottom="8dp">
 
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/filter_chip_group"
+<!--            <ImageView-->
+<!--                android:id="@+id/btnBack"-->
+<!--                android:layout_width="36dp"-->
+<!--                android:layout_height="36dp"-->
+<!--                android:background="?attr/selectableItemBackgroundBorderless"-->
+<!--                android:contentDescription="@string/back"-->
+<!--                android:padding="6dp"-->
+<!--                app:srcCompat="@drawable/back_svgrepo_com"-->
+<!--                app:tint="@color/text_primary" />-->
+
+            <TextView
+                android:id="@+id/titleHistory"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="@string/transaction_history"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <!-- Sort / Filter Action Button -->
+            <ImageView
+                android:id="@+id/filter_by_date"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/sort"
+                android:padding="6dp"
+                app:srcCompat="@drawable/ic_filter"
+                app:tint="@color/text_primary" />
+        </LinearLayout>
+
+        <!-- Nested Content inside ScrollView or Direct for RecyclerView -->
+        <!-- Financial Summary Section (Compact Fintech Style) -->
+        <LinearLayout
+            android:id="@+id/summary_cards_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="4dp">
+
+            <!-- Total Income / Inflow Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardTotalIncome"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="5dp"
+                app:cardBackgroundColor="@color/surface_card"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="1dp"
+                app:strokeColor="@color/border_subtle"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="9dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            app:cardBackgroundColor="@color/finance_income_container"
+                            app:cardCornerRadius="6dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="0dp">
+
+                            <ImageView
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:layout_gravity="center"
+                                app:srcCompat="@drawable/ic_arrow_down_left"
+                                app:tint="@color/finance_income" />
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="INCOME"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_weight="1" />
+
+                        <TextView
+                            android:id="@+id/textCountIncome"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 entries"
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="10sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/textSummaryIncome"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="+₹0.00"
+                        android:textColor="@color/finance_income"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Total Expenses / Outflow Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardTotalExpense"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="5dp"
+                app:cardBackgroundColor="@color/surface_card"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="1dp"
+                app:strokeColor="@color/border_subtle"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="9dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            app:cardBackgroundColor="@color/finance_expense_container"
+                            app:cardCornerRadius="6dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="0dp">
+
+                            <ImageView
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:layout_gravity="center"
+                                app:srcCompat="@drawable/ic_arrow_up_right"
+                                app:tint="@color/finance_expense" />
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="EXPENSES"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_weight="1" />
+
+                        <TextView
+                            android:id="@+id/textCountExpense"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 entries"
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="10sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/textSummaryExpense"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="-₹0.00"
+                        android:textColor="@color/finance_expense"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+        <!-- Search Input Bar -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="3dp"
+            android:layout_marginBottom="6dp"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="1dp"
+            app:strokeColor="@color/border_subtle"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="14dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:contentDescription="Search"
+                    app:srcCompat="@drawable/ic_search"
+                    app:tint="@color/text_secondary" />
+
+                <EditText
+                    android:id="@+id/editSearchTransactions"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:hint="Search receiver, category, UTR..."
+                    android:imeOptions="actionDone"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_tertiary"
+                    android:textSize="14sp" />
+
+                <ImageView
+                    android:id="@+id/btnClearSearch"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Clear search"
+                    android:visibility="gone"
+                    app:srcCompat="@drawable/ic_close_circle"
+                    app:tint="@color/text_secondary" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Segmented Filter Pills (All | Income | Expenses) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="4dp"
+            android:background="@drawable/bg_segmented_container"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="2dp">
+
+            <!-- Tab All -->
+            <TextView
+                android:id="@+id/tabFilterAll"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_segmented_active"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="All"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <!-- Tab Income -->
+            <TextView
+                android:id="@+id/tabFilterIncome"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="Income"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <!-- Tab Expenses -->
+            <TextView
+                android:id="@+id/tabFilterExpenses"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="Expenses"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Active Filter Indicator / Result Count Line -->
+        <LinearLayout
+            android:id="@+id/layoutFilterStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="2dp">
+
+            <TextView
+                android:id="@+id/textResultsCount"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="All Transactions"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/btnResetFilters"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:selectionRequired="true"
-                app:singleSelection="true">
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="2dp"
+                android:text="Reset Filters"
+                android:textColor="@color/color_accent"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </LinearLayout>
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_all"
-                    style="@style/Widget.Material3.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="@string/all" />
+        <!-- Transaction List Container (Seamless PhonePe Style Surface) -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border_subtle" />
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_income"
-                    style="@style/Widget.Material3.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/income" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_expenses"
-                    style="@style/Widget.Material3.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/expenses" />
-
-            </com.google.android.material.chip.ChipGroup>
-        </HorizontalScrollView>
-
-        <!-- Transaction List Container -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@color/surface_card"
             android:clipChildren="false"
-            android:clipToPadding="false"
-            android:layout_weight="1">
+            android:clipToPadding="false">
 
             <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
                 android:id="@+id/swipeRefreshLayout"
@@ -115,7 +398,7 @@
                     android:clipChildren="false"
                     android:clipToPadding="false"
                     android:overScrollMode="never"
-                    android:paddingTop="8dp"
+                    android:paddingTop="0dp"
                     android:paddingBottom="80dp" />
             </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
@@ -126,6 +409,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:text="@string/loading_transactions"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
                 android:textStyle="bold"
                 android:visibility="gone" />
 
@@ -137,31 +422,56 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:orientation="vertical"
+                android:paddingHorizontal="32dp"
                 android:visibility="gone">
 
-                <ImageView
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:contentDescription="@string/no_transactions_found"
-                    app:srcCompat="@drawable/empty_wallet_remove_svgrepo_com"
-                    app:tint="@color/text_secondary" />
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    app:cardBackgroundColor="@color/surface_card"
+                    app:cardCornerRadius="40dp"
+                    app:cardElevation="3dp"
+                    app:strokeColor="@color/border_subtle"
+                    app:strokeWidth="1dp">
+
+                    <ImageView
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@string/no_transactions_found"
+                        app:srcCompat="@drawable/ic_empty_wallet"
+                        app:tint="@color/text_tertiary" />
+                </com.google.android.material.card.MaterialCardView>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="@string/no_transactions_found"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="16sp" />
+                    android:textColor="@color/text_primary"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/btnAddTransaction"
+                <TextView
+                    android:id="@+id/textEmptySub"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:text="No transactions match your current search or filter criteria."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddTransaction"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="20dp"
                     android:text="@string/add_transaction"
-                    android:background="@drawable/rounded_corner_container_save"
-                    android:textColor="@android:color/white" />
+                    android:textSize="14sp"
+                    app:backgroundTint="@color/color_primary"
+                    app:cornerRadius="24dp" />
             </LinearLayout>
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -169,33 +479,37 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|end"
-                android:layout_margin="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp"
                 android:contentDescription="@string/scroll_to_top"
                 app:backgroundTint="@color/color_primary"
-                app:srcCompat="@drawable/up_arrow_svgrepo_com"
+                app:elevation="4dp"
+                app:fabCustomSize="40dp"
+                app:maxImageSize="18dp"
+                app:srcCompat="@drawable/ic_up_arrow"
                 app:tint="@android:color/white"
                 android:visibility="gone" />
         </FrameLayout>
 
-        <!-- Navigation Bar (Matching Dashboard) -->
+        <!-- Navigation Bar (Rebuilt 5-Item Fintech Dock) -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/navbar_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="0dp"
             app:cardBackgroundColor="@color/navbar_background"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.BottomNav"
             app:cardElevation="12dp"
             app:cardUseCompatPadding="false"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.BottomNav"
             app:strokeWidth="0dp">
 
             <LinearLayout
                 android:id="@+id/navbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="64dp"
                 android:background="@android:color/transparent"
                 android:gravity="center_vertical"
+                android:minHeight="64dp"
                 android:orientation="horizontal"
                 android:paddingHorizontal="4dp"
                 android:paddingVertical="6dp">
@@ -279,9 +593,9 @@
                         android:id="@+id/cardNavAdd"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
+                        app:cardBackgroundColor="@color/nav_fab_bg"
                         app:cardCornerRadius="24dp"
                         app:cardElevation="6dp"
-                        app:cardBackgroundColor="@color/nav_fab_bg"
                         app:strokeWidth="0dp"
                         android:clickable="false">
 
@@ -313,7 +627,7 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:contentDescription="@string/nav_export"
-                        app:srcCompat="@drawable/download_minimalistic"
+                        app:srcCompat="@drawable/ic_export"
                         app:tint="@color/nav_item_inactive" />
 
                     <TextView
@@ -344,7 +658,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:contentDescription="@string/nav_profile"
-                        app:srcCompat="@drawable/account_svgrepo_com"
+                        app:srcCompat="@drawable/ic_account"
                         app:tint="@color/nav_item_inactive" />
 
                     <TextView
@@ -360,12 +674,5 @@
         </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
-
-    <com.google.android.material.search.SearchView
-        android:id="@+id/search_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:hint="Search transactions..."
-        app:layout_anchor="@id/search_bar" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

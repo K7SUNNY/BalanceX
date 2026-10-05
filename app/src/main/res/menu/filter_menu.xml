@@ -1,9 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:id="@+id/option_newest_to_oldest"
-        android:title="Newest to Oldest" />
-    <item
-        android:id="@+id/option_oldest_to_newest"
-        android:title="Oldest to Newest" />
+    <group android:id="@+id/group_sort">
+        <item
+            android:id="@+id/option_newest_to_oldest"
+            android:title="Sort: Newest First" />
+        <item
+            android:id="@+id/option_oldest_to_newest"
+            android:title="Sort: Oldest First" />
+        <item
+            android:id="@+id/option_amount_high"
+            android:title="Sort: Highest Amount" />
+        <item
+            android:id="@+id/option_amount_low"
+            android:title="Sort: Lowest Amount" />
+    </group>
+    <group android:id="@+id/group_filter">
+        <item
+            android:id="@+id/option_filter_all"
+            android:title="Period: All Time" />
+        <item
+            android:id="@+id/option_filter_today"
+            android:title="Period: Today" />
+        <item
+            android:id="@+id/option_filter_month"
+            android:title="Period: This Month" />
+        <item
+            android:id="@+id/option_filter_custom_date"
+            android:title="Period: Pick Custom Date..." />
+    </group>
 </menu>

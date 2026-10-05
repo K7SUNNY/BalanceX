@@ -20,7 +20,7 @@
             android:layout_height="?attr/actionBarSize"
             app:title="Transaction Details"
             app:titleTextColor="@color/text_primary"
-            app:navigationIcon="@drawable/back_svgrepo_com"
+            app:navigationIcon="@drawable/ic_back"
             app:layout_scrollFlags="scroll|enterAlways" />
 
     </com.google.android.material.appbar.AppBarLayout>

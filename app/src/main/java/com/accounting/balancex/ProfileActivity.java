@@ -73,7 +73,7 @@ public class ProfileActivity extends AppCompatActivity {
                 profileImage.setImageURI(imageUri);
             } catch (SecurityException e) {
                 e.printStackTrace();
-                profileImage.setImageResource(R.drawable.account_svgrepo_com);
+                profileImage.setImageResource(R.drawable.ic_account);
             }
         }
     }

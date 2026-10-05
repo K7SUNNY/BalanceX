@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:src="@drawable/account_svgrepo_com"
+            android:src="@drawable/ic_account"
             android:contentDescription="@string/profile_image_desc" />
     </androidx.cardview.widget.CardView>
     <LinearLayout

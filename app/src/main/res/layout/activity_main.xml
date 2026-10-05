@@ -25,7 +25,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/menu_desc"
             android:padding="4dp"
-            app:srcCompat="@drawable/menu_alt_1_svgrepo_com"
+            app:srcCompat="@drawable/ic_menu_alt"
             app:tint="@color/text_primary" />
 
         <TextView
@@ -46,7 +46,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/notification_desc"
             android:padding="4dp"
-            app:srcCompat="@drawable/notification_bell_svgrepo_com"
+            app:srcCompat="@drawable/ic_notification_bell"
             app:tint="@color/text_primary" />
     </LinearLayout>
 
@@ -127,7 +127,7 @@
                                     android:layout_width="16dp"
                                     android:layout_height="16dp"
                                     android:contentDescription="@string/credit_arrow_desc"
-                                    app:srcCompat="@drawable/arrow_down_left_svgrepo_com"
+                                    app:srcCompat="@drawable/ic_arrow_down_left"
                                     app:tint="#4CAF50" />
 
                                 <TextView
@@ -174,7 +174,7 @@
                                     android:layout_width="16dp"
                                     android:layout_height="16dp"
                                     android:contentDescription="@string/debit_arrow_desc"
-                                    app:srcCompat="@drawable/arrow_up_right_lg_svgrepo_com"
+                                    app:srcCompat="@drawable/ic_arrow_up_right"
                                     app:tint="#F44336" />
 
                                 <TextView
@@ -319,7 +319,7 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:contentDescription="@string/export"
-                            app:srcCompat="@drawable/download_minimalistic"
+                            app:srcCompat="@drawable/ic_export"
                             app:tint="@color/finance_income" />
                     </com.google.android.material.card.MaterialCardView>
 
@@ -356,7 +356,7 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:contentDescription="@string/profile"
-                            app:srcCompat="@drawable/account_svgrepo_com"
+                            app:srcCompat="@drawable/ic_account"
                             app:tint="@color/color_tertiary" />
                     </com.google.android.material.card.MaterialCardView>
 
@@ -416,7 +416,7 @@
                                 android:background="@drawable/rounded_corner_unselected"
                                 android:contentDescription="@string/bar_chart_desc"
                                 android:padding="6dp"
-                                app:srcCompat="@drawable/bar_chart_12_svgrepo_com"
+                                app:srcCompat="@drawable/ic_bar_chart"
                                 app:tint="@color/text_primary" />
 
                             <ImageView
@@ -427,7 +427,7 @@
                                 android:background="@drawable/rounded_corner_unselected"
                                 android:contentDescription="@string/line_chart_desc"
                                 android:padding="6dp"
-                                app:srcCompat="@drawable/line_chart_svgrepo_com"
+                                app:srcCompat="@drawable/ic_line_chart"
                                 app:tint="@color/text_tertiary" />
                         </LinearLayout>
                     </LinearLayout>
@@ -734,7 +734,7 @@
                     android:layout_width="22dp"
                     android:layout_height="22dp"
                     android:contentDescription="@string/nav_export"
-                    app:srcCompat="@drawable/download_minimalistic"
+                    app:srcCompat="@drawable/ic_export"
                     app:tint="@color/nav_item_inactive" />
 
                 <TextView
@@ -765,7 +765,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="@string/nav_profile"
-                    app:srcCompat="@drawable/account_svgrepo_com"
+                    app:srcCompat="@drawable/ic_account"
                     app:tint="@color/nav_item_inactive" />
 
                 <TextView

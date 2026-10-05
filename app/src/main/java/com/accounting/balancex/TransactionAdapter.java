@@ -1,35 +1,34 @@
 package com.accounting.balancex;
 
-import android.annotation.SuppressLint;
-import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.os.Handler;
-import android.util.Log;
+import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.FrameLayout;
-import com.google.android.material.card.MaterialCardView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.gson.Gson;
+
 import java.util.ArrayList;
 import java.util.List;
 
-//class for transactions management
 public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.ViewHolder> {
-    private Context context;
+    private final Context context;
     private List<Transaction> transactionList;
 
     public TransactionAdapter(Context context, List<Transaction> transactionList) {
@@ -44,174 +43,254 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
         return new ViewHolder(view);
     }
 
-    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Transaction transaction = transactionList.get(position);
 
-        holder.transactionCard.setOnTouchListener(new View.OnTouchListener() {
-            private Handler handler = new Handler();
-            private boolean isLongPress = false;
+        boolean isCredit = transaction.getTransactionType() != null &&
+                transaction.getTransactionType().equalsIgnoreCase("Credit");
 
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        isLongPress = false;
-                        holder.hoverMessage.setVisibility(View.VISIBLE);
+        // 1. Icon Squircle and Type Styling
+        if (isCredit) {
+            holder.cardIconContainer.setCardBackgroundColor(
+                    ContextCompat.getColor(context, R.color.finance_income_container));
+            holder.iconTransactionType.setImageResource(R.drawable.ic_arrow_down_left);
+            holder.iconTransactionType.setColorFilter(
+                    ContextCompat.getColor(context, R.color.finance_income));
 
-                        // Start long press detection
-                        handler.postDelayed(() -> {
-                            isLongPress = true;
-                            showTransactionDetails(transaction, v.getContext());
-                        }, 500);
-                        break;
-
-                    case MotionEvent.ACTION_UP:
-                    case MotionEvent.ACTION_CANCEL:
-                        holder.hoverMessage.setVisibility(View.GONE);
-                        // Cancel long press if user lifts the finger early
-                        handler.removeCallbacksAndMessages(null);
-                        break;
-                }
-                return false; // Return false to allow MaterialCardView to handle ripples
-            }
-        });
-        // Debugging Log to check what is being retrieved
-        Log.d("TransactionDebug", "Transaction Type for " + transaction.getReceiverName() + ": " + transaction.getTransactionType());
-
-        if (transaction.getTransactionType().equalsIgnoreCase("Credit")) {
             holder.textType.setText("Credit");
             holder.textType.setTextColor(ContextCompat.getColor(context, R.color.finance_income));
-            holder.textType.setBackgroundResource(R.drawable.bg_credit);
+            holder.textType.setBackground(null);
+
+            holder.textAmount.setText("+₹" + formatAmount(transaction.getAmount()));
+            holder.textAmount.setTextColor(ContextCompat.getColor(context, R.color.finance_income));
         } else {
+            holder.cardIconContainer.setCardBackgroundColor(
+                    ContextCompat.getColor(context, R.color.finance_expense_container));
+            holder.iconTransactionType.setImageResource(R.drawable.ic_arrow_up_right);
+            holder.iconTransactionType.setColorFilter(
+                    ContextCompat.getColor(context, R.color.finance_expense));
+
             holder.textType.setText("Debit");
-            holder.textType.setTextColor(ContextCompat.getColor(context, R.color.finance_expense));
-            holder.textType.setBackgroundResource(R.drawable.bg_debit);
+            holder.textType.setTextColor(ContextCompat.getColor(context, R.color.text_secondary));
+            holder.textType.setBackground(null);
+
+            holder.textAmount.setText("-₹" + formatAmount(transaction.getAmount()));
+            holder.textAmount.setTextColor(ContextCompat.getColor(context, R.color.finance_expense));
         }
 
-        holder.textUTR.setText(transaction.getUtr());
-        holder.textPaymentMethod.setText(transaction.getPaymentMethod());
-
+        // 2. Receiver & Metadata
         String receiverName = transaction.getReceiverName();
-        if (receiverName.length() > 10) {
-            receiverName = receiverName.substring(0, 10) + "...";
+        if (receiverName == null || receiverName.trim().isEmpty()) {
+            receiverName = "Unknown";
         }
-        holder.textReceiver.setText(receiverName);
-        holder.textAmount.setText("₹" + transaction.getAmount());
-        holder.textDate.setText(transaction.getDate());
+        holder.textReceiverName.setText(receiverName);
 
-        holder.iconChat.setOnClickListener(v -> {
-            ArrayList<Transaction> filteredTransactions = new ArrayList<>();
-            for (Transaction t : transactionList) {
-                if (t.getReceiverName().equals(transaction.getReceiverName())) {
-                    filteredTransactions.add(t);
-                }
-            }
+        // 3. Category & Date
+        String category = transaction.getCategory();
+        if (category == null || category.trim().isEmpty()) {
+            category = "General";
+        }
+        holder.textCategory.setText(category);
 
-            if (!filteredTransactions.isEmpty()) {
-                Intent intent = new Intent(context, TransactionDetailsActivity.class);
-                Gson gson = new Gson();
-                String transactionsJson = gson.toJson(filteredTransactions);
+        String date = transaction.getDate();
+        if (date == null || date.trim().isEmpty()) {
+            date = "N/A";
+        }
+        holder.textDate.setText(date);
 
-                intent.putExtra("transactions_json", transactionsJson);
-                intent.putExtra("receiverName", transaction.getReceiverName());
-                context.startActivity(intent);
+        // 4. Divider Visibility (hide for last item)
+        if (holder.itemDivider != null) {
+            holder.itemDivider.setVisibility(position == getItemCount() - 1 ? View.GONE : View.VISIBLE);
+        }
+
+        // 5. Click Listeners
+        holder.transactionCard.setOnClickListener(v -> showTransactionDetails(transaction, v.getContext()));
+
+        holder.transactionCard.setOnLongClickListener(v -> {
+            String utr = transaction.getUtr();
+            String toCopy = (utr != null && !utr.trim().isEmpty() && !utr.equalsIgnoreCase("Unknown"))
+                    ? utr : transaction.getTransactionID();
+            if (toCopy != null && !toCopy.trim().isEmpty() && !toCopy.equalsIgnoreCase("N/A")) {
+                copyToClipboard(context, "Reference", toCopy);
             } else {
-                Toast.makeText(context, "No transactions found for this contact.", Toast.LENGTH_SHORT).show();
+                copyToClipboard(context, "Transaction", transaction.getReceiverName() + " - ₹" + transaction.getAmount());
             }
+            return true;
         });
     }
 
     @Override
     public int getItemCount() {
-        return transactionList.size();
+        return transactionList != null ? transactionList.size() : 0;
     }
 
     public void updateList(List<Transaction> newList) {
-        transactionList = newList;
+        this.transactionList = newList;
         notifyDataSetChanged();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView textUTR, textPaymentMethod, textType;
-        TextView textReceiver, textAmount, textDate;
-        ImageView iconChat;
-        TextView hoverMessage;
-        MaterialCardView transactionCard;
+        View transactionCard, itemDivider;
+        MaterialCardView cardIconContainer;
+        ImageView iconTransactionType;
+        TextView textReceiverName, textCategory, textDate;
+        TextView textAmount, textType;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-
-            textUTR = itemView.findViewById(R.id.textUTR);
-            textPaymentMethod = itemView.findViewById(R.id.textPaymentMethod);
-            textType = itemView.findViewById(R.id.textType);
-
-            textReceiver = itemView.findViewById(R.id.textReceiverName);
-            textAmount = itemView.findViewById(R.id.textAmount);
-            textDate = itemView.findViewById(R.id.textDate);
-            iconChat = itemView.findViewById(R.id.iconChat);
-            hoverMessage = itemView.findViewById(R.id.hoverMessage);
             transactionCard = itemView.findViewById(R.id.transactionCard);
+            cardIconContainer = itemView.findViewById(R.id.cardIconContainer);
+            iconTransactionType = itemView.findViewById(R.id.iconTransactionType);
+            textReceiverName = itemView.findViewById(R.id.textReceiverName);
+            textCategory = itemView.findViewById(R.id.textCategory);
+            textDate = itemView.findViewById(R.id.textDate);
+            textAmount = itemView.findViewById(R.id.textAmount);
+            textType = itemView.findViewById(R.id.textType);
+            itemDivider = itemView.findViewById(R.id.itemDivider);
         }
     }
-    private void showTransactionDetails(Transaction transaction, Context context) {
-        // Create a dialog
-        Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.popup_transaction_details); // Your XML layout
 
-        // Set translucent background
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    private void showTransactionDetails(Transaction transaction, Context ctx) {
+        BottomSheetDialog dialog = new BottomSheetDialog(ctx);
+        View view = LayoutInflater.from(ctx).inflate(R.layout.bottom_sheet_transaction_details, null);
+        dialog.setContentView(view);
 
-        // Find Views
-        TextView detailDate = dialog.findViewById(R.id.detailDate);
-        TextView detailReceiver = dialog.findViewById(R.id.detailReceiver);
-        TextView detailAmount = dialog.findViewById(R.id.detailAmount);
-        TextView detailTransactionID = dialog.findViewById(R.id.detailTransactionID);
-        TextView detailPaymentMethod = dialog.findViewById(R.id.detailPaymentMethod);
-        TextView detailUTR = dialog.findViewById(R.id.detailUTR);
-        ImageView closeBtn = dialog.findViewById(R.id.closeButton);
-        ImageView copyTransactionID = dialog.findViewById(R.id.detailTransactionID_copy);
-        ImageView copyUTR = dialog.findViewById(R.id.detailUTR_copy);
-        TextView detailComments = dialog.findViewById(R.id.detailComments);
-        TextView detailDescription = dialog.findViewById(R.id.detailDescription);
-        TextView detailCategory = dialog.findViewById(R.id.detailCategory);
+        TextView bsTextType = view.findViewById(R.id.bsTextType);
+        TextView bsTextAmount = view.findViewById(R.id.bsTextAmount);
+        TextView bsTextReceiver = view.findViewById(R.id.bsTextReceiver);
+        TextView bsTextDate = view.findViewById(R.id.bsTextDate);
+        TextView bsTextPaymentMethod = view.findViewById(R.id.bsTextPaymentMethod);
+        TextView bsTextCategory = view.findViewById(R.id.bsTextCategory);
+        TextView bsTextUTR = view.findViewById(R.id.bsTextUTR);
+        TextView bsTextTxnId = view.findViewById(R.id.bsTextTxnId);
+        TextView bsTextComments = view.findViewById(R.id.bsTextComments);
+        LinearLayout bsLayoutComments = view.findViewById(R.id.bsLayoutComments);
 
-        // Set Transaction Data
-        detailDate.setText(transaction.getDate());
-        detailReceiver.setText(transaction.getReceiverName());
-        detailAmount.setText("₹" + transaction.getAmount());
-        detailPaymentMethod.setText(transaction.getPaymentMethod());
-        detailUTR.setText(transaction.getUtr());
-        detailTransactionID.setText(transaction.getTransactionID());
-        detailComments.setText(transaction.getComments());
-        detailDescription.setText(transaction.getDescription());
-        detailCategory.setText(transaction.getCategory());
+        ImageView bsCloseButton = view.findViewById(R.id.bsCloseButton);
+        ImageView bsCopyUTR = view.findViewById(R.id.bsCopyUTR);
+        ImageView bsCopyTxnId = view.findViewById(R.id.bsCopyTxnId);
 
+        MaterialButton bsBtnContactHistory = view.findViewById(R.id.bsBtnContactHistory);
+        MaterialButton bsBtnShare = view.findViewById(R.id.bsBtnShare);
 
-        // Close button action
-        closeBtn.setOnClickListener(v -> dialog.dismiss());
+        boolean isCredit = transaction.getTransactionType() != null &&
+                transaction.getTransactionType().equalsIgnoreCase("Credit");
 
-        // Copy Transaction ID
-        copyTransactionID.setOnClickListener(v -> {
-            copyToClipboard(context, "Transaction ID", transaction.getTransactionID());
+        if (isCredit) {
+            bsTextType.setText("CREDIT / RECEIVED");
+            bsTextType.setTextColor(ContextCompat.getColor(ctx, R.color.finance_income));
+            bsTextType.setBackgroundResource(R.drawable.bg_credit);
+            bsTextAmount.setText("+₹" + formatAmount(transaction.getAmount()));
+            bsTextAmount.setTextColor(ContextCompat.getColor(ctx, R.color.finance_income));
+        } else {
+            bsTextType.setText("DEBIT / SENT");
+            bsTextType.setTextColor(ContextCompat.getColor(ctx, R.color.finance_expense));
+            bsTextType.setBackgroundResource(R.drawable.bg_debit);
+            bsTextAmount.setText("-₹" + formatAmount(transaction.getAmount()));
+            bsTextAmount.setTextColor(ContextCompat.getColor(ctx, R.color.finance_expense));
+        }
+
+        bsTextReceiver.setText(transaction.getReceiverName());
+        bsTextDate.setText(transaction.getDate());
+        bsTextPaymentMethod.setText(transaction.getPaymentMethod());
+        bsTextCategory.setText(transaction.getCategory() != null && !transaction.getCategory().isEmpty()
+                ? transaction.getCategory() : "General");
+
+        String utr = transaction.getUtr();
+        bsTextUTR.setText(utr != null && !utr.isEmpty() ? utr : "N/A");
+
+        String txnId = transaction.getTransactionID();
+        bsTextTxnId.setText(txnId != null && !txnId.isEmpty() ? txnId : "N/A");
+
+        String comments = transaction.getComments();
+        if (comments != null && !comments.trim().isEmpty()) {
+            bsLayoutComments.setVisibility(View.VISIBLE);
+            bsTextComments.setText(comments);
+        } else if (transaction.getDescription() != null && !transaction.getDescription().trim().isEmpty()) {
+            bsLayoutComments.setVisibility(View.VISIBLE);
+            bsTextComments.setText(transaction.getDescription());
+        } else {
+            bsLayoutComments.setVisibility(View.GONE);
+        }
+
+        bsCloseButton.setOnClickListener(v -> dialog.dismiss());
+
+        bsCopyUTR.setOnClickListener(v -> copyToClipboard(ctx, "UTR", bsTextUTR.getText().toString()));
+        bsCopyTxnId.setOnClickListener(v -> copyToClipboard(ctx, "Transaction ID", bsTextTxnId.getText().toString()));
+
+        bsBtnContactHistory.setOnClickListener(v -> {
+            dialog.dismiss();
+            openPersonHistory(transaction);
         });
 
-        // Copy UTR
-        copyUTR.setOnClickListener(v -> {
-            copyToClipboard(context, "UTR", transaction.getUtr());
+        bsBtnShare.setOnClickListener(v -> {
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/plain");
+            String shareBody = "BalanceX Transaction Receipt:\n" +
+                    "Party: " + transaction.getReceiverName() + "\n" +
+                    "Type: " + transaction.getTransactionType() + "\n" +
+                    "Amount: ₹" + transaction.getAmount() + "\n" +
+                    "Date: " + transaction.getDate() + "\n" +
+                    "Ref / UTR: " + transaction.getUtr() + "\n" +
+                    "Payment Method: " + transaction.getPaymentMethod();
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Transaction Receipt");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareBody);
+            ctx.startActivity(Intent.createChooser(shareIntent, "Share Transaction via"));
         });
 
-        // Show the dialog
         dialog.show();
     }
-    private void copyToClipboard(Context context, String label, String text) {
-        ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-        ClipData clip = ClipData.newPlainText(label, text);
-        clipboard.setPrimaryClip(clip);
-        Toast.makeText(context, label + " copied!", Toast.LENGTH_SHORT).show();
+
+    private void openPersonHistory(Transaction transaction) {
+        ArrayList<Transaction> filteredTransactions = new ArrayList<>();
+        if (transactionList != null) {
+            for (Transaction t : transactionList) {
+                if (t.getReceiverName().equalsIgnoreCase(transaction.getReceiverName())) {
+                    filteredTransactions.add(t);
+                }
+            }
+        }
+
+        if (!filteredTransactions.isEmpty()) {
+            Intent intent = new Intent(context, TransactionDetailsActivity.class);
+            Gson gson = new Gson();
+            String transactionsJson = gson.toJson(filteredTransactions);
+            intent.putExtra("transactions_json", transactionsJson);
+            intent.putExtra("receiverName", transaction.getReceiverName());
+            context.startActivity(intent);
+        } else {
+            Toast.makeText(context, "No other transactions found for this person.", Toast.LENGTH_SHORT).show();
+        }
     }
 
+    private void copyToClipboard(Context ctx, String label, String text) {
+        ClipboardManager clipboard = (ClipboardManager) ctx.getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText(label, text);
+        if (clipboard != null) {
+            clipboard.setPrimaryClip(clip);
+        }
+        vibrate(ctx);
+        Toast.makeText(ctx, label + " copied to clipboard", Toast.LENGTH_SHORT).show();
+    }
+
+    private void vibrate(Context ctx) {
+        Vibrator vibrator = (Vibrator) ctx.getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator != null && vibrator.hasVibrator()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(25, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(25);
+            }
+        }
+    }
+
+    private String formatAmount(String amountStr) {
+        try {
+            double parsed = Double.parseDouble(amountStr);
+            return String.format("%,.2f", parsed);
+        } catch (Exception e) {
+            return amountStr;
+        }
+    }
 }

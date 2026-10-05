@@ -24,7 +24,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/back"
             android:padding="4dp"
-            app:srcCompat="@drawable/back_svgrepo_com"
+            app:srcCompat="@drawable/ic_back"
             app:tint="@color/text_primary" />
 
         <TextView
@@ -109,7 +109,7 @@
                         android:text="@string/contacts"
                         android:textAllCaps="false"
                         android:textColor="@color/color_accent"
-                        app:icon="@drawable/contact_new_svgrepo_com"
+                        app:icon="@drawable/ic_new_contact"
                         app:iconTint="@color/color_accent" />
 
                     <View
@@ -127,7 +127,7 @@
                         android:text="@string/scan"
                         android:textAllCaps="false"
                         android:textColor="@color/color_accent"
-                        app:icon="@drawable/camera_svgrepo_com"
+                        app:icon="@drawable/ic_camera"
                         app:iconTint="@color/color_accent" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -165,7 +165,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
                         android:background="@drawable/rounded_input_background"
-                        app:drawableStartCompat="@drawable/calendar_svgrepo_com"
+                        app:drawableStartCompat="@drawable/ic_calendar"
                         android:drawablePadding="12dp"
                         app:drawableTint="@color/text_secondary"
                         android:gravity="center_vertical"
@@ -550,7 +550,7 @@
                     android:layout_width="22dp"
                     android:layout_height="22dp"
                     android:contentDescription="@string/nav_export"
-                    app:srcCompat="@drawable/download_minimalistic"
+                    app:srcCompat="@drawable/ic_export"
                     app:tint="@color/nav_item_inactive" />
 
                 <TextView
@@ -581,7 +581,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:contentDescription="@string/nav_profile"
-                    app:srcCompat="@drawable/account_svgrepo_com"
+                    app:srcCompat="@drawable/ic_account"
                     app:tint="@color/nav_item_inactive" />
 
                 <TextView

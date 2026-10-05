@@ -1,26 +1,24 @@
 package com.accounting.balancex;
 
-import static com.accounting.balancex.R.*;
-
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
-import android.view.animation.OvershootInterpolator;
-import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,52 +30,81 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
-import android.widget.Toast;
+import java.util.Locale;
 
-import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.search.SearchBar;
-import com.google.android.material.search.SearchView;
-
-//History page
 public class TransactionActivity extends AppCompatActivity {
+    private static final String TAG = "TransactionActivity";
 
-    private RecyclerView recyclerView;
+    // Data lists
+    private final List<Transaction> allTransactions = new ArrayList<>();
+    private final List<Transaction> filteredTransactions = new ArrayList<>();
     private TransactionAdapter adapter;
-    private List<Transaction> transactionList;
-    private List<Transaction> filteredList;
-    private ChipGroup filterChipGroup;
-    private SearchBar searchBar;
-    private com.google.android.material.search.SearchView searchView;
-    private MaterialToolbar toolbar;
-    private ImageView filterByDateIcon;
+
+    // Views
+    private RecyclerView recyclerView;
     private SwipeRefreshLayout swipeRefreshLayout;
-    private String currentFilterType = "All"; // Default to All
     private FloatingActionButton btnScrollToTop;
-    private Button btnAddTransaction;
+    private TextView loadingText;
+    private LinearLayout noTransactionsText;
+    private TextView textEmptySub;
+
+    // Summary Widgets
+    private TextView textSummaryIncome, textCountIncome;
+    private TextView textSummaryExpense, textCountExpense;
+
+    // Search & Filter
+    private EditText editSearchTransactions;
+    private ImageView btnClearSearch;
+    private TextView tabFilterAll, tabFilterIncome, tabFilterExpenses;
+    private TextView textResultsCount, btnResetFilters;
+
+    // Active Filter State
+    private String currentTypeFilter = "All"; // "All", "Credit", "Debit"
+    private String currentDateFilter = "All"; // "All", "Today", "Month", "Custom"
+    private String customSelectedDate = "";
+    private String currentSearchQuery = "";
+    private int currentSortOption = R.id.option_newest_to_oldest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transaction);
 
+        setupWindowInsets();
+        initializeViews();
+        setupNavigationDock();
+        setupSegmentedFilters();
+        setupSearch();
+        setupSwipeRefresh();
+        setupScrollListener();
+
+        loadTransactionsFromFile();
+    }
+
+    private void setupWindowInsets() {
         View coordinator = findViewById(R.id.coordinator);
         if (coordinator != null) {
             ViewCompat.setOnApplyWindowInsetsListener(coordinator, (v, windowInsets) -> {
                 Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
                 v.setPadding(insets.left, insets.top, insets.right, 0);
+
                 View navbar = findViewById(R.id.navbar);
                 if (navbar != null) {
                     int baseBottomPadding = (int) (6 * getResources().getDisplayMetrics().density);
@@ -90,62 +117,186 @@ public class TransactionActivity extends AppCompatActivity {
                 return windowInsets;
             });
         }
+    }
 
+    private void initializeViews() {
         recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        btnScrollToTop = findViewById(R.id.btnScrollToTop);
+        loadingText = findViewById(R.id.loadingText);
+        noTransactionsText = findViewById(R.id.noTransactionsText);
+        textEmptySub = findViewById(R.id.textEmptySub);
 
-        toolbar = findViewById(R.id.toolbar);
-        searchBar = findViewById(R.id.search_bar);
-        searchView = findViewById(R.id.search_view);
-        filterChipGroup = findViewById(R.id.filter_chip_group);
-        filterByDateIcon = findViewById(R.id.filter_by_date);
+        textSummaryIncome = findViewById(R.id.textSummaryIncome);
+        textCountIncome = findViewById(R.id.textCountIncome);
+        textSummaryExpense = findViewById(R.id.textSummaryExpense);
+        textCountExpense = findViewById(R.id.textCountExpense);
 
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        editSearchTransactions = findViewById(R.id.editSearchTransactions);
+        btnClearSearch = findViewById(R.id.btnClearSearch);
+
+        tabFilterAll = findViewById(R.id.tabFilterAll);
+        tabFilterIncome = findViewById(R.id.tabFilterIncome);
+        tabFilterExpenses = findViewById(R.id.tabFilterExpenses);
+
+        textResultsCount = findViewById(R.id.textResultsCount);
+        btnResetFilters = findViewById(R.id.btnResetFilters);
+
+        // Header Actions
+//        ImageView btnBack = findViewById(R.id.btnBack);
+//        if (btnBack != null) {
+//            btnBack.setOnClickListener(v -> {
+//                vibrateDevice();
+//                finish();
+//            });
+//        }
+
+        ImageView filterByDate = findViewById(R.id.filter_by_date);
+        if (filterByDate != null) {
+            filterByDate.setOnClickListener(this::showFilterSortMenu);
         }
 
-        toolbar.setNavigationOnClickListener(v -> onBackPressed());
+        findViewById(R.id.btnAddTransaction).setOnClickListener(v -> {
+            startActivity(new Intent(this, EntryActivity.class));
+            vibrateDevice();
+        });
 
-        transactionList = new ArrayList<>();
-        filteredList = new ArrayList<>();
+        btnResetFilters.setOnClickListener(v -> resetAllFilters());
 
-        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
-
-        adapter = new TransactionAdapter(this, filteredList);
+        // Setup RecyclerView Adapter
+        adapter = new TransactionAdapter(this, filteredTransactions);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
-        loadTransactionsFromFile();
-        filterTransactions("All");
+    }
 
-        filterChipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            if (checkedIds.isEmpty()) return;
-            int checkedId = checkedIds.get(0);
-            if (checkedId == R.id.chip_all) {
-                filterTransactions("All");
-            } else if (checkedId == R.id.chip_income) {
-                filterTransactions("Credit");
-            } else if (checkedId == R.id.chip_expenses) {
-                filterTransactions("Debit");
+    private void setupSegmentedFilters() {
+        tabFilterAll.setOnClickListener(v -> {
+            vibrateDevice();
+            selectSegmentTab("All");
+        });
+
+        tabFilterIncome.setOnClickListener(v -> {
+            vibrateDevice();
+            selectSegmentTab("Credit");
+        });
+
+        tabFilterExpenses.setOnClickListener(v -> {
+            vibrateDevice();
+            selectSegmentTab("Debit");
+        });
+    }
+
+    private void selectSegmentTab(String type) {
+        currentTypeFilter = type;
+
+        int activeBg = R.drawable.bg_segmented_active;
+        int activeText = ContextCompat.getColor(this, R.color.text_primary);
+        int inactiveText = ContextCompat.getColor(this, R.color.text_secondary);
+
+        if (type.equals("All")) {
+            tabFilterAll.setBackgroundResource(activeBg);
+            tabFilterAll.setTextColor(activeText);
+            tabFilterAll.setTypeface(null, android.graphics.Typeface.BOLD);
+
+            tabFilterIncome.setBackground(null);
+            tabFilterIncome.setTextColor(inactiveText);
+            tabFilterIncome.setTypeface(null, android.graphics.Typeface.NORMAL);
+
+            tabFilterExpenses.setBackground(null);
+            tabFilterExpenses.setTextColor(inactiveText);
+            tabFilterExpenses.setTypeface(null, android.graphics.Typeface.NORMAL);
+        } else if (type.equals("Credit")) {
+            tabFilterAll.setBackground(null);
+            tabFilterAll.setTextColor(inactiveText);
+            tabFilterAll.setTypeface(null, android.graphics.Typeface.NORMAL);
+
+            tabFilterIncome.setBackgroundResource(activeBg);
+            tabFilterIncome.setTextColor(activeText);
+            tabFilterIncome.setTypeface(null, android.graphics.Typeface.BOLD);
+
+            tabFilterExpenses.setBackground(null);
+            tabFilterExpenses.setTextColor(inactiveText);
+            tabFilterExpenses.setTypeface(null, android.graphics.Typeface.NORMAL);
+        } else {
+            tabFilterAll.setBackground(null);
+            tabFilterAll.setTextColor(inactiveText);
+            tabFilterAll.setTypeface(null, android.graphics.Typeface.NORMAL);
+
+            tabFilterIncome.setBackground(null);
+            tabFilterIncome.setTextColor(inactiveText);
+            tabFilterIncome.setTypeface(null, android.graphics.Typeface.NORMAL);
+
+            tabFilterExpenses.setBackgroundResource(activeBg);
+            tabFilterExpenses.setTextColor(activeText);
+            tabFilterExpenses.setTypeface(null, android.graphics.Typeface.BOLD);
+        }
+
+        applyFiltersAndSort();
+    }
+
+    private void setupSearch() {
+        editSearchTransactions.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                currentSearchQuery = s != null ? s.toString().trim() : "";
+                if (btnClearSearch != null) {
+                    btnClearSearch.setVisibility(currentSearchQuery.isEmpty() ? View.GONE : View.VISIBLE);
+                }
+                applyFiltersAndSort();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        btnClearSearch.setOnClickListener(v -> {
+            editSearchTransactions.setText("");
+            currentSearchQuery = "";
+            vibrateDevice();
+        });
+    }
+
+    private void setupSwipeRefresh() {
+        swipeRefreshLayout.setColorSchemeColors(ContextCompat.getColor(this, R.color.color_primary));
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                loadTransactionsFromFile();
+                swipeRefreshLayout.setRefreshing(false);
+            }, 800);
+        });
+    }
+
+    private void setupScrollListener() {
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                super.onScrolled(rv, dx, dy);
+                LinearLayoutManager layoutManager = (LinearLayoutManager) rv.getLayoutManager();
+                if (layoutManager != null) {
+                    int firstVisible = layoutManager.findFirstVisibleItemPosition();
+                    if (firstVisible > 4) {
+                        if (btnScrollToTop.getVisibility() != View.VISIBLE) {
+                            btnScrollToTop.show();
+                        }
+                    } else {
+                        if (btnScrollToTop.getVisibility() == View.VISIBLE) {
+                            btnScrollToTop.hide();
+                        }
+                    }
+                }
             }
         });
 
-        searchView.getEditText().setOnEditorActionListener((v, actionId, event) -> {
-            String query = searchView.getText().toString();
-            searchBar.setText(query);
-            searchTransaction(query);
-            searchView.hide();
-            return false;
+        btnScrollToTop.setOnClickListener(v -> {
+            vibrateDevice();
+            recyclerView.smoothScrollToPosition(0);
         });
+    }
 
-        searchView.addTransitionListener((searchView1, previousState, newState) -> {
-            if (newState == com.google.android.material.search.SearchView.TransitionState.HIDDEN) {
-                String query = searchView.getText().toString();
-                searchBar.setText(query);
-                searchTransaction(query);
-            }
-        });
-
-        // Bottom Navigation Listeners (Home, History, Center Add FAB, Export, Profile)
+    private void setupNavigationDock() {
         View navHome = findViewById(R.id.navHome);
         if (navHome != null) {
             navHome.setOnClickListener(v -> {
@@ -189,96 +340,16 @@ public class TransactionActivity extends AppCompatActivity {
                 vibrateDevice();
             });
         }
-
-        filterByDateIcon.setOnClickListener(v -> showFilterPopup(v));
-
-        // Pull-to-Refresh Listener
-        swipeRefreshLayout.setOnRefreshListener(() -> {
-            refreshTransactionList();
-        });
-
-        //scroll to top button
-        btnScrollToTop = findViewById(R.id.btnScrollToTop);
-        // Show or hide button based on scroll position
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                // Show button only when scrolling down
-                if (!recyclerView.canScrollVertically(-1)) {
-                    if (btnScrollToTop.getVisibility() == View.VISIBLE) {
-                        btnScrollToTop.hide();
-                    }
-                } else {
-                    if (btnScrollToTop.getVisibility() == View.GONE) {
-                        btnScrollToTop.show();
-                    }
-                }
-            }
-        });
-
-        // Scroll to top smoothly and hide button
-        btnScrollToTop.setOnClickListener(v -> {
-            recyclerView.smoothScrollToPosition(0);
-
-            // Delay hiding the button so the ripple effect completes
-            new Handler().postDelayed(() -> btnScrollToTop.hide(), 200);
-        });
-
-        //Add new transaction button
-        btnAddTransaction = findViewById(R.id.btnAddTransaction);
-        btnAddTransaction.setOnClickListener(v -> {
-            Log.d("DEBUG BUTTON", "Button Clicked!");  // Log to check if button is clickable
-            Toast.makeText(TransactionActivity.this, "Redirecting to Entry Page...", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(TransactionActivity.this, EntryActivity.class);
-            startActivity(intent);
-        });
-    }
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        Intent intent = new Intent(this, MainActivity.class);
-        startActivity(intent);
-        vibrateDevice(); // Optional if you want feedback on back press
-        finish();
-    }
-    private void showFilterPopup(View v) {
-        PopupMenu popupMenu = new PopupMenu(TransactionActivity.this, v);
-        // Inflate the menu with sorting options
-        getMenuInflater().inflate(R.menu.filter_menu, popupMenu.getMenu());
-
-        // Handle menu item selection using if-else instead of switch
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                if (item.getItemId() == R.id.option_newest_to_oldest) {
-                    sortTransactions(false); // Newest to oldest
-                } else if (item.getItemId() == R.id.option_oldest_to_newest) {
-                    sortTransactions(true); // Oldest to newest
-                }
-                return false;
-            }
-        });
-
-        // Show the popup menu
-        popupMenu.show();
     }
 
     private void loadTransactionsFromFile() {
-        transactionList.clear(); // Clear existing transactions
-
-        TextView loadingText = findViewById(R.id.loadingText);
-        LinearLayout textNoTransactions = findViewById(R.id.noTransactionsText);
-        recyclerView.setVisibility(View.GONE);
         loadingText.setVisibility(View.VISIBLE);
-        textNoTransactions.setVisibility(View.GONE);
+        allTransactions.clear();
 
-        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-                "Accounting/transactions.json");
-
+        File file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
         if (!file.exists()) {
-            Log.e("TransactionDebug", "File not found: " + file.getAbsolutePath());
             loadingText.setVisibility(View.GONE);
-            textNoTransactions.setVisibility(View.VISIBLE);
+            applyFiltersAndSort();
             return;
         }
 
@@ -292,158 +363,255 @@ public class TransactionActivity extends AppCompatActivity {
             }
 
             JSONArray jsonArray = new JSONArray(jsonBuilder.toString());
-            transactionList.clear();
-
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject obj = jsonArray.getJSONObject(i);
-
-                transactionList.add(new Transaction(
+                allTransactions.add(new Transaction(
                         obj.optString("date", "N/A"),
                         obj.optString("amount", "0"),
                         obj.optString("receiver", "Unknown"),
                         obj.optString("description", ""),
                         obj.optString("utr", "Unknown"),
                         obj.optString("comments", ""),
-                        obj.optString("category", ""),
-                        obj.optString("transactionId", "N/A"),   // ✅ Corrected
-                        obj.optString("paymentMethod", "Cash"),  // ✅ Corrected
-                        obj.optString("textType", "Unknown"),    // ✅ Corrected
-                        obj.optLong("entryId", System.currentTimeMillis())
+                        obj.optString("category", "General"),
+                        obj.optString("transactionId", "N/A"),
+                        obj.optString("paymentMethod", "Cash"),
+                        obj.optString("textType", "Unknown"),
+                        obj.optLong("entryId", System.currentTimeMillis() - i * 1000L)
                 ));
             }
-
-            // Sort transactions by date (newest first)
-            Collections.sort(transactionList, (t1, t2) -> Long.compare(t2.getEntryId(), t1.getEntryId()));
-
-            runOnUiThread(() -> {
-                // Apply the last selected filter type
-                filterTransactions(currentFilterType);
-
-                // Hide loading message
-                loadingText.setVisibility(View.GONE);
-            });
-
         } catch (Exception e) {
-            Log.e("TransactionDebug", "Error loading transactions", e);
-            loadingText.setVisibility(View.GONE);
-            textNoTransactions.setVisibility(View.VISIBLE);
+            Log.e(TAG, "Error loading transactions from JSON file", e);
         }
 
-        Log.d("TransactionDebug", "Loaded Transactions: " + transactionList.size());
+        loadingText.setVisibility(View.GONE);
+        applyFiltersAndSort();
     }
-    private void filterTransactions(String type) {
-        currentFilterType = type; // Store the selected type
-        filteredList.clear();
 
-        if (type.equals("All")) {
-            filteredList.addAll(transactionList);
-        } else {
-            for (Transaction t : transactionList) {
-                if (t.getTransactionType().equals(type)) {
-                    filteredList.add(t);
+    private void applyFiltersAndSort() {
+        filteredTransactions.clear();
+
+        String query = currentSearchQuery.toLowerCase(Locale.getDefault());
+        String todayStr = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+        String thisMonthPrefix = new SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(new Date());
+
+        for (Transaction t : allTransactions) {
+            // 1. Type Filter (All, Credit, Debit)
+            if (!currentTypeFilter.equals("All") && !currentTypeFilter.equalsIgnoreCase(t.getTransactionType())) {
+                continue;
+            }
+
+            // 2. Date Range Filter
+            if (currentDateFilter.equals("Today")) {
+                if (t.getDate() == null || !t.getDate().startsWith(todayStr)) {
+                    continue;
                 }
+            } else if (currentDateFilter.equals("Month")) {
+                if (t.getDate() == null || !t.getDate().startsWith(thisMonthPrefix)) {
+                    continue;
+                }
+            } else if (currentDateFilter.equals("Custom")) {
+                if (t.getDate() == null || !t.getDate().startsWith(customSelectedDate)) {
+                    continue;
+                }
+            }
+
+            // 3. Search Query Filter
+            if (!query.isEmpty()) {
+                boolean matchesReceiver = t.getReceiverName() != null && t.getReceiverName().toLowerCase().contains(query);
+                boolean matchesCategory = t.getCategory() != null && t.getCategory().toLowerCase().contains(query);
+                boolean matchesMethod = t.getPaymentMethod() != null && t.getPaymentMethod().toLowerCase().contains(query);
+                boolean matchesUtr = t.getUtr() != null && t.getUtr().toLowerCase().contains(query);
+                boolean matchesTxnId = t.getTransactionID() != null && t.getTransactionID().toLowerCase().contains(query);
+                boolean matchesAmount = t.getAmount() != null && t.getAmount().contains(query);
+                boolean matchesComments = t.getComments() != null && t.getComments().toLowerCase().contains(query);
+
+                if (!matchesReceiver && !matchesCategory && !matchesMethod &&
+                        !matchesUtr && !matchesTxnId && !matchesAmount && !matchesComments) {
+                    continue;
+                }
+            }
+
+            filteredTransactions.add(t);
+        }
+
+        // Apply Sorting
+        sortList(filteredTransactions, currentSortOption);
+
+        // Update Summary Cards & Count Header
+        updateFinancialSummary(filteredTransactions);
+
+        // Update Adapter
+        adapter.updateList(new ArrayList<>(filteredTransactions));
+
+        // Update Visibility & Empty State
+        if (filteredTransactions.isEmpty()) {
+            recyclerView.setVisibility(View.GONE);
+            noTransactionsText.setVisibility(View.VISIBLE);
+            if (!currentSearchQuery.isEmpty()) {
+                textEmptySub.setText("No transactions match \"" + currentSearchQuery + "\"");
+            } else {
+                textEmptySub.setText("No transactions found for the selected filter.");
+            }
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            noTransactionsText.setVisibility(View.GONE);
+            animateListEntrance();
+        }
+
+        // Show/Hide Reset Button
+        boolean isFiltered = !currentTypeFilter.equals("All") || !currentDateFilter.equals("All") || !currentSearchQuery.isEmpty();
+        btnResetFilters.setVisibility(isFiltered ? View.VISIBLE : View.GONE);
+
+        String countText = filteredTransactions.size() + (filteredTransactions.size() == 1 ? " Transaction" : " Transactions");
+        if (isFiltered) {
+            textResultsCount.setText("Showing " + countText);
+        } else {
+            textResultsCount.setText("All " + countText);
+        }
+    }
+
+    private void sortList(List<Transaction> list, int sortOptionId) {
+        if (list == null || list.isEmpty()) return;
+
+        if (sortOptionId == R.id.option_newest_to_oldest) {
+            Collections.sort(list, (t1, t2) -> Long.compare(t2.getEntryId(), t1.getEntryId()));
+        } else if (sortOptionId == R.id.option_oldest_to_newest) {
+            Collections.sort(list, (t1, t2) -> Long.compare(t1.getEntryId(), t2.getEntryId()));
+        } else if (sortOptionId == R.id.option_amount_high) {
+            Collections.sort(list, (t1, t2) -> {
+                double a1 = parseAmount(t1.getAmount());
+                double a2 = parseAmount(t2.getAmount());
+                return Double.compare(a2, a1);
+            });
+        } else if (sortOptionId == R.id.option_amount_low) {
+            Collections.sort(list, (t1, t2) -> {
+                double a1 = parseAmount(t1.getAmount());
+                double a2 = parseAmount(t2.getAmount());
+                return Double.compare(a1, a2);
+            });
+        }
+    }
+
+    private void updateFinancialSummary(List<Transaction> list) {
+        double totalInflow = 0;
+        int countInflow = 0;
+        double totalOutflow = 0;
+        int countOutflow = 0;
+
+        for (Transaction t : list) {
+            double amt = parseAmount(t.getAmount());
+            if (t.getTransactionType() != null && t.getTransactionType().equalsIgnoreCase("Credit")) {
+                totalInflow += amt;
+                countInflow++;
+            } else {
+                totalOutflow += amt;
+                countOutflow++;
             }
         }
 
-        adapter.updateList(filteredList);
+        textSummaryIncome.setText("+₹" + String.format(Locale.getDefault(), "%,.2f", totalInflow));
+        textCountIncome.setText(countInflow + (countInflow == 1 ? " entry" : " entries"));
 
-        LinearLayout textNoTransactions = findViewById(R.id.noTransactionsText);
-        if (filteredList.isEmpty()) {
-            textNoTransactions.setVisibility(View.VISIBLE);
-            recyclerView.setVisibility(View.GONE);
-            // Move noTransactionsText to front
-            textNoTransactions.bringToFront();
-        } else {
-            textNoTransactions.setVisibility(View.GONE);
-            recyclerView.setVisibility(View.VISIBLE);
-            // Move SwipeRefreshLayout to front
-            swipeRefreshLayout.bringToFront();
-        }
+        textSummaryExpense.setText("-₹" + String.format(Locale.getDefault(), "%,.2f", totalOutflow));
+        textCountExpense.setText(countOutflow + (countOutflow == 1 ? " entry" : " entries"));
+    }
 
-        // Animate list items (keeping the subtle animation)
+    private void showFilterSortMenu(View anchor) {
+        vibrateDevice();
+        PopupMenu popup = new PopupMenu(this, anchor);
+        popup.getMenuInflater().inflate(R.menu.filter_menu, popup.getMenu());
+
+        popup.setOnMenuItemClickListener(item -> {
+            vibrateDevice();
+            int itemId = item.getItemId();
+
+            if (itemId == R.id.option_newest_to_oldest ||
+                    itemId == R.id.option_oldest_to_newest ||
+                    itemId == R.id.option_amount_high ||
+                    itemId == R.id.option_amount_low) {
+                currentSortOption = itemId;
+                applyFiltersAndSort();
+                return true;
+            } else if (itemId == R.id.option_filter_all) {
+                currentDateFilter = "All";
+                applyFiltersAndSort();
+                return true;
+            } else if (itemId == R.id.option_filter_today) {
+                currentDateFilter = "Today";
+                applyFiltersAndSort();
+                return true;
+            } else if (itemId == R.id.option_filter_month) {
+                currentDateFilter = "Month";
+                applyFiltersAndSort();
+                return true;
+            } else if (itemId == R.id.option_filter_custom_date) {
+                pickCustomDate();
+                return true;
+            }
+
+            return false;
+        });
+
+        popup.show();
+    }
+
+    private void pickCustomDate() {
+        Calendar cal = Calendar.getInstance();
+        DatePickerDialog dialog = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+            customSelectedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year, month + 1, dayOfMonth);
+            currentDateFilter = "Custom";
+            applyFiltersAndSort();
+        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
+        dialog.show();
+    }
+
+    private void resetAllFilters() {
+        vibrateDevice();
+        currentTypeFilter = "All";
+        currentDateFilter = "All";
+        customSelectedDate = "";
+        currentSearchQuery = "";
+        editSearchTransactions.setText("");
+        currentSortOption = R.id.option_newest_to_oldest;
+
+        selectSegmentTab("All");
+    }
+
+    private void animateListEntrance() {
         recyclerView.post(() -> {
-            for (int i = 0; i < recyclerView.getChildCount(); i++) {
+            for (int i = 0; i < Math.min(recyclerView.getChildCount(), 8); i++) {
                 View child = recyclerView.getChildAt(i);
                 if (child != null) {
-                    child.setTranslationY(100f);
+                    child.setTranslationY(40f);
                     child.setAlpha(0f);
-
                     child.animate()
                             .translationY(0f)
                             .alpha(1f)
-                            .setStartDelay(i * 50L)
-                            .setDuration(400)
+                            .setStartDelay(i * 30L)
+                            .setDuration(250)
                             .setInterpolator(new DecelerateInterpolator())
                             .start();
                 }
             }
         });
     }
-    private void sortTransactions(boolean isOldestToNewest) {
-        if (!filteredList.isEmpty() && filteredList.get(0).getEntryId() != 0) { // Check if entryId exists
-            if (isOldestToNewest) {
-                Collections.sort(filteredList, (t1, t2) -> Long.compare(t1.getEntryId(), t2.getEntryId()));
-            } else {
-                Collections.sort(filteredList, (t1, t2) -> Long.compare(t2.getEntryId(), t1.getEntryId()));
-            }
-            adapter.notifyDataSetChanged();
 
-            // Animation for recyclerView items after sorting
-            recyclerView.post(() -> {
-                for (int i = 0; i < recyclerView.getChildCount(); i++) {
-                    View child = recyclerView.getChildAt(i);
-                    if (child != null) {
-                        child.setTranslationY(200f);
-                        child.setAlpha(0f);
-
-                        child.animate()
-                                .translationY(0f)
-                                .alpha(1f)
-                                .setStartDelay(i * 150L)
-                                .setDuration(500)
-                                .setInterpolator(new DecelerateInterpolator())
-                                .start();
-                    }
-                }
-            });
-
-        } else {
-            Log.e("TransactionDebug", "Sorting skipped: entryId missing.");
+    private double parseAmount(String amtStr) {
+        if (amtStr == null || amtStr.trim().isEmpty()) return 0;
+        try {
+            return Double.parseDouble(amtStr.replaceAll("[^0-9.]", ""));
+        } catch (Exception e) {
+            return 0;
         }
     }
-    private void searchTransaction(String query) {
-        List<Transaction> searchResults = new ArrayList<>();
 
-        for (Transaction transaction : transactionList) {
-            // Ensure search only considers transactions that match the current filter type
-            if (currentFilterType.equals("All") || transaction.getTransactionType().equals(currentFilterType)) {
-                if (transaction.getReceiverName().toLowerCase().contains(query.toLowerCase()) ||
-                        transaction.getUtr().toLowerCase().contains(query.toLowerCase())) {
-                    searchResults.add(transaction);
-                }
-            }
-        }
-
-        adapter.updateList(searchResults);
-    }
-    // Refresh Transactions
-    private void refreshTransactionList() {
-        // Simulating a small delay for a natural feel
-        new Handler().postDelayed(() -> {
-            // Reload transactions (Use your existing method)
-            loadTransactionsFromFile();
-
-            // Stop refresh animation
-            swipeRefreshLayout.setRefreshing(false);
-        }, 1500); // Delay to make it smooth
-    }
     public void vibrateDevice() {
         Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         if (vibrator != null && vibrator.hasVibrator()) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE));
             } else {
-                vibrator.vibrate(30); // Deprecated in API 26+, but works for older versions
+                vibrator.vibrate(20);
             }
         }
     }
