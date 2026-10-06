@@ -4,18 +4,18 @@ This roadmap outlines the step-by-step process to modernize BalanceX while prese
 
 ## Phase 1: Architecture & Data Layer Preparation
 *Goal: Migrate from the fragile JSON storage to a robust, encrypted relational database.*
-- [ ] **Step 1:** Add **Room Database** and **SQLCipher** dependencies to Gradle.
-- [ ] **Step 2:** Design Database Entities (Transactions, Categories, Goals) using Java annotations (`@Entity`, `@PrimaryKey`).
-- [ ] **Step 3:** Implement Data Access Objects (DAOs) using interfaces in Java.
-- [ ] **Step 4:** Build a Java-based Repository pattern to manage data access.
-- [ ] **Step 5:** Write a background migration script to parse the existing user JSON files and insert them into the new Room Database seamlessly.
+- [x] **Step 1:** Add **Room Database** and **SQLCipher** dependencies to Gradle.
+- [x] **Step 2:** Design Database Entities (Transactions, Categories, Goals) using Java annotations (`@Entity`, `@PrimaryKey`).
+- [x] **Step 3:** Implement Data Access Objects (DAOs) using interfaces in Java.
+- [x] **Step 4:** Build a Java-based Repository pattern to manage data access.
+- [x] **Step 5:** Write a background migration script to parse the existing user JSON files and insert them into the new Room Database seamlessly.
 
 ## Phase 2: UI/UX Modernization (Material 3 & Hybrid Compose)
 *Goal: Revamp the look and feel using Material 3 and selective Compose integration.*
-- [ ] **Step 1:** Upgrade project theme to **Material 3** (`Theme.Material3.DayNight`).
-- [ ] **Step 2:** Update core XML layouts (Buttons, TextFields, Cards) to their Material 3 equivalents.
-- [ ] **Step 3:** Set up Jetpack Compose tooling for Java/XML interoperability.
-- [ ] **Step 4:** Replace the legacy MPAndroidChart with a modern Compose-based chart inside a `ComposeView` within the Java Activities/Fragments.
+- [x] **Step 1:** Upgrade project theme to **Material 3** (`Theme.Material3.DayNight`).
+- [x] **Step 2:** Update core XML layouts (Buttons, TextFields, Cards) to their Material 3 equivalents.
+- [x] **Step 3:** Set up Jetpack Compose tooling for Java/XML interoperability.
+- [x] **Step 4:** Replace the legacy MPAndroidChart with a modern Compose-based chart inside a `ComposeView` within the Java Activities/Fragments.
 
 ## Phase 3: Core Feature Expansion & Gamification
 *Goal: Add smart budgeting and goals.*

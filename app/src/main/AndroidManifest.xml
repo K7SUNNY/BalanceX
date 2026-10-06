@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.accounting.balancex">
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Permissions required for the app -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -96,13 +95,7 @@
             android:theme="@style/Theme.BalanceX"
             android:windowNoTitle="true"
             android:windowSoftInputMode="adjustPan" />
-        <activity
-            android:name=".EditProfileActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.BalanceX"
-            android:windowNoTitle="true"
-            android:windowSoftInputMode="adjustPan" />
+
         <activity
             android:name=".SettingsActivity"
             android:theme="@style/Theme.BalanceX"

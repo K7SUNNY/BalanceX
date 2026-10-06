@@ -40,13 +40,9 @@ import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SnapHelper;
 
-import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.data.PieData;
-import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.utils.ColorTemplate;
+import androidx.compose.ui.platform.ComposeView;
+import com.accounting.balancex.ui.compose.ModernChartBridge;
+import com.accounting.balancex.ui.compose.ModernPieChartBridge;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
@@ -91,16 +87,14 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private RecentTransactionsAdapter adapter;
     private List<RecentTransactionModel> recentTransactions;
-    private PieChart pieChart;
     private String selectedTimeline = "M"; // Default to Months
     private String graphType = "bar"; // Default to Bar Graph
-    private BarChart barChart;
-    private LineChart lineChart;
+    private ModernChartBridge modernChartBridge;
+    private ModernPieChartBridge modernPieChartBridge;
     private DrawerLayout drawerLayout;
     private ImageView menuButton, notificationButton;
     // Back Press Handling
     private boolean backPressedOnce = false;
-    private static final int EDIT_PROFILE_REQUEST = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -265,18 +259,22 @@ public class MainActivity extends AppCompatActivity {
         snapHelper.attachToRecyclerView(recyclerView);
         startAutoScroll(); // ✅ Start auto-scrolling after setting up RecyclerView
 
-        // Initialize PieChart
-        pieChart = findViewById(R.id.pieChart);
-        setupPieChart();
+        // Initialize Modern Compose Pie/Donut Chart
+        ComposeView composePieChartView = findViewById(R.id.composePieChartView);
+        if (composePieChartView != null) {
+            modernPieChartBridge = new ModernPieChartBridge(this, composePieChartView);
+        }
 
-        // Initialize Graph
-        BarChart barChart = findViewById(R.id.barChart);
-        LineChart lineChart = findViewById(R.id.lineChart);
-
-        GraphManager graphManager = new GraphManager(this, barChart, lineChart);
+        // Initialize Modern Compose Graph
+        ComposeView composeChartView = findViewById(R.id.composeChartView);
+        if (composeChartView != null) {
+            modernChartBridge = new ModernChartBridge(this, composeChartView);
+        }
         selectedTimeline = "M"; // Default to Months
         graphType = "bar"; // Default to Bar Graph
-        graphManager.updateGraph(selectedTimeline, graphType);
+        if (modernChartBridge != null) {
+            modernChartBridge.updateGraph(selectedTimeline, graphType);
+        }
 
         // Timeline Selection Buttons
         TextView monthsTextView = findViewById(R.id.months);
@@ -296,39 +294,51 @@ public class MainActivity extends AppCompatActivity {
         monthsTextView.setOnClickListener(view -> {
             selectedTimeline = "M";
             updateTimelineSelection(monthsTextView, daysTextView, weeksTextView, yearsTextView);
-            graphManager.updateGraph(selectedTimeline, graphType);
+            if (modernChartBridge != null) {
+                modernChartBridge.updateGraph(selectedTimeline, graphType);
+            }
         });
 
         daysTextView.setOnClickListener(view -> {
             selectedTimeline = "D";
             updateTimelineSelection(daysTextView, monthsTextView, weeksTextView, yearsTextView);
-            graphManager.updateGraph(selectedTimeline, graphType);
+            if (modernChartBridge != null) {
+                modernChartBridge.updateGraph(selectedTimeline, graphType);
+            }
         });
 
         weeksTextView.setOnClickListener(view -> {
             selectedTimeline = "W";
             updateTimelineSelection(weeksTextView, monthsTextView, daysTextView, yearsTextView);
-            graphManager.updateGraph(selectedTimeline, graphType);
+            if (modernChartBridge != null) {
+                modernChartBridge.updateGraph(selectedTimeline, graphType);
+            }
         });
 
         yearsTextView.setOnClickListener(view -> {
             selectedTimeline = "Y";
             updateTimelineSelection(yearsTextView, monthsTextView, daysTextView, weeksTextView);
-            graphManager.updateGraph(selectedTimeline, graphType);
+            if (modernChartBridge != null) {
+                modernChartBridge.updateGraph(selectedTimeline, graphType);
+            }
         });
 
         // Graph Type Selection
         lineChartImageView.setOnClickListener(view -> {
-            Log.d("GraphManager", "Line Chart button clicked!");
+            Log.d("ModernChart", "Line Chart button clicked!");
             graphType = "line";
             updateGraphTypeSelection(lineChartImageView, barGraphImageView);
-            graphManager.updateGraph(selectedTimeline, graphType);
+            if (modernChartBridge != null) {
+                modernChartBridge.updateGraph(selectedTimeline, graphType);
+            }
         });
 
         barGraphImageView.setOnClickListener(view -> {
             graphType = "bar";
             updateGraphTypeSelection(barGraphImageView, lineChartImageView);
-            graphManager.updateGraph(selectedTimeline, graphType);
+            if (modernChartBridge != null) {
+                modernChartBridge.updateGraph(selectedTimeline, graphType);
+            }
         });
 
         setupCustomDrawer();
@@ -1126,9 +1136,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == EDIT_PROFILE_REQUEST && resultCode == RESULT_OK) {
-            loadProfileData(); // Reload updated data
-        } else if (requestCode == RESTORE_FILE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+        if (requestCode == RESTORE_FILE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
             importBackupFromUri(data.getData());
         }
     }
@@ -1531,6 +1539,12 @@ public class MainActivity extends AppCompatActivity {
         loadProfileData();
         loadBalanceData();
         loadTransactionsFromStorage();
+        if (modernChartBridge != null) {
+            modernChartBridge.refresh();
+        }
+        if (modernPieChartBridge != null) {
+            modernPieChartBridge.refresh();
+        }
         if (adapter != null) {
             adapter.notifyDataSetChanged();
         }
@@ -1542,6 +1556,9 @@ public class MainActivity extends AppCompatActivity {
                 loadTransactionsFromStorage();
                 setupPieChart();
                 updateDrawerStats();
+                if (modernChartBridge != null) {
+                    modernChartBridge.refresh();
+                }
             });
         });
     }
@@ -1558,83 +1575,16 @@ public class MainActivity extends AppCompatActivity {
         scrollPosition = 0; // Reset scrolling position
     }
 
-    // Initialize PieChart
-    private ArrayList<PieModel> loadPieChartData() {
-        ArrayList<PieModel> pieDataList = new ArrayList<>();
-        HashMap<String, Float> categoryTotals = new HashMap<>();
 
-        try {
-            File file = com.accounting.balancex.data.db.DatabaseMigrator.findJsonFile(this);
-            if (file == null) {
-                file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
-            }
-            if (!file.exists())
-                return pieDataList; // Return empty if no data
-
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            StringBuilder jsonContent = new StringBuilder();
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                jsonContent.append(line);
-            }
-            reader.close();
-
-            JSONArray transactionsArray = new JSONArray(jsonContent.toString());
-
-            for (int i = 0; i < transactionsArray.length(); i++) {
-                JSONObject transaction = transactionsArray.getJSONObject(i);
-
-                String category = transaction.getString("category");
-                float amount = Float.parseFloat(transaction.getString("amount"));
-
-                if (categoryTotals.containsKey(category)) {
-                    categoryTotals.put(category, categoryTotals.get(category) + amount);
-                } else {
-                    categoryTotals.put(category, amount);
-                }
-            }
-
-            for (Map.Entry<String, Float> entry : categoryTotals.entrySet()) {
-                pieDataList.add(new PieModel(entry.getKey(), entry.getValue()));
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return pieDataList;
-    }
 
     private void setupPieChart() {
-        ArrayList<PieModel> pieDataList = loadPieChartData(); // Load data
-
-        ArrayList<PieEntry> entries = new ArrayList<>();
-        for (PieModel pieData : pieDataList) {
-            entries.add(new PieEntry(pieData.getAmount(), pieData.getCategory()));
+        if (modernPieChartBridge != null) {
+            modernPieChartBridge.refresh();
         }
-
-        PieDataSet dataSet = new PieDataSet(entries, "Categories");
-        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
-        dataSet.setValueTextSize(14f);
-        int textColor = ContextCompat.getColor(this, R.color.text_primary);
-        dataSet.setValueTextColor(textColor);
-
-        PieData pieData = new PieData(dataSet);
-        pieChart.setData(pieData);
-        pieChart.getDescription().setEnabled(false);
-        pieChart.setHoleColor(ContextCompat.getColor(this, R.color.surface_card));
-        pieChart.getLegend().setTextColor(textColor);
-        pieChart.setEntryLabelColor(textColor);
-        pieChart.invalidate(); // Refresh chart
     }
 
     public void vibrateDevice() {
         SettingsManager.vibrate(this);
     }
-
-
-
-
 
 }

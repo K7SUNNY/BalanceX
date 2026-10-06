@@ -473,24 +473,12 @@
                         </LinearLayout>
                     </LinearLayout>
 
-                    <!-- Chart Container -->
-                    <FrameLayout
+                    <!-- Modern Compose Chart Container -->
+                    <androidx.compose.ui.platform.ComposeView
+                        android:id="@+id/composeChartView"
                         android:layout_width="match_parent"
                         android:layout_height="250dp"
-                        android:layout_marginTop="16dp">
-
-                        <com.github.mikephil.charting.charts.BarChart
-                            android:id="@+id/barChart"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:visibility="visible" />
-
-                        <com.github.mikephil.charting.charts.LineChart
-                            android:id="@+id/lineChart"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:visibility="gone" />
-                    </FrameLayout>
+                        android:layout_marginTop="16dp" />
 
                     <!-- Timeline Selection -->
                     <LinearLayout
@@ -629,11 +617,11 @@
                 app:strokeColor="@color/border_subtle"
                 app:strokeWidth="1dp">
 
-                <com.github.mikephil.charting.charts.PieChart
-                    android:id="@+id/pieChart"
+                <androidx.compose.ui.platform.ComposeView
+                    android:id="@+id/composePieChartView"
                     android:layout_width="match_parent"
-                    android:layout_height="300dp"
-                    android:layout_margin="16dp" />
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp" />
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
