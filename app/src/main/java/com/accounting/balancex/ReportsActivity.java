@@ -328,12 +328,14 @@ public class ReportsActivity extends AppCompatActivity {
                 (view, year, month, dayOfMonth) -> {
                     customStartCal = Calendar.getInstance();
                     customStartCal.set(year, month, dayOfMonth, 0, 0, 0);
+                    customStartCal.set(Calendar.MILLISECOND, 0);
 
                     DatePickerDialog endDialog = new DatePickerDialog(
                             this,
                             (endView, endYear, endMonth, endDay) -> {
                                 customEndCal = Calendar.getInstance();
                                 customEndCal.set(endYear, endMonth, endDay, 23, 59, 59);
+                                customEndCal.set(Calendar.MILLISECOND, 999);
 
                                 SimpleDateFormat shortFmt = new SimpleDateFormat("dd MMM", Locale.getDefault());
                                 textCustomRangeLabel.setText(shortFmt.format(customStartCal.getTime()) + " - " + shortFmt.format(customEndCal.getTime()));
@@ -532,12 +534,14 @@ public class ReportsActivity extends AppCompatActivity {
                 startRange.set(Calendar.HOUR_OF_DAY, 0);
                 startRange.set(Calendar.MINUTE, 0);
                 startRange.set(Calendar.SECOND, 0);
+                startRange.set(Calendar.MILLISECOND, 0);
 
                 endRange = Calendar.getInstance();
                 endRange.set(Calendar.DAY_OF_MONTH, endRange.getActualMaximum(Calendar.DAY_OF_MONTH));
                 endRange.set(Calendar.HOUR_OF_DAY, 23);
                 endRange.set(Calendar.MINUTE, 59);
                 endRange.set(Calendar.SECOND, 59);
+                endRange.set(Calendar.MILLISECOND, 999);
 
                 SimpleDateFormat monthFmt = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
                 rangeSubtitle = "Current Month • " + monthFmt.format(now.getTime());
@@ -550,6 +554,7 @@ public class ReportsActivity extends AppCompatActivity {
                 startRange.set(Calendar.HOUR_OF_DAY, 0);
                 startRange.set(Calendar.MINUTE, 0);
                 startRange.set(Calendar.SECOND, 0);
+                startRange.set(Calendar.MILLISECOND, 0);
 
                 endRange = Calendar.getInstance();
                 endRange.add(Calendar.MONTH, -1);
@@ -557,6 +562,7 @@ public class ReportsActivity extends AppCompatActivity {
                 endRange.set(Calendar.HOUR_OF_DAY, 23);
                 endRange.set(Calendar.MINUTE, 59);
                 endRange.set(Calendar.SECOND, 59);
+                endRange.set(Calendar.MILLISECOND, 999);
 
                 SimpleDateFormat monthFmt = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
                 rangeSubtitle = "Last Month • " + monthFmt.format(startRange.getTime());
@@ -568,8 +574,13 @@ public class ReportsActivity extends AppCompatActivity {
                 startRange.set(Calendar.HOUR_OF_DAY, 0);
                 startRange.set(Calendar.MINUTE, 0);
                 startRange.set(Calendar.SECOND, 0);
+                startRange.set(Calendar.MILLISECOND, 0);
 
                 endRange = Calendar.getInstance();
+                endRange.set(Calendar.HOUR_OF_DAY, 23);
+                endRange.set(Calendar.MINUTE, 59);
+                endRange.set(Calendar.SECOND, 59);
+                endRange.set(Calendar.MILLISECOND, 999);
 
                 SimpleDateFormat shortFmt = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
                 rangeSubtitle = "Last 30 Days • " + shortFmt.format(startRange.getTime()) + " - " + shortFmt.format(endRange.getTime());
@@ -581,8 +592,13 @@ public class ReportsActivity extends AppCompatActivity {
                 startRange.set(Calendar.HOUR_OF_DAY, 0);
                 startRange.set(Calendar.MINUTE, 0);
                 startRange.set(Calendar.SECOND, 0);
+                startRange.set(Calendar.MILLISECOND, 0);
 
                 endRange = Calendar.getInstance();
+                endRange.set(Calendar.HOUR_OF_DAY, 23);
+                endRange.set(Calendar.MINUTE, 59);
+                endRange.set(Calendar.SECOND, 59);
+                endRange.set(Calendar.MILLISECOND, 999);
 
                 SimpleDateFormat shortFmt = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
                 rangeSubtitle = "Last 90 Days • " + shortFmt.format(startRange.getTime()) + " - " + shortFmt.format(endRange.getTime());
@@ -595,14 +611,18 @@ public class ReportsActivity extends AppCompatActivity {
                 }
                 startRange = Calendar.getInstance();
                 startRange.set(year, Calendar.APRIL, 1, 0, 0, 0);
+                startRange.set(Calendar.MILLISECOND, 0);
 
                 endRange = Calendar.getInstance();
                 endRange.set(year + 1, Calendar.MARCH, 31, 23, 59, 59);
+                endRange.set(Calendar.MILLISECOND, 999);
 
                 rangeSubtitle = "FY " + year + "-" + (year + 1) + " (Apr - Mar)";
                 break;
             }
             case ALL_TIME: {
+                startRange = null;
+                endRange = null;
                 rangeSubtitle = "Complete Transaction History (All Time)";
                 break;
             }
@@ -636,16 +656,14 @@ public class ReportsActivity extends AppCompatActivity {
         for (Transaction t : allTransactions) {
             // Filter by date range for the overview
             if (startRange != null && endRange != null) {
-                try {
-                    Date date = dateParser.parse(t.getDate());
-                    if (date != null) {
-                        Calendar cal = Calendar.getInstance();
-                        cal.setTime(date);
-                        if (cal.before(startRange) || cal.after(endRange)) {
-                            continue;
-                        }
+                Date date = parseTransactionDate(t.getDate());
+                if (date != null) {
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime(date);
+                    if (cal.before(startRange) || cal.after(endRange)) {
+                        continue;
                     }
-                } catch (Exception ignored) {}
+                }
             }
 
             periodTransactions.add(t);
@@ -1267,6 +1285,21 @@ public class ReportsActivity extends AppCompatActivity {
             Log.e(TAG, "Share failed", e);
             Toast.makeText(this, "Failed to share file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private Date parseTransactionDate(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty() || dateStr.equalsIgnoreCase("N/A")) {
+            return null;
+        }
+        String[] formats = new String[]{"yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss", "dd-MM-yyyy", "yyyy/MM/dd"};
+        for (String fmt : formats) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(fmt, Locale.getDefault());
+                sdf.setLenient(false);
+                return sdf.parse(dateStr.trim());
+            } catch (Exception ignored) {}
+        }
+        return null;
     }
 
     private void vibrateDevice() {
