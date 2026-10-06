@@ -195,16 +195,7 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         if (profileAvatarImage != null) {
-            if (!imageUriString.isEmpty()) {
-                try {
-                    Uri imageUri = Uri.parse(imageUriString);
-                    profileAvatarImage.setImageURI(imageUri);
-                } catch (Exception e) {
-                    profileAvatarImage.setImageResource(R.drawable.ic_account);
-                }
-            } else {
-                profileAvatarImage.setImageResource(R.drawable.ic_account);
-            }
+            ProfileHelper.loadAvatar(this, profileAvatarImage);
         }
     }
 
@@ -268,15 +259,7 @@ public class ProfileActivity extends AppCompatActivity {
         pendingImageUri = savedUriString.isEmpty() ? null : Uri.parse(savedUriString);
 
         if (sheetAvatarPreviewRef != null) {
-            if (pendingImageUri != null) {
-                try {
-                    sheetAvatarPreviewRef.setImageURI(pendingImageUri);
-                } catch (Exception e) {
-                    sheetAvatarPreviewRef.setImageResource(R.drawable.ic_account);
-                }
-            } else {
-                sheetAvatarPreviewRef.setImageResource(R.drawable.ic_account);
-            }
+            ProfileHelper.loadAvatar(this, sheetAvatarPreviewRef);
         }
 
         // Change Photo Button
@@ -294,8 +277,12 @@ public class ProfileActivity extends AppCompatActivity {
             btnRemovePhoto.setOnClickListener(v -> {
                 SettingsManager.vibrate(this);
                 pendingImageUri = null;
+                ProfileHelper.removeProfileImage(this);
                 if (sheetAvatarPreviewRef != null) {
                     sheetAvatarPreviewRef.setImageResource(R.drawable.ic_account);
+                }
+                if (profileAvatarImage != null) {
+                    profileAvatarImage.setImageResource(R.drawable.ic_account);
                 }
                 Toast.makeText(ProfileActivity.this, "Profile photo removed", Toast.LENGTH_SHORT).show();
             });
@@ -308,19 +295,13 @@ public class ProfileActivity extends AppCompatActivity {
                 SettingsManager.vibrate(this);
 
                 SharedPreferences.Editor editor = sharedPreferences.edit();
-                if (editName != null) editor.putString("userName", editName.getText().toString().trim());
-                if (editBio != null) editor.putString("bio", editBio.getText().toString().trim());
-                if (editCompany != null) editor.putString("companyName", editCompany.getText().toString().trim());
-                if (editEmail != null) editor.putString("email", editEmail.getText().toString().trim());
-                if (editPhone != null) editor.putString("phone", editPhone.getText().toString().trim());
-                if (editAddress != null) editor.putString("address", editAddress.getText().toString().trim());
-
-                if (pendingImageUri != null) {
-                    editor.putString("profileImageUri", pendingImageUri.toString());
-                } else {
-                    editor.remove("profileImageUri");
-                }
-                editor.apply();
+                if (editName != null) editor.putString(ProfileHelper.KEY_USER_NAME, editName.getText().toString().trim());
+                if (editBio != null) editor.putString(ProfileHelper.KEY_BIO, editBio.getText().toString().trim());
+                if (editCompany != null) editor.putString(ProfileHelper.KEY_COMPANY_NAME, editCompany.getText().toString().trim());
+                if (editEmail != null) editor.putString(ProfileHelper.KEY_EMAIL, editEmail.getText().toString().trim());
+                if (editPhone != null) editor.putString(ProfileHelper.KEY_PHONE, editPhone.getText().toString().trim());
+                if (editAddress != null) editor.putString(ProfileHelper.KEY_ADDRESS, editAddress.getText().toString().trim());
+                editor.commit(); // Synchronous commit for instant update
 
                 loadProfileData();
                 dialog.dismiss();
@@ -347,36 +328,11 @@ public class ProfileActivity extends AppCompatActivity {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
             Uri pickedUri = data.getData();
             if (pickedUri != null) {
-                Uri internalUri = copyImageToInternalStorage(pickedUri);
+                Uri internalUri = ProfileHelper.saveProfileImage(this, pickedUri);
                 pendingImageUri = internalUri;
-                if (sheetAvatarPreviewRef != null) {
-                    sheetAvatarPreviewRef.setImageURI(internalUri);
-                }
-                if (profileAvatarImage != null) {
-                    profileAvatarImage.setImageURI(internalUri);
-                }
-                // Save immediately so changes persist even if sheet is dismissed
-                sharedPreferences.edit().putString("profileImageUri", internalUri.toString()).apply();
+                ProfileHelper.loadAvatar(this, sheetAvatarPreviewRef);
+                ProfileHelper.loadAvatar(this, profileAvatarImage);
             }
-        }
-    }
-
-    private Uri copyImageToInternalStorage(Uri sourceUri) {
-        try (InputStream is = getContentResolver().openInputStream(sourceUri)) {
-            if (is == null) return sourceUri;
-            File internalFile = new File(getFilesDir(), "profile_image.jpg");
-            try (OutputStream os = new FileOutputStream(internalFile)) {
-                byte[] buffer = new byte[2048];
-                int read;
-                while ((read = is.read(buffer)) > 0) {
-                    os.write(buffer, 0, read);
-                }
-                os.flush();
-            }
-            return Uri.fromFile(internalFile);
-        } catch (Exception e) {
-            Log.e("ProfileActivity", "Error saving profile image", e);
-            return sourceUri;
         }
     }
 

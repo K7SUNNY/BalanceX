@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/menu_period_month"
+            android:title="@string/month" />
+        <item
+            android:id="@+id/menu_period_financial_year"
+            android:title="@string/financial_year" />
+        <item
+            android:id="@+id/menu_period_all_time"
+            android:title="@string/all_time" />
+    </group>
+</menu>

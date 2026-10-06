@@ -8,7 +8,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.pdf.PdfDocument;
-import android.icu.util.Calendar;
+import java.util.Calendar;
+import androidx.appcompat.widget.PopupMenu;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -79,6 +80,9 @@ import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
     private TextView textTotalBalance, textNetCredit, textNetDebit, seeAllButton;
+    private TextView textBalancePeriod;
+    private View btnBalancePeriodFilter;
+    private String currentBalancePeriod = SettingsManager.PERIOD_MONTH;
     private double totalBalance = 0, totalCredit = 0, totalDebit = 0;
     private ArrayList<String> transactionDates;
     private Handler handler = new Handler();
@@ -233,6 +237,16 @@ public class MainActivity extends AppCompatActivity {
         textTotalBalance = findViewById(R.id.textTotalBalance);
         textNetCredit = findViewById(R.id.textNetCredit);
         textNetDebit = findViewById(R.id.textNetDebit);
+        textBalancePeriod = findViewById(R.id.textBalancePeriod);
+        btnBalancePeriodFilter = findViewById(R.id.btnBalancePeriodFilter);
+
+        currentBalancePeriod = SettingsManager.getBalancePeriod(this);
+        if (textBalancePeriod != null) {
+            textBalancePeriod.setText(currentBalancePeriod);
+        }
+        if (btnBalancePeriodFilter != null) {
+            btnBalancePeriodFilter.setOnClickListener(this::showBalancePeriodMenu);
+        }
 
         // Load initial balance
         loadBalanceData();
@@ -470,32 +484,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadProfileData() {
-        SharedPreferences sharedPreferences = getSharedPreferences("UserProfile", MODE_PRIVATE);
+        SharedPreferences sharedPreferences = ProfileHelper.getPrefs(this);
 
         TextView userNameText = findViewById(R.id.drawerUserName);
         TextView bioText = findViewById(R.id.drawerUserBio);
         ImageView profileImage = findViewById(R.id.drawerProfileImage);
 
         if (userNameText != null) {
-            userNameText.setText(sharedPreferences.getString("userName", "User Name"));
+            userNameText.setText(sharedPreferences.getString(ProfileHelper.KEY_USER_NAME, "User Name"));
         }
         if (bioText != null) {
-            bioText.setText(sharedPreferences.getString("bio", "Personal Ledger"));
+            bioText.setText(sharedPreferences.getString(ProfileHelper.KEY_BIO, "Personal Ledger"));
         }
 
         if (profileImage != null) {
-            String imageUriString = sharedPreferences.getString("profileImageUri", "");
-            if (!imageUriString.isEmpty()) {
-                try {
-                    Uri imageUri = Uri.parse(imageUriString);
-                    profileImage.setImageURI(imageUri);
-                } catch (SecurityException e) {
-                    Log.e("ProfileImage", "Permission denied for URI: " + imageUriString, e);
-                    profileImage.setImageResource(R.drawable.ic_account);
-                }
-            } else {
-                profileImage.setImageResource(R.drawable.ic_account);
-            }
+            ProfileHelper.loadAvatar(this, profileImage);
         }
 
         updateDrawerStats();
@@ -1181,6 +1184,122 @@ public class MainActivity extends AppCompatActivity {
         other.setColorFilter(ContextCompat.getColor(this, R.color.text_tertiary));
     }
 
+    private void showBalancePeriodMenu(View anchor) {
+        vibrateDevice();
+        PopupMenu popup = new PopupMenu(this, anchor);
+        popup.getMenuInflater().inflate(R.menu.menu_balance_period, popup.getMenu());
+
+        Menu menu = popup.getMenu();
+        if (SettingsManager.PERIOD_MONTH.equals(currentBalancePeriod)) {
+            MenuItem item = menu.findItem(R.id.menu_period_month);
+            if (item != null) item.setChecked(true);
+        } else if (SettingsManager.PERIOD_FINANCIAL_YEAR.equals(currentBalancePeriod)) {
+            MenuItem item = menu.findItem(R.id.menu_period_financial_year);
+            if (item != null) item.setChecked(true);
+        } else if (SettingsManager.PERIOD_ALL_TIME.equals(currentBalancePeriod)) {
+            MenuItem item = menu.findItem(R.id.menu_period_all_time);
+            if (item != null) item.setChecked(true);
+        }
+
+        popup.setOnMenuItemClickListener(item -> {
+            vibrateDevice();
+            int itemId = item.getItemId();
+            String newPeriod = currentBalancePeriod;
+            if (itemId == R.id.menu_period_month) {
+                newPeriod = SettingsManager.PERIOD_MONTH;
+            } else if (itemId == R.id.menu_period_financial_year) {
+                newPeriod = SettingsManager.PERIOD_FINANCIAL_YEAR;
+            } else if (itemId == R.id.menu_period_all_time) {
+                newPeriod = SettingsManager.PERIOD_ALL_TIME;
+            }
+
+            currentBalancePeriod = newPeriod;
+            SettingsManager.setBalancePeriod(MainActivity.this, currentBalancePeriod);
+            if (textBalancePeriod != null) {
+                textBalancePeriod.setText(currentBalancePeriod);
+            }
+            loadBalanceData();
+            return true;
+        });
+
+        popup.show();
+    }
+
+    private boolean isTransactionInSelectedPeriod(String dateStr, String period) {
+        if (SettingsManager.PERIOD_ALL_TIME.equals(period)) {
+            return true;
+        }
+
+        Date date = parseTransactionDate(dateStr);
+        if (date == null) {
+            return false;
+        }
+
+        Calendar now = Calendar.getInstance();
+
+        if (SettingsManager.PERIOD_MONTH.equals(period)) {
+            // Month: 1st day of current month (00:00:00.000) up to today (23:59:59.999)
+            Calendar startRange = Calendar.getInstance();
+            startRange.set(Calendar.DAY_OF_MONTH, 1);
+            startRange.set(Calendar.HOUR_OF_DAY, 0);
+            startRange.set(Calendar.MINUTE, 0);
+            startRange.set(Calendar.SECOND, 0);
+            startRange.set(Calendar.MILLISECOND, 0);
+
+            Calendar endRange = Calendar.getInstance();
+            endRange.set(Calendar.HOUR_OF_DAY, 23);
+            endRange.set(Calendar.MINUTE, 59);
+            endRange.set(Calendar.SECOND, 59);
+            endRange.set(Calendar.MILLISECOND, 999);
+
+            return !date.before(startRange.getTime()) && !date.after(endRange.getTime());
+        } else if (SettingsManager.PERIOD_FINANCIAL_YEAR.equals(period)) {
+            // Financial Year: 1st day of current financial year (April 1st) up to today (23:59:59.999)
+            int year = now.get(Calendar.YEAR);
+            if (now.get(Calendar.MONTH) < Calendar.APRIL) {
+                year -= 1;
+            }
+            Calendar startRange = Calendar.getInstance();
+            startRange.set(year, Calendar.APRIL, 1, 0, 0, 0);
+            startRange.set(Calendar.MILLISECOND, 0);
+
+            Calendar endRange = Calendar.getInstance();
+            endRange.set(Calendar.HOUR_OF_DAY, 23);
+            endRange.set(Calendar.MINUTE, 59);
+            endRange.set(Calendar.SECOND, 59);
+            endRange.set(Calendar.MILLISECOND, 999);
+
+            return !date.before(startRange.getTime()) && !date.after(endRange.getTime());
+        }
+
+        return true;
+    }
+
+    private Date parseTransactionDate(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty() || dateStr.equalsIgnoreCase("N/A")) {
+            return null;
+        }
+        String[] formats = new String[]{"yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss", "dd-MM-yyyy", "yyyy/MM/dd"};
+        for (String fmt : formats) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(fmt, Locale.getDefault());
+                sdf.setLenient(false);
+                return sdf.parse(dateStr.trim());
+            } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
+    private void updateBalanceDisplay(String symbol, double balance, double credit, double debit) {
+        if (balance < 0) {
+            textTotalBalance.setText("-" + symbol + String.format(Locale.getDefault(), "%,.2f", Math.abs(balance)));
+        } else {
+            textTotalBalance.setText(symbol + String.format(Locale.getDefault(), "%,.2f", balance));
+        }
+        textNetCredit.setText("+" + symbol + String.format(Locale.getDefault(), "%,.2f", credit));
+        textNetDebit.setText("-" + symbol + String.format(Locale.getDefault(), "%,.2f", debit));
+    }
+
     private void loadBalanceData() {
         String symbol = SettingsManager.getCurrencySymbol(this);
         try {
@@ -1189,10 +1308,7 @@ public class MainActivity extends AppCompatActivity {
                 file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
             }
             if (!file.exists() || file.length() == 0) {
-                totalBalance = totalCredit = totalDebit = 0;
-                textTotalBalance.setText(symbol + "0.00");
-                textNetCredit.setText("+" + symbol + "0.00");
-                textNetDebit.setText("-" + symbol + "0.00");
+                loadBalanceDataFromRoom(symbol);
                 return;
             }
 
@@ -1208,10 +1324,7 @@ public class MainActivity extends AppCompatActivity {
 
             String jsonStr = sb.toString().trim();
             if (jsonStr.isEmpty() || jsonStr.equals("[]")) {
-                totalBalance = totalCredit = totalDebit = 0;
-                textTotalBalance.setText(symbol + "0.00");
-                textNetCredit.setText("+" + symbol + "0.00");
-                textNetDebit.setText("-" + symbol + "0.00");
+                loadBalanceDataFromRoom(symbol);
                 return;
             }
 
@@ -1221,6 +1334,13 @@ public class MainActivity extends AppCompatActivity {
 
             for (int i = 0; i < transactionsArray.length(); i++) {
                 JSONObject transaction = transactionsArray.getJSONObject(i);
+                String date = transaction.optString("date", "N/A");
+                dateSet.add(date);
+
+                if (!isTransactionInSelectedPeriod(date, currentBalancePeriod)) {
+                    continue;
+                }
+
                 double amount = 0;
                 try {
                     amount = transaction.getDouble("amount");
@@ -1230,9 +1350,6 @@ public class MainActivity extends AppCompatActivity {
                     } catch (Exception ignored) {}
                 }
                 String type = transaction.optString("textType", "debit");
-                String date = transaction.optString("date", "N/A");
-
-                dateSet.add(date);
 
                 if (type.equalsIgnoreCase("credit")) {
                     totalCredit += amount;
@@ -1243,19 +1360,71 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            textTotalBalance.setText(symbol + String.format(Locale.getDefault(), "%,.2f", totalBalance));
-            textNetCredit.setText("+" + symbol + String.format(Locale.getDefault(), "%,.2f", totalCredit));
-            textNetDebit.setText("-" + symbol + String.format(Locale.getDefault(), "%,.2f", totalDebit));
+            updateBalanceDisplay(symbol, totalBalance, totalCredit, totalDebit);
 
             transactionDates = new ArrayList<>(dateSet);
             Collections.sort(transactionDates, Collections.reverseOrder());
         } catch (Exception e) {
             e.printStackTrace();
             totalBalance = totalCredit = totalDebit = 0;
-            textTotalBalance.setText(symbol + "0.00");
-            textNetCredit.setText("+" + symbol + "0.00");
-            textNetDebit.setText("-" + symbol + "0.00");
+            updateBalanceDisplay(symbol, 0, 0, 0);
         }
+    }
+
+    private void loadBalanceDataFromRoom(String symbol) {
+        com.accounting.balancex.data.repository.TransactionRepository repo = 
+                new com.accounting.balancex.data.repository.TransactionRepository(this);
+        repo.getAllTransactions(entities -> {
+            if (entities == null || entities.isEmpty()) {
+                runOnUiThread(() -> {
+                    totalBalance = totalCredit = totalDebit = 0;
+                    updateBalanceDisplay(symbol, 0, 0, 0);
+                });
+                return;
+            }
+
+            double credit = 0;
+            double debit = 0;
+            double balance = 0;
+            Set<String> dateSet = new HashSet<>();
+
+            for (com.accounting.balancex.data.entity.TransactionEntity e : entities) {
+                String date = e.date != null ? e.date : "N/A";
+                dateSet.add(date);
+
+                if (!isTransactionInSelectedPeriod(date, currentBalancePeriod)) {
+                    continue;
+                }
+
+                double amount = 0;
+                try {
+                    amount = Double.parseDouble(e.amount.replaceAll("[^0-9.]", ""));
+                } catch (Exception ignored) {}
+
+                String type = e.textType != null ? e.textType : "debit";
+                if (type.equalsIgnoreCase("credit")) {
+                    credit += amount;
+                    balance += amount;
+                } else if (type.equalsIgnoreCase("debit")) {
+                    debit += amount;
+                    balance -= amount;
+                }
+            }
+
+            final double finalBalance = balance;
+            final double finalCredit = credit;
+            final double finalDebit = debit;
+
+            runOnUiThread(() -> {
+                totalBalance = finalBalance;
+                totalCredit = finalCredit;
+                totalDebit = finalDebit;
+                updateBalanceDisplay(symbol, totalBalance, totalCredit, totalDebit);
+
+                transactionDates = new ArrayList<>(dateSet);
+                Collections.sort(transactionDates, Collections.reverseOrder());
+            });
+        });
     }
 
     private void loadTransactionsFromStorage() {
@@ -1355,6 +1524,10 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         SettingsManager.applyTheme(this);
         startAutoScroll(); // Resume auto-scroll
+        currentBalancePeriod = SettingsManager.getBalancePeriod(this);
+        if (textBalancePeriod != null) {
+            textBalancePeriod.setText(currentBalancePeriod);
+        }
         loadProfileData();
         loadBalanceData();
         loadTransactionsFromStorage();

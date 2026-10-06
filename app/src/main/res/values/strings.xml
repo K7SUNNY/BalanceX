@@ -79,4 +79,7 @@
     <string name="category">Category</string>
     <string name="confirm_transaction">I confirm this transaction details</string>
     <string name="save_transaction">Save Transaction</string>
+    <string name="financial_year">Financial Year</string>
+    <string name="all_time">All Time</string>
+    <string name="balance_period_filter_desc">Filter balance by period</string>
 </resources>

@@ -164,4 +164,18 @@ public class SettingsManager {
     public static void setDefaultTransactionType(Context context, String type) {
         getPrefs(context).edit().putString(KEY_DEFAULT_TX_TYPE, type).apply();
     }
+
+    // ==================== BALANCE CARD PERIOD ====================
+    public static final String KEY_BALANCE_PERIOD = "balance_card_period";
+    public static final String PERIOD_MONTH = "Month";
+    public static final String PERIOD_FINANCIAL_YEAR = "Financial Year";
+    public static final String PERIOD_ALL_TIME = "All Time";
+
+    public static String getBalancePeriod(Context context) {
+        return getPrefs(context).getString(KEY_BALANCE_PERIOD, PERIOD_MONTH);
+    }
+
+    public static void setBalancePeriod(Context context, String period) {
+        getPrefs(context).edit().putString(KEY_BALANCE_PERIOD, period).apply();
+    }
 }
