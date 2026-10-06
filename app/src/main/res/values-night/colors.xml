@@ -42,6 +42,17 @@
     <color name="black">#000000</color>
     <color name="transparent">#00000000</color>
 
+    <!-- Reference Palette (UI_referene/color plates.png) -->
+    <color name="palette_space_cadet">#262842</color>
+    <color name="palette_delft_blue">#293961</color>
+    <color name="palette_yinmn_blue">#2C497F</color>
+    <color name="palette_cool_gray">#8897BD</color>
+    <color name="palette_lavender">#E3E4FA</color>
+
+    <!-- Entry Screen CTA Gradient -->
+    <color name="entry_cta_gradient_start">#2563EB</color>
+    <color name="entry_cta_gradient_end">#1D4ED8</color>
+
     <!-- Backward Compatibility Aliases -->
     <color name="colorPrimary">@color/color_primary</color>
     <color name="colorPrimaryDark">@color/color_primary_dark</color>
