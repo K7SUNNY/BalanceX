@@ -63,6 +63,7 @@ kotlin {
 }
 
 dependencies {
+    implementation libs.androidx.biometric
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
