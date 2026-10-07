@@ -147,15 +147,15 @@
         android:layout_height="52dp"
         android:text="Share Backup Snapshot"
         android:textAllCaps="false"
-        android:textColor="@color/color_on_primary"
+        android:textColor="@color/btn_primary_text"
         android:textSize="14sp"
         android:textStyle="bold"
-        app:backgroundTint="@color/color_primary"
+        app:backgroundTint="@color/btn_primary_bg"
         app:cornerRadius="14dp"
         app:icon="@drawable/ic_share"
         app:iconGravity="textStart"
         app:iconPadding="10dp"
-        app:iconTint="@color/color_on_primary" />
+        app:iconTint="@color/btn_primary_text" />
 
     <!-- Action 2: Save to Documents -->
     <com.google.android.material.button.MaterialButton
@@ -166,14 +166,14 @@
         android:layout_marginTop="10dp"
         android:text="Save Copy to Documents"
         android:textAllCaps="false"
-        android:textColor="@color/color_primary"
+        android:textColor="@color/btn_primary_bg"
         android:textSize="14sp"
         android:textStyle="bold"
         app:cornerRadius="14dp"
         app:icon="@drawable/ic_export"
         app:iconGravity="textStart"
         app:iconPadding="10dp"
-        app:iconTint="@color/color_primary"
+        app:iconTint="@color/btn_primary_bg"
         app:strokeColor="@color/border_subtle"
         app:strokeWidth="1dp" />
 

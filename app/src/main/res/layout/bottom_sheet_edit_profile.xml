@@ -305,10 +305,10 @@
                 android:layout_marginTop="20dp"
                 android:text="Save Profile Changes"
                 android:textAllCaps="false"
-                android:textColor="@color/color_on_primary"
+                android:textColor="@color/btn_primary_text"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                app:backgroundTint="@color/color_primary"
+                app:backgroundTint="@color/btn_primary_bg"
                 app:cornerRadius="14dp" />
 
         </LinearLayout>

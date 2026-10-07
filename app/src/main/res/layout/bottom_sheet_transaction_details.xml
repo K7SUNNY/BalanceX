@@ -305,8 +305,9 @@
             android:layout_marginEnd="8dp"
             android:text="Person History"
             android:textSize="13sp"
+            android:textColor="@color/btn_primary_text"
             app:cornerRadius="14dp"
-            app:backgroundTint="@color/color_primary" />
+            app:backgroundTint="@color/btn_primary_bg" />
 
         <!-- Share Receipt -->
         <com.google.android.material.button.MaterialButton
@@ -318,9 +319,9 @@
             android:layout_marginStart="8dp"
             android:text="Share Receipt"
             android:textSize="13sp"
-            android:textColor="@color/color_primary"
+            android:textColor="@color/btn_primary_bg"
             app:cornerRadius="14dp"
-            app:strokeColor="@color/color_primary" />
+            app:strokeColor="@color/btn_primary_bg" />
     </LinearLayout>
 
 </LinearLayout>

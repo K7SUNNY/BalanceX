@@ -37,6 +37,16 @@
     <color name="header_gradient_start">#1A2330</color>
     <color name="header_gradient_end">#111720</color>
 
+    <!-- Phase 3 Quick Actions -->
+    <color name="action_sub_bg">#1E293B</color>
+    <color name="action_sub_tint">#60A5FA</color>
+    <color name="action_goals_bg">#292524</color>
+    <color name="action_goals_tint">#FBBF24</color>
+    <color name="action_health_bg">#064E3B</color>
+    <color name="action_health_tint">#34D399</color>
+    <color name="action_security_bg">#2E1065</color>
+    <color name="action_security_tint">#A78BFA</color>
+
     <!-- Common / Base Colors -->
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
@@ -52,6 +62,19 @@
     <!-- Entry Screen CTA Gradient -->
     <color name="entry_cta_gradient_start">#2563EB</color>
     <color name="entry_cta_gradient_end">#1D4ED8</color>
+
+    <!-- Primary Action Button (Vibrant Royal Blue for Dark Mode) -->
+    <color name="btn_primary_bg">#2563EB</color>
+    <color name="btn_primary_text">#FFFFFF</color>
+    <color name="btn_primary_ripple">#33FFFFFF</color>
+
+    <!-- Switch & Biometric Vault Colors -->
+    <color name="switch_track_unchecked">#334155</color>
+    <color name="switch_track_unchecked_stroke">#64748B</color>
+    <color name="switch_thumb_unchecked">#E2E8F0</color>
+    <color name="switch_track_checked">#2563EB</color>
+    <color name="switch_thumb_checked">#FFFFFF</color>
+    <color name="vault_lock_scrim">#F00E1217</color>
 
     <!-- Backward Compatibility Aliases -->
     <color name="colorPrimary">@color/color_primary</color>

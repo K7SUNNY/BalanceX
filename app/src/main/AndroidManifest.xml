@@ -12,6 +12,8 @@
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-feature
         android:name="android.hardware.type.television"
@@ -103,6 +105,20 @@
             android:windowNoTitle="true"/>
         <activity
             android:name=".ReportsActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.BalanceX"
+            android:windowNoTitle="true"
+            android:windowSoftInputMode="adjustPan" />
+        <activity
+            android:name=".ui.subscriptions.SubscriptionsActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.BalanceX"
+            android:windowNoTitle="true"
+            android:windowSoftInputMode="adjustPan" />
+        <activity
+            android:name=".ui.goals.GoalsBudgetsActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"

@@ -19,10 +19,10 @@ This roadmap outlines the step-by-step process to modernize BalanceX while prese
 
 ## Phase 3: Core Feature Expansion & Gamification
 *Goal: Add smart budgeting and goals.*
-- [ ] **Step 1:** Add a "Subscriptions / Recurring" tracker using Java background workers (`WorkManager`).
-- [ ] **Step 2:** Build a "Goals" UI in XML to set budgets for specific categories.
-- [ ] **Step 3:** Implement the "Financial Health" score logic based on user's adherence to budgets.
-- [ ] **Step 4:** Implement App Lock using Android's `BiometricPrompt` API.
+- [x] **Step 1:** Add a "Subscriptions / Recurring" tracker using Java background workers (`WorkManager`).
+- [x] **Step 2:** Build a "Goals" UI in XML to set budgets for specific categories.
+- [x] **Step 3:** Implement the "Financial Health" score logic based on user's adherence to budgets.
+- [x] **Step 4:** Implement App Lock using Android's `BiometricPrompt` API.
 
 ## Phase 4: On-Device Intelligence (The Local LLM)
 *Goal: Implement offline AI to automate data entry.*

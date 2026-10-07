@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.pdf.PdfDocument;
 import java.util.Calendar;
@@ -22,6 +24,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -75,18 +78,15 @@ import java.util.Map;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
-    private TextView textTotalBalance, textNetCredit, textNetDebit, seeAllButton;
+    private TextView textTotalBalance, textNetCredit, textNetDebit;
     private TextView textBalancePeriod;
     private View btnBalancePeriodFilter;
     private String currentBalancePeriod = SettingsManager.PERIOD_MONTH;
     private double totalBalance = 0, totalCredit = 0, totalDebit = 0;
     private ArrayList<String> transactionDates;
-    private Handler handler = new Handler();
-    private Runnable scrollRunnable;
-    private int scrollPosition = 0;
-    private RecyclerView recyclerView;
-    private RecentTransactionsAdapter adapter;
-    private List<RecentTransactionModel> recentTransactions;
+    private com.accounting.balancex.data.repository.SubscriptionRepository subscriptionRepository;
+    private com.accounting.balancex.data.repository.BudgetGoalRepository budgetGoalRepository;
+    private static boolean hasAuthenticatedThisSession = false;
     private String selectedTimeline = "M"; // Default to Months
     private String graphType = "bar"; // Default to Bar Graph
     private ModernChartBridge modernChartBridge;
@@ -162,26 +162,38 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        // Quick Actions Listeners
-        findViewById(R.id.action_add_transaction).setOnClickListener(v -> {
-            startActivity(new Intent(this, EntryActivity.class));
-            vibrateDevice();
-        });
+        // Phase 3 Quick Actions Listeners
+        View actionSub = findViewById(R.id.action_subscriptions);
+        if (actionSub != null) {
+            actionSub.setOnClickListener(v -> {
+                vibrateDevice();
+                startActivity(new Intent(this, com.accounting.balancex.ui.subscriptions.SubscriptionsActivity.class));
+            });
+        }
 
-        findViewById(R.id.action_history).setOnClickListener(v -> {
-            startActivity(new Intent(this, HistoryActivity.class));
-            vibrateDevice();
-        });
+        View actionGoals = findViewById(R.id.action_goals);
+        if (actionGoals != null) {
+            actionGoals.setOnClickListener(v -> {
+                vibrateDevice();
+                startActivity(new Intent(this, com.accounting.balancex.ui.goals.GoalsBudgetsActivity.class));
+            });
+        }
 
-        findViewById(R.id.action_export).setOnClickListener(v -> {
-            startActivity(new Intent(this, ReportsActivity.class));
-            vibrateDevice();
-        });
+        View actionHealth = findViewById(R.id.action_health);
+        if (actionHealth != null) {
+            actionHealth.setOnClickListener(v -> {
+                vibrateDevice();
+                showHealthScoreSheet();
+            });
+        }
 
-        findViewById(R.id.action_profile).setOnClickListener(v -> {
-            startActivity(new Intent(this, ProfileActivity.class));
-            vibrateDevice();
-        });
+        View actionSec = findViewById(R.id.action_security);
+        if (actionSec != null) {
+            actionSec.setOnClickListener(v -> {
+                vibrateDevice();
+                showSecurityLockSheet();
+            });
+        }
 
         // Bottom Navigation Bar (5 Items: Home, History, Center Add FAB, Export, Profile)
         View navHome = findViewById(R.id.navHome);
@@ -245,19 +257,51 @@ public class MainActivity extends AppCompatActivity {
         // Load initial balance
         loadBalanceData();
 
-        recyclerView = findViewById(R.id.recyclerViewRecentTransactions);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-        recentTransactions = new ArrayList<>(); // ✅ Initialize empty list before passing it to adapter
-        adapter = new RecentTransactionsAdapter(this, recentTransactions);
-        recyclerView.setAdapter(adapter);
-        recyclerView.setLayoutManager(layoutManager);
-        // Load transactions from storage
-        loadTransactionsFromStorage();
+        // Initialize Phase 3 Repositories & WorkManager
+        subscriptionRepository = new com.accounting.balancex.data.repository.SubscriptionRepository(this);
+        budgetGoalRepository = new com.accounting.balancex.data.repository.BudgetGoalRepository(this);
+        com.accounting.balancex.worker.SubscriptionWorker.scheduleDailyCheck(this);
 
-        // Ensures the item in the center stays in place
-        SnapHelper snapHelper = new LinearSnapHelper();
-        snapHelper.attachToRecyclerView(recyclerView);
-        startAutoScroll(); // ✅ Start auto-scrolling after setting up RecyclerView
+        // Snapshot Card click listeners
+        View btnManageSubs = findViewById(R.id.btnManageSubscriptions);
+        if (btnManageSubs != null) {
+            btnManageSubs.setOnClickListener(v -> {
+                vibrateDevice();
+                startActivity(new Intent(this, com.accounting.balancex.ui.subscriptions.SubscriptionsActivity.class));
+            });
+        }
+
+        View btnViewGoals = findViewById(R.id.btnViewAllGoals);
+        if (btnViewGoals != null) {
+            btnViewGoals.setOnClickListener(v -> {
+                vibrateDevice();
+                startActivity(new Intent(this, com.accounting.balancex.ui.goals.GoalsBudgetsActivity.class));
+            });
+        }
+
+        View cardHealth = findViewById(R.id.cardHealthScore);
+        if (cardHealth != null) {
+            cardHealth.setOnClickListener(v -> {
+                vibrateDevice();
+                showHealthScoreSheet();
+            });
+        }
+
+        // Vault Security Overlay click listeners
+        View btnUnlockVault = findViewById(R.id.btnUnlockVaultBiometric);
+        if (btnUnlockVault != null) {
+            btnUnlockVault.setOnClickListener(v -> {
+                vibrateDevice();
+                triggerBiometricUnlock();
+            });
+        }
+        View overlayLock = findViewById(R.id.layoutBiometricLockOverlay);
+        if (overlayLock != null) {
+            overlayLock.setOnClickListener(v -> {
+                vibrateDevice();
+                triggerBiometricUnlock();
+            });
+        }
 
         // Initialize Modern Compose Pie/Donut Chart
         ComposeView composePieChartView = findViewById(R.id.composePieChartView);
@@ -348,14 +392,6 @@ public class MainActivity extends AppCompatActivity {
         if (notificationButton != null) {
             notificationButton.setOnClickListener(v -> {
                 startActivity(new Intent(this, NotificationActivity.class));
-                vibrateDevice();
-            });
-        }
-
-        TextView seeAllButton = findViewById(R.id.seeAllButton);
-        if (seeAllButton != null) {
-            seeAllButton.setOnClickListener(v -> {
-                startActivity(new Intent(this, HistoryActivity.class));
                 vibrateDevice();
             });
         }
@@ -957,7 +993,7 @@ public class MainActivity extends AppCompatActivity {
                                     Toast.LENGTH_LONG).show();
                             updateDrawerStats();
                             loadBalanceData();
-                            loadTransactionsFromStorage();
+                            loadSnapshotCards();
                             setupPieChart();
                         });
                     });
@@ -984,7 +1020,7 @@ public class MainActivity extends AppCompatActivity {
                                                 Toast.LENGTH_LONG).show();
                                         updateDrawerStats();
                                         loadBalanceData();
-                                        loadTransactionsFromStorage();
+                                        loadSnapshotCards();
                                         setupPieChart();
                                     });
                                 });
@@ -1149,6 +1185,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (backPressedOnce) {
+            hasAuthenticatedThisSession = false;
             super.onBackPressed(); // Close the app
             return;
         }
@@ -1435,125 +1472,384 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void loadTransactionsFromStorage() {
-        File file = com.accounting.balancex.data.db.DatabaseMigrator.findJsonFile(this);
-        if (file == null) {
-            file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
-        }
+    // ==================== PHASE 3 SNAPSHOT FEED ====================
 
-        if (recentTransactions == null) {
-            recentTransactions = new ArrayList<>();
-        }
-        recentTransactions.clear();
+    private void loadSnapshotCards() {
+        runOnUiThread(() -> {
+            loadUpcomingSubscriptionsSnapshot();
+            loadBudgetsGoalsSnapshot();
+            loadHealthScoreSnapshot();
+        });
+    }
 
-        if (!file.exists() || file.length() == 0) {
-            if (adapter != null) adapter.notifyDataSetChanged();
-            return;
-        }
+    private void loadUpcomingSubscriptionsSnapshot() {
+        if (subscriptionRepository == null) return;
+        subscriptionRepository.getActiveSubscriptions(subscriptions -> runOnUiThread(() -> {
+            LinearLayout container = findViewById(R.id.layoutSubscriptionsContainer);
+            TextView emptyText = findViewById(R.id.textEmptySubscriptions);
+            if (container == null) return;
 
-        try {
-            FileInputStream fis = new FileInputStream(file);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
+            for (int i = container.getChildCount() - 1; i >= 0; i--) {
+                View child = container.getChildAt(i);
+                if (child.getId() != R.id.textEmptySubscriptions) {
+                    container.removeViewAt(i);
+                }
             }
 
-            reader.close();
-            fis.close();
-
-            String jsonStr = sb.toString().trim();
-            if (jsonStr.isEmpty() || jsonStr.equals("[]")) {
-                if (adapter != null) adapter.notifyDataSetChanged();
+            if (subscriptions == null || subscriptions.isEmpty()) {
+                if (emptyText != null) emptyText.setVisibility(View.VISIBLE);
                 return;
             }
 
-            JSONArray transactionsArray = new JSONArray(jsonStr);
-            int limit = Math.min(5, transactionsArray.length());
+            if (emptyText != null) emptyText.setVisibility(View.GONE);
+            String symbol = SettingsManager.getCurrencySymbol(this);
+            int displayLimit = Math.min(2, subscriptions.size());
 
-            for (int i = 0; i < limit; i++) {
-                JSONObject transaction = transactionsArray.getJSONObject(i);
-                String receiver = transaction.optString("receiver", "Unknown");
-                String date = transaction.optString("date", "N/A");
-                String amount = transaction.optString("amount", "0.00");
-                String type = transaction.optString("textType", "debit");
-                long entryId = transaction.optLong("entryId", i + 1);
+            for (int i = 0; i < displayLimit; i++) {
+                com.accounting.balancex.data.entity.SubscriptionEntity sub = subscriptions.get(i);
+                View item = getLayoutInflater().inflate(R.layout.item_home_subscription, container, false);
 
-                recentTransactions.add(new RecentTransactionModel(receiver, date, amount, type, entryId));
+                TextView textName = item.findViewById(R.id.textHomeSubName);
+                TextView textAmount = item.findViewById(R.id.textHomeSubAmount);
+                TextView textDueBadge = item.findViewById(R.id.textHomeSubDueBadge);
+                TextView textCycle = item.findViewById(R.id.textHomeSubCycle);
+                View divider = item.findViewById(R.id.dividerHomeSub);
+
+                if (textName != null) textName.setText(sub.name);
+                if (textAmount != null) textAmount.setText(symbol + String.format(Locale.getDefault(), "%,.2f", sub.amount));
+                if (textDueBadge != null) textDueBadge.setText("Due " + (sub.nextDueDate != null ? sub.nextDueDate : "Soon"));
+                if (textCycle != null) textCycle.setText("• " + sub.billingCycle);
+
+                if (divider != null && i == displayLimit - 1) {
+                    divider.setVisibility(View.GONE);
+                }
+
+                item.setOnClickListener(v -> {
+                    vibrateDevice();
+                    startActivity(new Intent(this, com.accounting.balancex.ui.subscriptions.SubscriptionsActivity.class));
+                });
+
+                container.addView(item);
+            }
+        }));
+    }
+
+    private void loadBudgetsGoalsSnapshot() {
+        if (budgetGoalRepository == null) return;
+        budgetGoalRepository.getAll(items -> runOnUiThread(() -> {
+            LinearLayout container = findViewById(R.id.layoutBudgetsGoalsContainer);
+            TextView emptyText = findViewById(R.id.textEmptyBudgets);
+            if (container == null) return;
+
+            for (int i = container.getChildCount() - 1; i >= 0; i--) {
+                View child = container.getChildAt(i);
+                if (child.getId() != R.id.textEmptyBudgets) {
+                    container.removeViewAt(i);
+                }
             }
 
-            // 🔹 SORT transactions by Entry ID in DESCENDING ORDER (latest first)
-            Collections.sort(recentTransactions, (t1, t2) -> Long.compare(t2.getEntryId(), t1.getEntryId()));
-
-            if (adapter != null) {
-                adapter.notifyDataSetChanged();
+            if (items == null || items.isEmpty()) {
+                if (emptyText != null) emptyText.setVisibility(View.VISIBLE);
+                return;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            if (emptyText != null) emptyText.setVisibility(View.GONE);
+            String symbol = SettingsManager.getCurrencySymbol(this);
+            int displayLimit = Math.min(2, items.size());
+
+            for (int i = 0; i < displayLimit; i++) {
+                com.accounting.balancex.data.entity.BudgetGoalEntity bg = items.get(i);
+                View item = getLayoutInflater().inflate(R.layout.item_home_budget_goal, container, false);
+
+                TextView title = item.findViewById(R.id.textHomeBudgetTitle);
+                TextView pctText = item.findViewById(R.id.textHomeBudgetProgressPct);
+                TextView spentText = item.findViewById(R.id.textHomeBudgetSpent);
+                TextView limitText = item.findViewById(R.id.textHomeBudgetTarget);
+                LinearProgressIndicator progress = item.findViewById(R.id.progressHomeBudget);
+                View divider = item.findViewById(R.id.dividerHomeBudget);
+
+                boolean isBudget = com.accounting.balancex.data.entity.BudgetGoalEntity.TYPE_BUDGET.equalsIgnoreCase(bg.type);
+                int pct = bg.targetAmount > 0 ? (int) Math.round((bg.currentAmount / bg.targetAmount) * 100) : 0;
+
+                if (title != null) {
+                    title.setText(bg.title + (isBudget ? " (Budget)" : " (Goal)"));
+                }
+                if (pctText != null) {
+                    pctText.setText(pct + "%");
+                }
+                if (spentText != null) {
+                    spentText.setText((isBudget ? "Spent: " : "Saved: ") + symbol + String.format(Locale.getDefault(), "%,.2f", bg.currentAmount));
+                }
+                if (limitText != null) {
+                    limitText.setText((isBudget ? "Limit: " : "Target: ") + symbol + String.format(Locale.getDefault(), "%,.2f", bg.targetAmount));
+                }
+                if (progress != null) {
+                    progress.setProgress(Math.min(100, pct));
+                    if (isBudget) {
+                        if (pct >= 100) {
+                            progress.setIndicatorColor(ContextCompat.getColor(this, R.color.finance_expense));
+                        } else if (pct >= 80) {
+                            progress.setIndicatorColor(ContextCompat.getColor(this, R.color.color_tertiary));
+                        } else {
+                            progress.setIndicatorColor(ContextCompat.getColor(this, R.color.finance_income));
+                        }
+                    } else {
+                        progress.setIndicatorColor(ContextCompat.getColor(this, R.color.color_primary));
+                    }
+                }
+
+                if (divider != null && i == displayLimit - 1) {
+                    divider.setVisibility(View.GONE);
+                }
+
+                item.setOnClickListener(v -> {
+                    vibrateDevice();
+                    startActivity(new Intent(this, com.accounting.balancex.ui.goals.GoalsBudgetsActivity.class));
+                });
+
+                container.addView(item);
+            }
+        }));
+    }
+
+    private void loadHealthScoreSnapshot() {
+        if (budgetGoalRepository == null || subscriptionRepository == null) return;
+        budgetGoalRepository.getBudgets(budgets -> {
+            subscriptionRepository.getActiveSubscriptions(subs -> runOnUiThread(() -> {
+                com.accounting.balancex.finance.FinancialHealthEngine.HealthScoreResult result =
+                        com.accounting.balancex.finance.FinancialHealthEngine.calculateHealthScore(
+                                totalCredit,
+                                totalDebit,
+                                budgets,
+                                subs
+                        );
+
+                TextView scoreNum = findViewById(R.id.textHealthScoreNumber);
+                TextView rating = findViewById(R.id.textHealthScoreRating);
+                TextView subDesc = findViewById(R.id.textHealthSavingsRate);
+                TextView tip = findViewById(R.id.textHealthTip);
+
+                if (scoreNum != null) scoreNum.setText(String.valueOf(result.score));
+                if (rating != null) rating.setText(result.ratingLabel);
+                if (subDesc != null) {
+                    if (result.savingsRatePercent > 0) {
+                        subDesc.setText(result.savingsRatePercent + "% monthly savings rate • Disciplined spending");
+                    } else {
+                        subDesc.setText("Discipline & cashflow tracking");
+                    }
+                }
+                if (tip != null) tip.setText(result.adviceTip);
+            }));
+        });
+    }
+
+    private void showHealthScoreSheet() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet_health_score, null);
+        dialog.setContentView(view);
+
+        TextView scoreVal = view.findViewById(R.id.textSheetHealthScore);
+        TextView ratingVal = view.findViewById(R.id.textSheetHealthRating);
+        TextView savingsDesc = view.findViewById(R.id.textSheetSavingsDesc);
+        View btnClose = view.findViewById(R.id.btnCloseHealthSheet);
+
+        if (budgetGoalRepository != null && subscriptionRepository != null) {
+            budgetGoalRepository.getBudgets(budgets -> {
+                subscriptionRepository.getActiveSubscriptions(subs -> runOnUiThread(() -> {
+                    com.accounting.balancex.finance.FinancialHealthEngine.HealthScoreResult res =
+                            com.accounting.balancex.finance.FinancialHealthEngine.calculateHealthScore(
+                                    totalCredit, totalDebit, budgets, subs
+                            );
+                    if (scoreVal != null) scoreVal.setText(String.valueOf(res.score));
+                    if (ratingVal != null) ratingVal.setText(res.ratingLabel);
+                    if (savingsDesc != null && res.savingsRatePercent > 0) {
+                        savingsDesc.setText("Retained " + res.savingsRatePercent + "% of incoming credit this period.");
+                    }
+                }));
+            });
+        }
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    private void showSecurityLockSheet() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet_security_lock, null);
+        dialog.setContentView(view);
+
+        com.google.android.material.materialswitch.MaterialSwitch switchLock =
+                view.findViewById(R.id.switchBiometricLock);
+        View btnClose = view.findViewById(R.id.btnCloseSecuritySheet);
+
+        if (switchLock != null) {
+            switchLock.setChecked(SettingsManager.isBiometricLockEnabled(this));
+            switchLock.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                vibrateDevice();
+                if (isChecked) {
+                    if (com.accounting.balancex.security.BiometricLockHelper.canAuthenticate(this)) {
+                        com.accounting.balancex.security.BiometricLockHelper.promptAuthentication(
+                                this,
+                                "Enable Biometric Lock",
+                                "Verify biometric or device credentials",
+                                new com.accounting.balancex.security.BiometricLockHelper.AuthCallback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        SettingsManager.setBiometricLockEnabled(MainActivity.this, true);
+                                        hasAuthenticatedThisSession = true;
+                                        Toast.makeText(MainActivity.this, "App lock enabled!", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void onFailure(String errorMsg) {
+                                        switchLock.setChecked(false);
+                                        Toast.makeText(MainActivity.this, "Authentication failed: " + errorMsg, Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                        );
+                    } else {
+                        switchLock.setChecked(false);
+                        Toast.makeText(this, "Biometrics or device security not set up on device", Toast.LENGTH_LONG).show();
+                    }
+                } else {
+                    com.accounting.balancex.security.BiometricLockHelper.promptAuthentication(
+                            this,
+                            "Disable Biometric Lock",
+                            "Verify credentials to turn off App Lock",
+                            new com.accounting.balancex.security.BiometricLockHelper.AuthCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    SettingsManager.setBiometricLockEnabled(MainActivity.this, false);
+                                    hasAuthenticatedThisSession = true;
+                                    unlockDashboard();
+                                    loadUnlockedDashboardData();
+                                    Toast.makeText(MainActivity.this, "App lock disabled", Toast.LENGTH_SHORT).show();
+                                }
+
+                                @Override
+                                public void onFailure(String errorMsg) {
+                                    switchLock.setChecked(true);
+                                    Toast.makeText(MainActivity.this, "Authentication required to disable lock", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                    );
+                }
+            });
+        }
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
+    }
+
+    private void lockDashboardForBiometrics() {
+        applyScreenBlur(true);
+        View lockOverlay = findViewById(R.id.layoutBiometricLockOverlay);
+        if (lockOverlay != null) {
+            lockOverlay.setVisibility(View.VISIBLE);
+        }
+        View balanceCard = findViewById(R.id.balanceCard);
+        if (balanceCard != null) {
+            balanceCard.setVisibility(View.INVISIBLE);
+        }
+        if (textTotalBalance != null) textTotalBalance.setText("••••••");
+        if (textNetCredit != null) textNetCredit.setText("••••••");
+        if (textNetDebit != null) textNetDebit.setText("••••••");
+    }
+
+    private void unlockDashboard() {
+        applyScreenBlur(false);
+        View lockOverlay = findViewById(R.id.layoutBiometricLockOverlay);
+        if (lockOverlay != null) {
+            lockOverlay.setVisibility(View.GONE);
+        }
+        View balanceCard = findViewById(R.id.balanceCard);
+        if (balanceCard != null) {
+            balanceCard.setVisibility(View.VISIBLE);
         }
     }
 
-    private void startAutoScroll() {
-        if (scrollRunnable != null) {
-            handler.removeCallbacks(scrollRunnable); // Prevent duplicate runnable
+    private void applyScreenBlur(boolean blur) {
+        View contentRoot = findViewById(R.id.main_content_root);
+        if (contentRoot != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (blur) {
+                contentRoot.setRenderEffect(RenderEffect.createBlurEffect(32f, 32f, Shader.TileMode.CLAMP));
+            } else {
+                contentRoot.setRenderEffect(null);
+            }
+        }
+    }
+
+    private void triggerBiometricUnlock() {
+        if (!SettingsManager.isBiometricLockEnabled(this)) {
+            unlockDashboard();
+            loadUnlockedDashboardData();
+            return;
         }
 
-        scrollRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (transactionDates == null || transactionDates.isEmpty())
-                    return; // Prevent crashes
+        com.accounting.balancex.security.BiometricLockHelper.promptAuthentication(
+                this,
+                "Unlock BalanceX",
+                "Scan fingerprint or confirm lock screen PIN",
+                new com.accounting.balancex.security.BiometricLockHelper.AuthCallback() {
+                    @Override
+                    public void onSuccess() {
+                        hasAuthenticatedThisSession = true;
+                        unlockDashboard();
+                        loadUnlockedDashboardData();
+                    }
 
-                // 🔹 Smooth scroll normally
-                if (scrollPosition < transactionDates.size() - 1) {
-                    scrollPosition++;
-                    recyclerView.smoothScrollBy(0, 150); // Adjust for better smoothness
+                    @Override
+                    public void onFailure(String errorMsg) {
+                        lockDashboardForBiometrics();
+                    }
                 }
-                // 🔹 Handle last item (wait & reset smoothly)
-                else {
-                    recyclerView.smoothScrollToPosition(transactionDates.size() - 1); // Reach last item
-                    new Handler().postDelayed(() -> {
-                        recyclerView.scrollToPosition(0); // Reset to first item after delay
-                        scrollPosition = 0; // Reset position
-                    }, 1500); // Delay before resetting
-                }
-
-                handler.postDelayed(this, 4000); // Auto-scroll every 4 sec
-            }
-        };
-
-        handler.postDelayed(scrollRunnable, 4000); // Start scrolling after 4 sec
+        );
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         SettingsManager.applyTheme(this);
-        startAutoScroll(); // Resume auto-scroll
+        if (SettingsManager.isBiometricLockEnabled(this) && !hasAuthenticatedThisSession) {
+            lockDashboardForBiometrics();
+            triggerBiometricUnlock();
+        } else {
+            unlockDashboard();
+            loadUnlockedDashboardData();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    private void loadUnlockedDashboardData() {
         currentBalancePeriod = SettingsManager.getBalancePeriod(this);
         if (textBalancePeriod != null) {
             textBalancePeriod.setText(currentBalancePeriod);
         }
         loadProfileData();
         loadBalanceData();
-        loadTransactionsFromStorage();
+        loadSnapshotCards();
         if (modernChartBridge != null) {
             modernChartBridge.refresh();
         }
         if (modernPieChartBridge != null) {
             modernPieChartBridge.refresh();
         }
-        if (adapter != null) {
-            adapter.notifyDataSetChanged();
-        }
         com.accounting.balancex.data.repository.TransactionRepository repo = 
                 new com.accounting.balancex.data.repository.TransactionRepository(this);
         com.accounting.balancex.data.db.DatabaseMigrator.migrateJsonToRoomIfNeeded(this, repo, () -> {
             runOnUiThread(() -> {
                 loadBalanceData();
-                loadTransactionsFromStorage();
+                loadSnapshotCards();
                 setupPieChart();
                 updateDrawerStats();
                 if (modernChartBridge != null) {
@@ -1566,16 +1862,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        handler.removeCallbacks(scrollRunnable); // Stop auto-scroll to save resources
     }
-
-    // ✅ Properly Used updateRecyclerView()
-    private void updateRecyclerView() {
-        adapter.notifyDataSetChanged(); // Refresh data
-        scrollPosition = 0; // Reset scrolling position
-    }
-
-
 
     private void setupPieChart() {
         if (modernPieChartBridge != null) {

@@ -178,4 +178,15 @@ public class SettingsManager {
     public static void setBalancePeriod(Context context, String period) {
         getPrefs(context).edit().putString(KEY_BALANCE_PERIOD, period).apply();
     }
+
+    // ==================== BIOMETRIC APP LOCK ====================
+    public static final String KEY_BIOMETRIC_LOCK = "pref_biometric_lock";
+
+    public static boolean isBiometricLockEnabled(Context context) {
+        return getPrefs(context).getBoolean(KEY_BIOMETRIC_LOCK, false);
+    }
+
+    public static void setBiometricLockEnabled(Context context, boolean enabled) {
+        getPrefs(context).edit().putBoolean(KEY_BIOMETRIC_LOCK, enabled).apply();
+    }
 }

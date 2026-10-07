@@ -221,15 +221,15 @@
         android:layout_height="52dp"
         android:text="Merge with Existing Vault"
         android:textAllCaps="false"
-        android:textColor="@color/color_on_primary"
+        android:textColor="@color/btn_primary_text"
         android:textSize="14sp"
         android:textStyle="bold"
-        app:backgroundTint="@color/color_primary"
+        app:backgroundTint="@color/btn_primary_bg"
         app:cornerRadius="14dp"
         app:icon="@drawable/ic_download"
         app:iconGravity="textStart"
         app:iconPadding="10dp"
-        app:iconTint="@color/color_on_primary" />
+        app:iconTint="@color/btn_primary_text" />
 
     <!-- Action 2: Replace Local Vault -->
     <com.google.android.material.button.MaterialButton

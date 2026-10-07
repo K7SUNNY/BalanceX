@@ -82,4 +82,17 @@
     <string name="financial_year">Financial Year</string>
     <string name="all_time">All Time</string>
     <string name="balance_period_filter_desc">Filter balance by period</string>
+
+    <!-- Phase 3 Strings -->
+    <string name="subscriptions">Subscriptions</string>
+    <string name="upcoming_subscriptions">Upcoming Subscriptions</string>
+    <string name="manage">Manage</string>
+    <string name="goals">Goals</string>
+    <string name="budgets_and_goals">Budgets &amp; Goals</string>
+    <string name="view_all">View All</string>
+    <string name="health_score">Health Score</string>
+    <string name="financial_health_score">Financial Health Score</string>
+    <string name="security">Security</string>
+    <string name="app_lock">App Lock</string>
+    <string name="biometric_lock">Biometric Lock</string>
 </resources>

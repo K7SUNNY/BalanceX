@@ -83,6 +83,12 @@ dependencies {
     implementation libs.sqlcipher
     implementation libs.sqlite
 
+    // WorkManager (Phase 3 Subscriptions Tracker)
+    implementation libs.work.runtime
+
+    // Biometric Authentication (Phase 3 App Lock)
+    implementation libs.biometric
+
     // Jetpack Compose
     def composeBom = platform(libs.compose.bom)
     implementation composeBom

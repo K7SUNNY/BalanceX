@@ -18,6 +18,8 @@ sqlcipher = "4.6.1"
 sqlite = "2.4.0"
 swiperefreshlayout = "1.1.0"
 ui = "1.12.1"
+work = "2.9.1"
+biometric = "1.2.0-alpha05"
 
 [libraries]
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
@@ -43,6 +45,8 @@ room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 sqlcipher = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher" }
 sqlite = { module = "androidx.sqlite:sqlite", version.ref = "sqlite" }
 swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefreshlayout", version.ref = "swiperefreshlayout" }
+work-runtime = { module = "androidx.work:work-runtime", version.ref = "work" }
+biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
 ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 
 [plugins]
