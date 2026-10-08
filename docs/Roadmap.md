@@ -1,41 +1,77 @@
-# BalanceX: Implementation Roadmap (Java Edition)
+# BalanceX: Implementation Roadmap (Hybrid Java & Compose Edition)
 
-This roadmap outlines the step-by-step process to modernize BalanceX while preserving the core Java and XML foundation.
+This roadmap tracks the architectural evolution and feature milestones of BalanceX.
 
-## Phase 1: Architecture & Data Layer Preparation
-*Goal: Migrate from the fragile JSON storage to a robust, encrypted relational database.*
-- [x] **Step 1:** Add **Room Database** and **SQLCipher** dependencies to Gradle.
-- [x] **Step 2:** Design Database Entities (Transactions, Categories, Goals) using Java annotations (`@Entity`, `@PrimaryKey`).
-- [x] **Step 3:** Implement Data Access Objects (DAOs) using interfaces in Java.
-- [x] **Step 4:** Build a Java-based Repository pattern to manage data access.
-- [x] **Step 5:** Write a background migration script to parse the existing user JSON files and insert them into the new Room Database seamlessly.
+---
+
+## Phase 1: Architecture & Data Layer Modernization
+*Goal: Migrate from file-based JSON storage to an encrypted, enterprise-grade relational database.*
+- [x] **Step 1:** Add **Room Database** and **SQLCipher** dependencies with AES-256 local encryption.
+- [x] **Step 2:** Design Database Entities (`TransactionEntity`, `SubscriptionEntity`, `BudgetGoalEntity`).
+- [x] **Step 3:** Implement Data Access Objects (`TransactionDao`, `SubscriptionDao`, `BudgetGoalDao`).
+- [x] **Step 4:** Build thread-safe Repository pattern using shared database write executor (`AppDatabase.databaseWriteExecutor`).
+- [x] **Step 5:** Non-destructive schema migration (`MIGRATION_1_2`) and seamless one-time JSON ledger migrator.
+
+---
 
 ## Phase 2: UI/UX Modernization (Material 3 & Hybrid Compose)
-*Goal: Revamp the look and feel using Material 3 and selective Compose integration.*
-- [x] **Step 1:** Upgrade project theme to **Material 3** (`Theme.Material3.DayNight`).
-- [x] **Step 2:** Update core XML layouts (Buttons, TextFields, Cards) to their Material 3 equivalents.
-- [x] **Step 3:** Set up Jetpack Compose tooling for Java/XML interoperability.
-- [x] **Step 4:** Replace the legacy MPAndroidChart with a modern Compose-based chart inside a `ComposeView` within the Java Activities/Fragments.
+*Goal: Elevate aesthetics with Material 3 styling and interactive Jetpack Compose data visualizations.*
+- [x] **Step 1:** Upgrade theme to **Material 3** (`Theme.Material3.DayNight.NoActionBar`) with automated light/dark switching.
+- [x] **Step 2:** Update core XML components (TextInputs, MaterialButtons, MaterialCardViews, Chips, Segmented Buttons).
+- [x] **Step 3:** Set up Jetpack Compose BOM tooling and `ComposeView` interoperability in Java Activities.
+- [x] **Step 4:** Replace legacy MPAndroidChart with native Compose Canvas charts:
+  - `ModernFinancialChart`: Smooth quadratic Bézier curves, gradient area fills, touch scrubbing with haptic feedback.
+  - `ModernPieChart`: Donut visualization with interactive slice selection and category legends.
+  - Set **Line Chart** with **Months (M)** timeline filter as default spending analysis view on Home dashboard.
 
-## Phase 3: Core Feature Expansion & Gamification
-*Goal: Add smart budgeting and goals.*
-- [x] **Step 1:** Add a "Subscriptions / Recurring" tracker using Java background workers (`WorkManager`).
-- [x] **Step 2:** Build a "Goals" UI in XML to set budgets for specific categories.
-- [x] **Step 3:** Implement the "Financial Health" score logic based on user's adherence to budgets.
-- [x] **Step 4:** Implement App Lock using Android's `BiometricPrompt` API.
+---
 
-## Phase 4: On-Device Intelligence (The Local LLM)
-*Goal: Implement offline AI to automate data entry.*
-- [ ] **Step 1:** Research and integrate an inference engine (e.g., `llama.cpp` for Android via JNI or MediaPipe).
-- [ ] **Step 2:** Download and bundle (or fetch post-install) a small quantized GGUF model (e.g., Qwen-0.5B / Qwen-1.5B).
-- [ ] **Step 3:** Build the "Smart Input" prompt engine. When a user types text, feed it to the model with a system prompt to strictly output JSON.
-- [ ] **Step 4:** (Optional Bonus) Integrate ML Kit Text Recognition to scan physical receipts, passing the OCR text into the local LLM to extract the amount and vendor.
+## Phase 3: Core Feature Expansion, Gamification & Vault Security
+*Goal: Smart budgeting, recurring commitments tracking, gamified wellness, and biometric protection.*
+- [x] **Step 1: Subscriptions & Recurring Tracker**
+  - Daily background worker (`SubscriptionWorker`) powered by AndroidX `WorkManager`.
+  - Android 13+ `POST_NOTIFICATIONS` runtime permission request flow.
+  - Advance reminder notifications (same-day, 1-day, 2-day, 3-day windows) with deduplication guards.
+  - Automated recurring transaction logging on due dates with catch-up deduplication.
+  - Contextual relative due date formatting (`Due today`, `Due tomorrow`, `Due in 3 days`, `Overdue by 2d`).
+  - Full management sheet with edit, pause/resume (`isActive`), and reminder window controls.
+- [x] **Step 2: Category Budgets & Savings Goals**
+  - Monthly spending limit budgets for specific categories with chip & autocomplete selection.
+  - Real-time spend computation dynamically filtering current-month ledger debits.
+  - Visual status progress indicators with adaptive color thresholds (Green, Amber, Red/Over Budget).
+  - Savings target goals with initial balance tracking, progress badges, and fast deposit dialogs.
+  - Direct edit affordances (edit pencil buttons and row click) for existing budgets and goals.
+- [x] **Step 3: Algorithmic Financial Health Engine**
+  - 0–100 wellness score evaluating Savings Rate (40 pts), Budget Adherence (35 pts), and Recurring Commitments (25 pts).
+  - First-run safety state (`NO_DATA`) to prevent premature "Excellent" ratings on empty ledgers.
+  - Interactive breakdown bottom sheet dynamically populated with computed pillar points and advice.
+- [x] **Step 4: Vault Security & App Lock**
+  - Hardware biometric authentication via Android `BiometricPrompt` with device PIN/Pattern fallback.
+  - Re-entrancy protection eliminating infinite prompt loops on cancellation.
+  - Background auto-lock re-engaging when the application is minimized or resumed from background.
+  - Anti-tamper drawer security: `DrawerLayout` is locked closed while the app is locked to prevent data leaks.
+  - Hardware capability verification (`canAuthenticate()`) with permanent lockout recovery path.
+- [x] **Step 5: Reports & Financial Analytics**
+  - Cashflow flow ratios, category breakdown, top payees, and payment method statistics.
+  - Horizontal progress bar clip rendering and individual drawable state isolation.
 
-## Phase 5: Polish & Deployment
-*Goal: Ensure stability and performance.*
-- [ ] **Step 1:** Thoroughly test the JSON-to-Room data migration on first launch.
-- [ ] **Step 2:** Profile memory usage, especially around the LLM inference.
-- [ ] **Step 3:** Refine PDF Statement generation using data straight from Room.
-- [ ] **Step 4:** Beta release and feedback gathering.
+---
 
-### The End
+## Phase 4: On-Device Intelligence (Offline Local AI)
+*Goal: Zero-cloud, on-device AI automation for natural language transaction logging and receipt scanning.*
+- [ ] **Step 1:** Integrate lightweight on-device inference runtime (e.g., `llama.cpp` Android JNI or Google MediaPipe LLM Inference).
+- [ ] **Step 2:** Bundle or download a quantized small language model (e.g., Qwen-0.5B / Qwen-1.5B GGUF).
+- [ ] **Step 3:** Implement "Smart Input" natural language prompt engine (e.g., "Paid $15 for lunch at Subway" → structured JSON output).
+- [ ] **Step 4:** Integrate Google ML Kit Text Recognition (OCR) for camera receipt scanning with automated parsing into Room transactions.
+
+---
+
+## Phase 5: Production Readiness & Release
+*Goal: Final profiling, stability verification, and store distribution.*
+- [x] **Step 1:** Complete 21-bug stability audit remediation (`DEBUG_REPORT.md`).
+- [x] **Step 2:** Package namespace consolidation under `com.k7sunny.balancex`.
+- [ ] **Step 3:** Memory and CPU profiling under high-volume transaction stress tests (10k+ records).
+- [ ] **Step 4:** Release keystore configuration and signed Android App Bundle (`.aab`) generation for Google Play Store.
+
+---
+*Roadmap maintained and updated for BalanceX development.*

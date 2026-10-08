@@ -1,36 +1,69 @@
-# BalanceX: Project Vision & Evolution (Java Edition)
+# BalanceX: Project Vision & Evolution
 
-## The Current State
-BalanceX is a solid, traditional Android personal accounting app. It successfully achieves its primary goal: a 100% local, privacy-focused financial tracker.
-*   **Tech Stack**: Java, Android XML, Material Design, MPAndroidChart, Local JSON storage.
-*   **Strengths**: Strong privacy ethos, basic dashboarding, PDF statement generation.
-*   **Limitations**: Static feature set, fragile JSON data storage, requires high manual input.
+## 1. The Present Reality: A Privacy-First Financial Powerhouse
 
-## The Potential Future: The Intelligent Privacy-First Coach
-To make BalanceX a standout, production-tier project, we will evolve it from a static ledger to a **Proactive Financial Wellness Coach**. 
-We will maintain your expertise in **Java and XML Layouts** while introducing modern architectural patterns, local relational databases, and bleeding-edge **On-Device Local AI**.
+BalanceX has evolved from a simple offline ledger into a **secure, proactive personal accounting and wellness companion**. By combining the rock-solid stability of Java and Material 3 XML with the high performance of Jetpack Compose and encrypted SQLite, BalanceX delivers a premium fintech experience with 100% data sovereignty.
 
-## Key Proposed Implementations (The "Why" and "What")
+### What is Live & Production-Ready Today:
+- **Bank-Grade Local Encryption**: All user data is encrypted at rest using **SQLCipher (AES-256)** on top of Android **Room Database**, with non-destructive migrations (`MIGRATION_1_2`) and complete JSON export/import portability.
+- **Hybrid Material 3 & Jetpack Compose UI**:
+  - Material 3 Day/Night theme with automated dark mode switching.
+  - Native Jetpack Compose Canvas visualizations (`ModernFinancialChart` and `ModernPieChart`) featuring smooth quadratic Bézier curves, area gradients, and haptic touch scrubbing.
+  - Line Chart with Months filter as the default home spending analysis view.
+- **Automated Recurring Subscriptions Tracker**:
+  - Background processing via AndroidX **WorkManager** (`SubscriptionWorker`).
+  - Predictive offline reminders with runtime notification permissions.
+  - Relative due date formatting (`Due today`, `Due tomorrow`, `Due in 3 days`).
+  - Automated auto-billing with deduplication.
+- **Category Budgets & Savings Goals**:
+  - Monthly spending caps per category with autocomplete & chip suggestions.
+  - Real-time spend computation synchronized directly with ledger debits.
+  - Goal tracking with progress indicators, fast deposit dialogs, and edit controls.
+- **Algorithmic Financial Health Engine**:
+  - Gamified 0–100 wellness score based on Savings Rate (40 pts), Budget Adherence (35 pts), and Recurring Commitments (25 pts).
+  - Detailed breakdown sheet with dynamic pillar inspections and no-data guards.
+- **Vault Security & App Lock**:
+  - Hardware biometric authentication (**BiometricPrompt**) supporting Fingerprint, Face, and Device PIN/Pattern.
+  - Automatic re-locking when app is minimized or backgrounded.
+  - Drawer anti-tamper locking preventing unauthorized exports while locked.
+- **Statement & Reports Engine**:
+  - Auditable PDF statement generation via embedded **iText7**.
+  - Comprehensive cashflow analytics, category breakdowns, and payee insights.
 
-### 1. Data Layer Upgrade: Room Database + SQLCipher
-*   **What**: Migrate from file-based Local JSON to Android's **Room Database** (written in Java), and encrypt it using **SQLCipher**.
-*   **Why**: JSON files become slow and error-prone as data grows. Room provides a robust, scalable SQLite abstraction for complex querying (e.g., getting monthly sums effortlessly), while SQLCipher ensures bank-level security even if the phone is compromised.
+---
 
-### 2. Hybrid UI: Material 3 XML + Targeted Jetpack Compose
-*   **What**: Upgrade existing XML layouts to **Material Design 3** (M3) components for a modern look. Selectively introduce **Jetpack Compose** using `ComposeView` within your XML layouts for specific, highly interactive elements (like new animated charts or gamified widgets).
-*   **Why**: This lets you keep working in the XML environment you know, while slowly experimenting with Compose where it shines best—without a massive, risky codebase rewrite.
+## 2. The Next Horizon: On-Device Intelligence (Phase 4)
 
-### 3. On-Device LLM (Small Language Models)
-*   **What**: Integrate a local AI inference engine (like `llama.cpp` for Android or Google's MediaPipe LLM Inference) to run highly quantized, ultra-small models locally (e.g., **Qwen-0.5B-GGUF** or a small Phi/Gemma model).
-*   **Why**: You can build a "Smart Add" feature where the user types (or uses voice-to-text) something like *"Bought a $4.50 coffee at Starbucks"* and the local LLM parses it into structured JSON: `{"amount": 4.50, "category": "Food/Drink", "note": "Starbucks coffee"}`.
-*   **Vision Extension**: We can also integrate Google ML Kit for on-device Text Recognition (OCR) to scan receipts, feeding the text to our local LLM to extract the total and category, keeping it 100% offline.
+To complete the transformation from a smart financial tracker to an **Autonomous Financial Wellness Coach**, BalanceX will integrate on-device local intelligence without ever sending a single byte to the cloud.
 
-### 4. Gamification & Behavioral Nudges
-*   **What**: Introduce a "Financial Health Score," savings streaks, and customizable budget goals using Java logic.
-*   **Why**: Gamification encourages user retention and actually helps users build better financial habits.
+### Upcoming Key Implementations:
 
-### 5. Seamless Automation & Security
-*   **What**: Implement Biometric Authentication (Fingerprint/Face Unlock) to open the app, and add recurring transaction management.
+### 1. On-Device Small Language Model (SLM) Inference
+- **What**: Integrate an embedded offline inference engine (such as `llama.cpp` Android JNI or Google MediaPipe LLM Inference) running quantized models (e.g., **Qwen-0.5B-GGUF** or a lightweight Gemma model).
+- **Why**: Enable conversational "Smart Add". A user can type or dictate:
+  > *"Had dinner at Olive Garden for $48.50 with friends"*
+  and the local model parses this instantly into:
+  ```json
+  {
+    "amount": 48.50,
+    "category": "Food & Dining",
+    "note": "Dinner at Olive Garden with friends",
+    "type": "Debit"
+  }
+  ```
+  completely offline in under 300ms.
 
-## Impact of these Changes
-You will build an app that acts like an AI-powered financial advisor, processing natural language and receipts locally, storing data securely in encrypted SQL, and featuring a modernized hybrid UI—all while mastering advanced Java Android development.
+### 2. On-Device Receipt OCR Scanner
+- **What**: Integrate Google ML Kit on-device Text Recognition with the camera.
+- **Why**: Scan paper receipts, extract vendor and line items, feed the text to the local parser, and auto-populate the transaction form with a single tap.
+
+### 3. Predictive Cashflow Forecasting
+- **What**: Statistical projection algorithms analyzing recurring subscriptions, average category burns, and historical income cycles to predict end-of-month liquidity.
+
+---
+
+## 3. Guiding Principles
+
+1. **Zero Cloud Telemetry**: User financial records are personal and private. BalanceX never connects to external servers.
+2. **Deterministic Security**: Encryption keys and biometric validation rely on hardware-backed Android Keystore and SQLCipher.
+3. **Fluid Performance**: High frame-rate rendering, seamless edge-to-edge system insets, and zero UI blocking on background I/O threads.

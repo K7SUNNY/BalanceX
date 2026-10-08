@@ -64,12 +64,14 @@ Gradient backgrounds (like `home_page_gradient_background.xml`) will be updated 
 - [x] `themes.xml` and `values-night/themes.xml` updated to use `DayNight` parent and semantic colors.
 - [x] Global refactor of layouts to use `@color/text_primary`, `@color/text_secondary`, etc.
 - [x] Custom drawables (gradients, rounded rectangles) updated to use theme-aware colors.
-- [x] Programmatic chart coloring in `GraphManager.java` and `MainActivity.java` updated to use `ContextCompat.getColor()`.
+- [x] Modern Jetpack Compose charts (`ModernFinancialChart`, `ModernPieChart`) styled with native dark mode palette and dynamic alpha gradients.
+- [x] Biometric security scrim (`vault_lock_scrim`) theme-aware across Light (`#F0F7F9FC`) and Dark (`#F00E1217`) modes.
 
 ## 4. Verification
-The app now follows the system theme automatically. To verify:
-1. Switch device to Dark Mode.
-2. Observe background changes to `#121212`.
-3. Observe cards changing to `#1E1E1E`.
-4. Observe text changing to light gray/white.
-5. Observe charts (Bar, Line, Pie) updating their colors and text for better visibility.
+The app now follows the system theme automatically and supports in-app theme selection via Settings. To verify:
+1. Switch device or app settings to Dark Mode.
+2. Observe background changes to `#0E1217` (`surface_background`).
+3. Observe cards changing to `#171D25` (`surface_card`).
+4. Observe text changing to `#F1F5F9` (`text_primary`) and `#94A3B8` (`text_secondary`).
+5. Observe Jetpack Compose Canvas charts (Line, Bar, Donut) rendering with high-contrast night colors, smooth Bézier curves, and luminous gradient fills.
+

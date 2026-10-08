@@ -57,6 +57,7 @@ This document provides a complete reference for the Material 3-aligned modern fi
 | **`navbar_background`** | `#0B2545` | `#131922` | Solid continuous background for bottom nav and system bar |
 | **`header_gradient_start`** | `#1B4B82` | `#1A2330` | Top toolbar header start gradient |
 | **`header_gradient_end`** | `#0D2D52` | `#111720` | Top toolbar header end gradient |
+| **`vault_lock_scrim`** | `#F0F7F9FC` | `#F00E1217` | Full-screen security scrim for biometric lock overlay |
 
 ---
 
