@@ -3,7 +3,6 @@ package com.accounting.balancex.data.repository;
 import android.content.Context;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import com.accounting.balancex.data.db.AppDatabase;
 import com.accounting.balancex.data.dao.TransactionDao;
@@ -11,13 +10,13 @@ import com.accounting.balancex.data.entity.TransactionEntity;
 
 public class TransactionRepository {
 
-    private TransactionDao transactionDao;
-    private ExecutorService executorService;
+    private final TransactionDao transactionDao;
+    private final ExecutorService executorService;
 
     public TransactionRepository(Context context) {
         AppDatabase db = AppDatabase.getDatabase(context);
-        transactionDao = db.transactionDao();
-        executorService = Executors.newFixedThreadPool(4);
+        this.transactionDao = db.transactionDao();
+        this.executorService = AppDatabase.databaseWriteExecutor;
     }
 
     public void insert(TransactionEntity transaction, Runnable onSuccess) {

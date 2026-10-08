@@ -68,6 +68,20 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/textSubManageStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_tag_subtle"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:text="Paused"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <TextView
                     android:id="@+id/textSubManageCycle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -94,16 +108,34 @@
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <ImageView
-                android:id="@+id/btnDeleteSubscription"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Delete subscription"
-                android:padding="4dp"
-                app:srcCompat="@drawable/ic_delete"
-                app:tint="@color/text_tertiary" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/btnEditSubscription"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Edit subscription"
+                    android:padding="4dp"
+                    app:srcCompat="@drawable/ic_edit_pencil"
+                    app:tint="@color/text_tertiary" />
+
+                <ImageView
+                    android:id="@+id/btnDeleteSubscription"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_marginStart="6dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Delete subscription"
+                    android:padding="4dp"
+                    app:srcCompat="@drawable/ic_delete"
+                    app:tint="@color/text_tertiary" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 

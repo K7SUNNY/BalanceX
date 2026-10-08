@@ -1,6 +1,9 @@
 package com.accounting.balancex.ui.subscriptions;
 
+import android.Manifest;
 import android.app.DatePickerDialog;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -8,7 +11,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -21,6 +28,7 @@ import com.accounting.balancex.worker.SubscriptionWorker;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.text.SimpleDateFormat;
@@ -30,6 +38,8 @@ import java.util.List;
 import java.util.Locale;
 
 public class SubscriptionsActivity extends AppCompatActivity {
+
+    private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 201;
 
     private SubscriptionRepository repository;
     private LinearLayout containerItems;
@@ -66,7 +76,32 @@ public class SubscriptionsActivity extends AppCompatActivity {
         // Schedule daily background alert check via WorkManager
         SubscriptionWorker.scheduleDailyCheck(this);
 
+        checkAndRequestNotificationPermission();
+
         loadSubscriptions();
+    }
+
+    private void checkAndRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_REQUEST_CODE
+                );
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                SubscriptionWorker.scheduleDailyCheck(this);
+            }
+        }
     }
 
     private void setupWindowInsets() {
@@ -138,7 +173,9 @@ public class SubscriptionsActivity extends AppCompatActivity {
                     TextView textName = itemView.findViewById(R.id.textSubManageName);
                     TextView textAmount = itemView.findViewById(R.id.textSubManageAmount);
                     TextView textDue = itemView.findViewById(R.id.textSubManageDue);
+                    TextView textStatus = itemView.findViewById(R.id.textSubManageStatus);
                     TextView textCycle = itemView.findViewById(R.id.textSubManageCycle);
+                    ImageView btnEdit = itemView.findViewById(R.id.btnEditSubscription);
                     ImageView btnDelete = itemView.findViewById(R.id.btnDeleteSubscription);
                     View divider = itemView.findViewById(R.id.dividerSubManage);
 
@@ -149,12 +186,28 @@ public class SubscriptionsActivity extends AppCompatActivity {
                     if (textDue != null) {
                         textDue.setText("Due " + sub.nextDueDate);
                     }
+                    if (textStatus != null) {
+                        textStatus.setVisibility(sub.isActive ? View.GONE : View.VISIBLE);
+                    }
+                    itemView.setAlpha(sub.isActive ? 1.0f : 0.6f);
+
                     if (textCycle != null) {
-                        textCycle.setText("• " + sub.billingCycle);
+                        String cycleText = "• " + sub.billingCycle;
+                        if (sub.reminderDaysBefore == 0) {
+                            cycleText += " • Same day alert";
+                        } else {
+                            cycleText += " • " + sub.reminderDaysBefore + "d alert";
+                        }
+                        textCycle.setText(cycleText);
                     }
                     if (divider != null && i == subscriptions.size() - 1) {
                         divider.setVisibility(View.GONE);
                     }
+
+                    if (btnEdit != null) {
+                        btnEdit.setOnClickListener(v -> showSubscriptionSheet(sub));
+                    }
+                    itemView.setOnClickListener(v -> showSubscriptionSheet(sub));
 
                     if (btnDelete != null) {
                         btnDelete.setOnClickListener(v -> {
@@ -192,24 +245,82 @@ public class SubscriptionsActivity extends AppCompatActivity {
     }
 
     private void showAddSubscriptionSheet() {
+        showSubscriptionSheet(null);
+    }
+
+    private void showSubscriptionSheet(@Nullable SubscriptionEntity existingSub) {
+        boolean isEditing = existingSub != null;
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.bottom_sheet_add_subscription, null);
         dialog.setContentView(view);
 
+        TextView textTitle = view.findViewById(R.id.textSheetSubscriptionTitle);
         TextInputEditText editName = view.findViewById(R.id.editSubName);
         TextInputEditText editAmount = view.findViewById(R.id.editSubAmount);
         TextInputEditText editDueDate = view.findViewById(R.id.editSubDueDate);
-        ChipGroup chipGroup = view.findViewById(R.id.chipGroupCycle);
-        com.google.android.material.materialswitch.MaterialSwitch switchAuto = view.findViewById(R.id.switchAutoAdd);
+        ChipGroup chipGroupCycle = view.findViewById(R.id.chipGroupCycle);
+        ChipGroup chipGroupReminder = view.findViewById(R.id.chipGroupReminder);
+        MaterialSwitch switchActive = view.findViewById(R.id.switchIsActive);
+        MaterialSwitch switchAuto = view.findViewById(R.id.switchAutoAdd);
         View btnSave = view.findViewById(R.id.btnSaveSubscription);
 
-        // Default due date = 1 week from today
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DAY_OF_YEAR, 7);
+        if (isEditing) {
+            if (textTitle != null) textTitle.setText("Edit Subscription");
+            if (btnSave instanceof TextView) ((TextView) btnSave).setText("Save Changes");
+            if (editName != null) editName.setText(existingSub.name);
+            if (editAmount != null) editAmount.setText(String.format(Locale.US, "%.2f", existingSub.amount));
+            if (editDueDate != null) editDueDate.setText(existingSub.nextDueDate != null ? existingSub.nextDueDate : "");
+
+            if (chipGroupCycle != null) {
+                if ("Yearly".equalsIgnoreCase(existingSub.billingCycle)) {
+                    chipGroupCycle.check(R.id.chipYearly);
+                } else if ("Weekly".equalsIgnoreCase(existingSub.billingCycle)) {
+                    chipGroupCycle.check(R.id.chipWeekly);
+                } else {
+                    chipGroupCycle.check(R.id.chipMonthly);
+                }
+            }
+
+            if (chipGroupReminder != null) {
+                if (existingSub.reminderDaysBefore == 0) {
+                    chipGroupReminder.check(R.id.chipRemindSameDay);
+                } else if (existingSub.reminderDaysBefore == 1) {
+                    chipGroupReminder.check(R.id.chipRemind1Day);
+                } else if (existingSub.reminderDaysBefore == 3) {
+                    chipGroupReminder.check(R.id.chipRemind3Days);
+                } else if (existingSub.reminderDaysBefore == 7) {
+                    chipGroupReminder.check(R.id.chipRemind7Days);
+                } else {
+                    chipGroupReminder.check(R.id.chipRemind2Days);
+                }
+            }
+
+            if (switchActive != null) switchActive.setChecked(existingSub.isActive);
+            if (switchAuto != null) switchAuto.setChecked(existingSub.autoAddTransaction);
+        } else {
+            if (textTitle != null) textTitle.setText("Add Recurring Subscription");
+            if (btnSave instanceof TextView) ((TextView) btnSave).setText("Save Subscription");
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.DAY_OF_YEAR, 7);
+            if (editDueDate != null) {
+                editDueDate.setText(sdf.format(cal.getTime()));
+            }
+            if (chipGroupCycle != null) chipGroupCycle.check(R.id.chipMonthly);
+            if (chipGroupReminder != null) chipGroupReminder.check(R.id.chipRemind2Days);
+            if (switchActive != null) switchActive.setChecked(true);
+            if (switchAuto != null) switchAuto.setChecked(false);
+        }
+
         if (editDueDate != null) {
-            editDueDate.setText(sdf.format(cal.getTime()));
             editDueDate.setOnClickListener(v -> {
                 Calendar c = Calendar.getInstance();
+                try {
+                    String current = editDueDate.getText() != null ? editDueDate.getText().toString().trim() : "";
+                    if (!current.isEmpty()) {
+                        Date d = sdf.parse(current);
+                        if (d != null) c.setTime(d);
+                    }
+                } catch (Exception ignored) {}
                 new DatePickerDialog(this, (dp, year, month, dayOfMonth) -> {
                     Calendar picked = Calendar.getInstance();
                     picked.set(year, month, dayOfMonth);
@@ -237,9 +348,19 @@ public class SubscriptionsActivity extends AppCompatActivity {
                     return;
                 }
 
+                if (amount <= 0) {
+                    Toast.makeText(this, "Amount must be greater than zero", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (dueDate.isEmpty()) {
+                    Toast.makeText(this, "Please select due date", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 String cycle = "Monthly";
-                if (chipGroup != null) {
-                    int selectedChipId = chipGroup.getCheckedChipId();
+                if (chipGroupCycle != null) {
+                    int selectedChipId = chipGroupCycle.getCheckedChipId();
                     if (selectedChipId == R.id.chipYearly) {
                         cycle = "Yearly";
                     } else if (selectedChipId == R.id.chipWeekly) {
@@ -247,18 +368,57 @@ public class SubscriptionsActivity extends AppCompatActivity {
                     }
                 }
 
+                int reminderDays = 2;
+                if (chipGroupReminder != null) {
+                    int remId = chipGroupReminder.getCheckedChipId();
+                    if (remId == R.id.chipRemindSameDay) {
+                        reminderDays = 0;
+                    } else if (remId == R.id.chipRemind1Day) {
+                        reminderDays = 1;
+                    } else if (remId == R.id.chipRemind3Days) {
+                        reminderDays = 3;
+                    } else if (remId == R.id.chipRemind7Days) {
+                        reminderDays = 7;
+                    }
+                }
+
+                boolean isActive = switchActive == null || switchActive.isChecked();
                 boolean autoAdd = switchAuto != null && switchAuto.isChecked();
 
-                SubscriptionEntity newSub = new SubscriptionEntity(name, amount, cycle, dueDate, "Subscription");
-                newSub.autoAddTransaction = autoAdd;
+                btnSave.setEnabled(false);
 
-                repository.insert(newSub, () -> {
-                    runOnUiThread(() -> {
-                        dialog.dismiss();
-                        loadSubscriptions();
-                        Toast.makeText(this, "Subscription saved!", Toast.LENGTH_SHORT).show();
+                if (isEditing) {
+                    existingSub.name = name;
+                    existingSub.amount = amount;
+                    existingSub.billingCycle = cycle;
+                    existingSub.nextDueDate = dueDate;
+                    existingSub.reminderDaysBefore = reminderDays;
+                    existingSub.isActive = isActive;
+                    existingSub.autoAddTransaction = autoAdd;
+
+                    repository.update(existingSub, () -> {
+                        runOnUiThread(() -> {
+                            dialog.dismiss();
+                            loadSubscriptions();
+                            Toast.makeText(this, "Subscription updated!", Toast.LENGTH_SHORT).show();
+                            checkAndRequestNotificationPermission();
+                        });
                     });
-                });
+                } else {
+                    SubscriptionEntity newSub = new SubscriptionEntity(name, amount, cycle, dueDate, "Subscription");
+                    newSub.reminderDaysBefore = reminderDays;
+                    newSub.isActive = isActive;
+                    newSub.autoAddTransaction = autoAdd;
+
+                    repository.insert(newSub, () -> {
+                        runOnUiThread(() -> {
+                            dialog.dismiss();
+                            loadSubscriptions();
+                            Toast.makeText(this, "Subscription saved!", Toast.LENGTH_SHORT).show();
+                            checkAndRequestNotificationPermission();
+                        });
+                    });
+                }
             });
         }
 

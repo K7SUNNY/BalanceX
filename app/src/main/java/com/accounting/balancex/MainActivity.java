@@ -86,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> transactionDates;
     private com.accounting.balancex.data.repository.SubscriptionRepository subscriptionRepository;
     private com.accounting.balancex.data.repository.BudgetGoalRepository budgetGoalRepository;
+    private com.accounting.balancex.data.repository.TransactionRepository transactionRepository;
     private static boolean hasAuthenticatedThisSession = false;
     private String selectedTimeline = "M"; // Default to Months
     private String graphType = "bar"; // Default to Bar Graph
@@ -260,6 +261,7 @@ public class MainActivity extends AppCompatActivity {
         // Initialize Phase 3 Repositories & WorkManager
         subscriptionRepository = new com.accounting.balancex.data.repository.SubscriptionRepository(this);
         budgetGoalRepository = new com.accounting.balancex.data.repository.BudgetGoalRepository(this);
+        transactionRepository = new com.accounting.balancex.data.repository.TransactionRepository(this);
         com.accounting.balancex.worker.SubscriptionWorker.scheduleDailyCheck(this);
 
         // Snapshot Card click listeners
@@ -1346,6 +1348,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadBalanceData() {
+        loadBalanceData(this::loadHealthScoreSnapshot);
+    }
+
+    private void loadBalanceData(Runnable onComplete) {
         String symbol = SettingsManager.getCurrencySymbol(this);
         try {
             File file = com.accounting.balancex.data.db.DatabaseMigrator.findJsonFile(this);
@@ -1353,7 +1359,7 @@ public class MainActivity extends AppCompatActivity {
                 file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
             }
             if (!file.exists() || file.length() == 0) {
-                loadBalanceDataFromRoom(symbol);
+                loadBalanceDataFromRoom(symbol, onComplete);
                 return;
             }
 
@@ -1369,7 +1375,7 @@ public class MainActivity extends AppCompatActivity {
 
             String jsonStr = sb.toString().trim();
             if (jsonStr.isEmpty() || jsonStr.equals("[]")) {
-                loadBalanceDataFromRoom(symbol);
+                loadBalanceDataFromRoom(symbol, onComplete);
                 return;
             }
 
@@ -1409,21 +1415,30 @@ public class MainActivity extends AppCompatActivity {
 
             transactionDates = new ArrayList<>(dateSet);
             Collections.sort(transactionDates, Collections.reverseOrder());
+            if (onComplete != null) {
+                onComplete.run();
+            }
         } catch (Exception e) {
             e.printStackTrace();
             totalBalance = totalCredit = totalDebit = 0;
             updateBalanceDisplay(symbol, 0, 0, 0);
+            if (onComplete != null) {
+                onComplete.run();
+            }
         }
     }
 
-    private void loadBalanceDataFromRoom(String symbol) {
+    private void loadBalanceDataFromRoom(String symbol, Runnable onComplete) {
         com.accounting.balancex.data.repository.TransactionRepository repo = 
-                new com.accounting.balancex.data.repository.TransactionRepository(this);
+                transactionRepository != null ? transactionRepository : new com.accounting.balancex.data.repository.TransactionRepository(this);
         repo.getAllTransactions(entities -> {
             if (entities == null || entities.isEmpty()) {
                 runOnUiThread(() -> {
                     totalBalance = totalCredit = totalDebit = 0;
                     updateBalanceDisplay(symbol, 0, 0, 0);
+                    if (onComplete != null) {
+                        onComplete.run();
+                    }
                 });
                 return;
             }
@@ -1468,6 +1483,9 @@ public class MainActivity extends AppCompatActivity {
 
                 transactionDates = new ArrayList<>(dateSet);
                 Collections.sort(transactionDates, Collections.reverseOrder());
+                if (onComplete != null) {
+                    onComplete.run();
+                }
             });
         });
     }
@@ -1536,110 +1554,135 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadBudgetsGoalsSnapshot() {
         if (budgetGoalRepository == null) return;
-        budgetGoalRepository.getAll(items -> runOnUiThread(() -> {
-            LinearLayout container = findViewById(R.id.layoutBudgetsGoalsContainer);
-            TextView emptyText = findViewById(R.id.textEmptyBudgets);
-            if (container == null) return;
-
-            for (int i = container.getChildCount() - 1; i >= 0; i--) {
-                View child = container.getChildAt(i);
-                if (child.getId() != R.id.textEmptyBudgets) {
-                    container.removeViewAt(i);
+        budgetGoalRepository.getAll(items -> {
+            com.accounting.balancex.data.repository.TransactionRepository txRepo =
+                    transactionRepository != null ? transactionRepository : new com.accounting.balancex.data.repository.TransactionRepository(this);
+            txRepo.getAllTransactions(txs -> {
+                if (items != null && txs != null) {
+                    java.util.Map<String, Double> monthlyExpenses =
+                            com.accounting.balancex.finance.FinancialHealthEngine.calculateMonthlyCategoryExpenses(txs);
+                    com.accounting.balancex.finance.FinancialHealthEngine.applyMonthlySpendToBudgets(items, monthlyExpenses);
+                    budgetGoalRepository.syncBudgetSpends(monthlyExpenses, null);
                 }
-            }
 
-            if (items == null || items.isEmpty()) {
-                if (emptyText != null) emptyText.setVisibility(View.VISIBLE);
-                return;
-            }
+                runOnUiThread(() -> {
+                    LinearLayout container = findViewById(R.id.layoutBudgetsGoalsContainer);
+                    TextView emptyText = findViewById(R.id.textEmptyBudgets);
+                    if (container == null) return;
 
-            if (emptyText != null) emptyText.setVisibility(View.GONE);
-            String symbol = SettingsManager.getCurrencySymbol(this);
-            int displayLimit = Math.min(2, items.size());
-
-            for (int i = 0; i < displayLimit; i++) {
-                com.accounting.balancex.data.entity.BudgetGoalEntity bg = items.get(i);
-                View item = getLayoutInflater().inflate(R.layout.item_home_budget_goal, container, false);
-
-                TextView title = item.findViewById(R.id.textHomeBudgetTitle);
-                TextView pctText = item.findViewById(R.id.textHomeBudgetProgressPct);
-                TextView spentText = item.findViewById(R.id.textHomeBudgetSpent);
-                TextView limitText = item.findViewById(R.id.textHomeBudgetTarget);
-                LinearProgressIndicator progress = item.findViewById(R.id.progressHomeBudget);
-                View divider = item.findViewById(R.id.dividerHomeBudget);
-
-                boolean isBudget = com.accounting.balancex.data.entity.BudgetGoalEntity.TYPE_BUDGET.equalsIgnoreCase(bg.type);
-                int pct = bg.targetAmount > 0 ? (int) Math.round((bg.currentAmount / bg.targetAmount) * 100) : 0;
-
-                if (title != null) {
-                    title.setText(bg.title + (isBudget ? " (Budget)" : " (Goal)"));
-                }
-                if (pctText != null) {
-                    pctText.setText(pct + "%");
-                }
-                if (spentText != null) {
-                    spentText.setText((isBudget ? "Spent: " : "Saved: ") + symbol + String.format(Locale.getDefault(), "%,.2f", bg.currentAmount));
-                }
-                if (limitText != null) {
-                    limitText.setText((isBudget ? "Limit: " : "Target: ") + symbol + String.format(Locale.getDefault(), "%,.2f", bg.targetAmount));
-                }
-                if (progress != null) {
-                    progress.setProgress(Math.min(100, pct));
-                    if (isBudget) {
-                        if (pct >= 100) {
-                            progress.setIndicatorColor(ContextCompat.getColor(this, R.color.finance_expense));
-                        } else if (pct >= 80) {
-                            progress.setIndicatorColor(ContextCompat.getColor(this, R.color.color_tertiary));
-                        } else {
-                            progress.setIndicatorColor(ContextCompat.getColor(this, R.color.finance_income));
+                    for (int i = container.getChildCount() - 1; i >= 0; i--) {
+                        View child = container.getChildAt(i);
+                        if (child.getId() != R.id.textEmptyBudgets) {
+                            container.removeViewAt(i);
                         }
-                    } else {
-                        progress.setIndicatorColor(ContextCompat.getColor(this, R.color.color_primary));
                     }
-                }
 
-                if (divider != null && i == displayLimit - 1) {
-                    divider.setVisibility(View.GONE);
-                }
+                    if (items == null || items.isEmpty()) {
+                        if (emptyText != null) emptyText.setVisibility(View.VISIBLE);
+                        return;
+                    }
 
-                item.setOnClickListener(v -> {
-                    vibrateDevice();
-                    startActivity(new Intent(this, com.accounting.balancex.ui.goals.GoalsBudgetsActivity.class));
+                    if (emptyText != null) emptyText.setVisibility(View.GONE);
+                    String symbol = SettingsManager.getCurrencySymbol(this);
+                    int displayLimit = Math.min(2, items.size());
+
+                    for (int i = 0; i < displayLimit; i++) {
+                        com.accounting.balancex.data.entity.BudgetGoalEntity bg = items.get(i);
+                        View item = getLayoutInflater().inflate(R.layout.item_home_budget_goal, container, false);
+
+                        TextView title = item.findViewById(R.id.textHomeBudgetTitle);
+                        TextView pctText = item.findViewById(R.id.textHomeBudgetProgressPct);
+                        TextView spentText = item.findViewById(R.id.textHomeBudgetSpent);
+                        TextView limitText = item.findViewById(R.id.textHomeBudgetTarget);
+                        LinearProgressIndicator progress = item.findViewById(R.id.progressHomeBudget);
+                        View divider = item.findViewById(R.id.dividerHomeBudget);
+
+                        boolean isBudget = com.accounting.balancex.data.entity.BudgetGoalEntity.TYPE_BUDGET.equalsIgnoreCase(bg.type);
+                        int pct = bg.targetAmount > 0 ? (int) Math.round((bg.currentAmount / bg.targetAmount) * 100) : 0;
+
+                        if (title != null) {
+                            title.setText(bg.title + (isBudget ? " (Budget)" : " (Goal)"));
+                        }
+                        if (pctText != null) {
+                            pctText.setText(pct + "%");
+                        }
+                        if (spentText != null) {
+                            spentText.setText((isBudget ? "Spent: " : "Saved: ") + symbol + String.format(Locale.getDefault(), "%,.2f", bg.currentAmount));
+                        }
+                        if (limitText != null) {
+                            limitText.setText((isBudget ? "Limit: " : "Target: ") + symbol + String.format(Locale.getDefault(), "%,.2f", bg.targetAmount));
+                        }
+                        if (progress != null) {
+                            progress.setProgress(Math.min(100, pct));
+                            if (isBudget) {
+                                if (pct >= 100) {
+                                    progress.setIndicatorColor(ContextCompat.getColor(this, R.color.finance_expense));
+                                } else if (pct >= 80) {
+                                    progress.setIndicatorColor(ContextCompat.getColor(this, R.color.color_tertiary));
+                                } else {
+                                    progress.setIndicatorColor(ContextCompat.getColor(this, R.color.finance_income));
+                                }
+                            } else {
+                                progress.setIndicatorColor(ContextCompat.getColor(this, R.color.color_primary));
+                            }
+                        }
+
+                        if (divider != null && i == displayLimit - 1) {
+                            divider.setVisibility(View.GONE);
+                        }
+
+                        item.setOnClickListener(v -> {
+                            vibrateDevice();
+                            startActivity(new Intent(this, com.accounting.balancex.ui.goals.GoalsBudgetsActivity.class));
+                        });
+
+                        container.addView(item);
+                    }
                 });
-
-                container.addView(item);
-            }
-        }));
+            });
+        });
     }
 
     private void loadHealthScoreSnapshot() {
         if (budgetGoalRepository == null || subscriptionRepository == null) return;
         budgetGoalRepository.getBudgets(budgets -> {
-            subscriptionRepository.getActiveSubscriptions(subs -> runOnUiThread(() -> {
-                com.accounting.balancex.finance.FinancialHealthEngine.HealthScoreResult result =
-                        com.accounting.balancex.finance.FinancialHealthEngine.calculateHealthScore(
-                                totalCredit,
-                                totalDebit,
-                                budgets,
-                                subs
-                        );
+            subscriptionRepository.getActiveSubscriptions(subs -> {
+                com.accounting.balancex.data.repository.TransactionRepository txRepo =
+                        new com.accounting.balancex.data.repository.TransactionRepository(this);
+                txRepo.getAllTransactions(txs -> runOnUiThread(() -> {
+                    com.accounting.balancex.finance.FinancialHealthEngine.HealthScoreResult result =
+                            com.accounting.balancex.finance.FinancialHealthEngine.calculateHealthScore(
+                                    totalCredit,
+                                    totalDebit,
+                                    budgets,
+                                    subs,
+                                    txs
+                            );
 
-                TextView scoreNum = findViewById(R.id.textHealthScoreNumber);
-                TextView rating = findViewById(R.id.textHealthScoreRating);
-                TextView subDesc = findViewById(R.id.textHealthSavingsRate);
-                TextView tip = findViewById(R.id.textHealthTip);
+                    TextView scoreNum = findViewById(R.id.textHealthScoreNumber);
+                    TextView rating = findViewById(R.id.textHealthScoreRating);
+                    TextView subDesc = findViewById(R.id.textHealthSavingsRate);
+                    TextView tip = findViewById(R.id.textHealthTip);
 
-                if (scoreNum != null) scoreNum.setText(String.valueOf(result.score));
-                if (rating != null) rating.setText(result.ratingLabel);
-                if (subDesc != null) {
-                    if (result.savingsRatePercent > 0) {
-                        subDesc.setText(result.savingsRatePercent + "% monthly savings rate • Disciplined spending");
+                    if (result.hasData) {
+                        if (scoreNum != null) scoreNum.setText(String.valueOf(result.score));
+                        if (rating != null) rating.setText(result.ratingLabel);
+                        if (subDesc != null) {
+                            if (result.savingsRatePercent > 0) {
+                                subDesc.setText(result.savingsRatePercent + "% monthly savings rate • Disciplined spending");
+                            } else {
+                                subDesc.setText("Discipline & cashflow tracking");
+                            }
+                        }
+                        if (tip != null) tip.setText(result.adviceTip);
                     } else {
-                        subDesc.setText("Discipline & cashflow tracking");
+                        if (scoreNum != null) scoreNum.setText("—");
+                        if (rating != null) rating.setText(result.ratingLabel);
+                        if (subDesc != null) subDesc.setText("Log income & expenses to unlock score");
+                        if (tip != null) tip.setText(result.adviceTip);
                     }
-                }
-                if (tip != null) tip.setText(result.adviceTip);
-            }));
+                }));
+            });
         });
     }
 
@@ -1650,22 +1693,45 @@ public class MainActivity extends AppCompatActivity {
 
         TextView scoreVal = view.findViewById(R.id.textSheetHealthScore);
         TextView ratingVal = view.findViewById(R.id.textSheetHealthRating);
+        TextView savingsPts = view.findViewById(R.id.textSheetSavingsPts);
         TextView savingsDesc = view.findViewById(R.id.textSheetSavingsDesc);
+        TextView budgetPts = view.findViewById(R.id.textSheetBudgetPts);
+        TextView budgetDesc = view.findViewById(R.id.textSheetBudgetDesc);
+        TextView recurringPts = view.findViewById(R.id.textSheetRecurringPts);
+        TextView recurringDesc = view.findViewById(R.id.textSheetRecurringDesc);
         View btnClose = view.findViewById(R.id.btnCloseHealthSheet);
 
         if (budgetGoalRepository != null && subscriptionRepository != null) {
             budgetGoalRepository.getBudgets(budgets -> {
-                subscriptionRepository.getActiveSubscriptions(subs -> runOnUiThread(() -> {
-                    com.accounting.balancex.finance.FinancialHealthEngine.HealthScoreResult res =
-                            com.accounting.balancex.finance.FinancialHealthEngine.calculateHealthScore(
-                                    totalCredit, totalDebit, budgets, subs
-                            );
-                    if (scoreVal != null) scoreVal.setText(String.valueOf(res.score));
-                    if (ratingVal != null) ratingVal.setText(res.ratingLabel);
-                    if (savingsDesc != null && res.savingsRatePercent > 0) {
-                        savingsDesc.setText("Retained " + res.savingsRatePercent + "% of incoming credit this period.");
-                    }
-                }));
+                subscriptionRepository.getActiveSubscriptions(subs -> {
+                    com.accounting.balancex.data.repository.TransactionRepository txRepo =
+                            new com.accounting.balancex.data.repository.TransactionRepository(this);
+                    txRepo.getAllTransactions(txs -> runOnUiThread(() -> {
+                        com.accounting.balancex.finance.FinancialHealthEngine.HealthScoreResult res =
+                                com.accounting.balancex.finance.FinancialHealthEngine.calculateHealthScore(
+                                         totalCredit, totalDebit, budgets, subs, txs
+                                );
+                        if (res.hasData) {
+                            if (scoreVal != null) scoreVal.setText(String.valueOf(res.score));
+                            if (ratingVal != null) ratingVal.setText(res.ratingLabel);
+                            if (savingsPts != null) savingsPts.setText(res.savingsPoints + " / 40 pts");
+                            if (savingsDesc != null) savingsDesc.setText(res.savingsDesc);
+                            if (budgetPts != null) budgetPts.setText(res.budgetPoints + " / 35 pts");
+                            if (budgetDesc != null) budgetDesc.setText(res.budgetDesc);
+                            if (recurringPts != null) recurringPts.setText(res.recurringPoints + " / 25 pts");
+                            if (recurringDesc != null) recurringDesc.setText(res.recurringDesc);
+                        } else {
+                            if (scoreVal != null) scoreVal.setText("—");
+                            if (ratingVal != null) ratingVal.setText(res.ratingLabel);
+                            if (savingsPts != null) savingsPts.setText("— / 40 pts");
+                            if (savingsDesc != null) savingsDesc.setText(res.savingsDesc);
+                            if (budgetPts != null) budgetPts.setText("— / 35 pts");
+                            if (budgetDesc != null) budgetDesc.setText(res.budgetDesc);
+                            if (recurringPts != null) recurringPts.setText("— / 25 pts");
+                            if (recurringDesc != null) recurringDesc.setText(res.recurringDesc);
+                        }
+                    }));
+                });
             });
         }
 
@@ -1674,6 +1740,18 @@ public class MainActivity extends AppCompatActivity {
         }
 
         dialog.show();
+    }
+
+    private void setSwitchSilently(com.google.android.material.materialswitch.MaterialSwitch switchView,
+                                   boolean checked,
+                                   boolean[] isProgrammaticFlag) {
+        if (switchView == null) return;
+        isProgrammaticFlag[0] = true;
+        try {
+            switchView.setChecked(checked);
+        } finally {
+            isProgrammaticFlag[0] = false;
+        }
     }
 
     private void showSecurityLockSheet() {
@@ -1686,8 +1764,12 @@ public class MainActivity extends AppCompatActivity {
         View btnClose = view.findViewById(R.id.btnCloseSecuritySheet);
 
         if (switchLock != null) {
-            switchLock.setChecked(SettingsManager.isBiometricLockEnabled(this));
+            final boolean[] isProgrammaticChange = new boolean[]{false};
+            setSwitchSilently(switchLock, SettingsManager.isBiometricLockEnabled(this), isProgrammaticChange);
             switchLock.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isProgrammaticChange[0]) {
+                    return;
+                }
                 vibrateDevice();
                 if (isChecked) {
                     if (com.accounting.balancex.security.BiometricLockHelper.canAuthenticate(this)) {
@@ -1705,13 +1787,13 @@ public class MainActivity extends AppCompatActivity {
 
                                     @Override
                                     public void onFailure(String errorMsg) {
-                                        switchLock.setChecked(false);
+                                        setSwitchSilently(switchLock, false, isProgrammaticChange);
                                         Toast.makeText(MainActivity.this, "Authentication failed: " + errorMsg, Toast.LENGTH_SHORT).show();
                                     }
                                 }
                         );
                     } else {
-                        switchLock.setChecked(false);
+                        setSwitchSilently(switchLock, false, isProgrammaticChange);
                         Toast.makeText(this, "Biometrics or device security not set up on device", Toast.LENGTH_LONG).show();
                     }
                 } else {
@@ -1731,7 +1813,7 @@ public class MainActivity extends AppCompatActivity {
 
                                 @Override
                                 public void onFailure(String errorMsg) {
-                                    switchLock.setChecked(true);
+                                    setSwitchSilently(switchLock, true, isProgrammaticChange);
                                     Toast.makeText(MainActivity.this, "Authentication required to disable lock", Toast.LENGTH_SHORT).show();
                                 }
                             }
@@ -1748,6 +1830,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void lockDashboardForBiometrics() {
+        if (drawerLayout == null) {
+            drawerLayout = findViewById(R.id.drawerlayout);
+        }
+        if (drawerLayout != null) {
+            drawerLayout.closeDrawer(GravityCompat.START, false);
+            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+        }
         applyScreenBlur(true);
         View lockOverlay = findViewById(R.id.layoutBiometricLockOverlay);
         if (lockOverlay != null) {
@@ -1763,6 +1852,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void unlockDashboard() {
+        if (drawerLayout == null) {
+            drawerLayout = findViewById(R.id.drawerlayout);
+        }
+        if (drawerLayout != null) {
+            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+        }
         applyScreenBlur(false);
         View lockOverlay = findViewById(R.id.layoutBiometricLockOverlay);
         if (lockOverlay != null) {
@@ -1792,6 +1887,11 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        if (!com.accounting.balancex.security.BiometricLockHelper.canAuthenticate(this)) {
+            showBiometricUnavailableRecoveryDialog();
+            return;
+        }
+
         com.accounting.balancex.security.BiometricLockHelper.promptAuthentication(
                 this,
                 "Unlock BalanceX",
@@ -1806,10 +1906,41 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailure(String errorMsg) {
-                        lockDashboardForBiometrics();
+                        if (!com.accounting.balancex.security.BiometricLockHelper.canAuthenticate(MainActivity.this)) {
+                            showBiometricUnavailableRecoveryDialog();
+                        } else {
+                            lockDashboardForBiometrics();
+                        }
                     }
                 }
         );
+    }
+
+    private void showBiometricUnavailableRecoveryDialog() {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Device Security Not Available")
+                .setMessage("Biometric or screen lock credentials (PIN/Pattern/Password) are not configured on this device.\n\nYou cannot authenticate to unlock BalanceX. You can open Device Settings to set up screen security, or disable App Lock.")
+                .setPositiveButton("Disable App Lock", (dialog, which) -> {
+                    SettingsManager.setBiometricLockEnabled(MainActivity.this, false);
+                    hasAuthenticatedThisSession = true;
+                    unlockDashboard();
+                    loadUnlockedDashboardData();
+                    Toast.makeText(MainActivity.this, "App lock disabled", Toast.LENGTH_SHORT).show();
+                })
+                .setNeutralButton("Device Settings", (dialog, which) -> {
+                    try {
+                        startActivity(new Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS));
+                    } catch (Exception e) {
+                        try {
+                            startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
+                        } catch (Exception ignored) {}
+                    }
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    lockDashboardForBiometrics();
+                })
+                .setCancelable(false)
+                .show();
     }
 
     @Override
@@ -1830,14 +1961,19 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
     }
 
+    public static void resetSessionAuth() {
+        hasAuthenticatedThisSession = false;
+    }
+
     private void loadUnlockedDashboardData() {
         currentBalancePeriod = SettingsManager.getBalancePeriod(this);
         if (textBalancePeriod != null) {
             textBalancePeriod.setText(currentBalancePeriod);
         }
         loadProfileData();
-        loadBalanceData();
-        loadSnapshotCards();
+        loadUpcomingSubscriptionsSnapshot();
+        loadBudgetsGoalsSnapshot();
+        loadBalanceData(this::loadHealthScoreSnapshot);
         if (modernChartBridge != null) {
             modernChartBridge.refresh();
         }
@@ -1845,11 +1981,12 @@ public class MainActivity extends AppCompatActivity {
             modernPieChartBridge.refresh();
         }
         com.accounting.balancex.data.repository.TransactionRepository repo = 
-                new com.accounting.balancex.data.repository.TransactionRepository(this);
+                transactionRepository != null ? transactionRepository : new com.accounting.balancex.data.repository.TransactionRepository(this);
         com.accounting.balancex.data.db.DatabaseMigrator.migrateJsonToRoomIfNeeded(this, repo, () -> {
             runOnUiThread(() -> {
-                loadBalanceData();
-                loadSnapshotCards();
+                loadBalanceData(() -> {
+                    loadSnapshotCards();
+                });
                 setupPieChart();
                 updateDrawerStats();
                 if (modernChartBridge != null) {

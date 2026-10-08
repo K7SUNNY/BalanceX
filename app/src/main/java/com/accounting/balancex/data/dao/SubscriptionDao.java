@@ -26,6 +26,9 @@ public interface SubscriptionDao {
     @Query("DELETE FROM subscriptions WHERE id = :id")
     void deleteById(long id);
 
+    @Query("DELETE FROM subscriptions")
+    void deleteAll();
+
     @Query("SELECT * FROM subscriptions ORDER BY nextDueDate ASC")
     List<SubscriptionEntity> getAllSubscriptions();
 

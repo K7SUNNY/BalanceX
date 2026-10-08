@@ -1,15 +1,18 @@
 package com.accounting.balancex.worker;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
@@ -25,6 +28,7 @@ import com.accounting.balancex.data.entity.SubscriptionEntity;
 import com.accounting.balancex.data.entity.TransactionEntity;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -91,31 +95,39 @@ public class SubscriptionWorker extends Worker {
 
                     // Auto-add transaction if due today or past and autoAddTransaction is enabled
                     if (daysUntilDue <= 0 && sub.autoAddTransaction) {
-                        TransactionEntity tx = new TransactionEntity();
-                        tx.date = sdf.format(today);
-                        tx.amount = String.format(Locale.getDefault(), "%.2f", sub.amount);
-                        tx.receiver = sub.name;
-                        tx.description = "Auto-billed recurring: " + sub.name;
-                        tx.category = sub.category != null ? sub.category : "Subscription";
-                        tx.paymentMethod = "Auto-Debit";
-                        tx.textType = "debit";
-                        db.transactionDao().insert(tx);
+                        List<String> missedDates = calculateCatchUpDueDates(dueDate, today, sub.billingCycle);
+                        int billedCount = 0;
+                        double totalBilledAmount = 0;
 
-                        // Advance nextDueDate
-                        Calendar nextCal = Calendar.getInstance();
-                        nextCal.setTime(dueDate);
-                        if ("Yearly".equalsIgnoreCase(sub.billingCycle)) {
-                            nextCal.add(Calendar.YEAR, 1);
-                        } else if ("Weekly".equalsIgnoreCase(sub.billingCycle)) {
-                            nextCal.add(Calendar.WEEK_OF_YEAR, 1);
-                        } else {
-                            nextCal.add(Calendar.MONTH, 1);
+                        for (String cycleDateStr : missedDates) {
+                            String desc = "Auto-billed recurring: " + sub.name;
+                            boolean alreadyExists = db.transactionDao().hasAutoBilledTransaction(sub.name, cycleDateStr, desc);
+
+                            if (!alreadyExists) {
+                                TransactionEntity tx = new TransactionEntity();
+                                tx.date = cycleDateStr;
+                                tx.amount = String.format(Locale.getDefault(), "%.2f", sub.amount);
+                                tx.receiver = sub.name;
+                                tx.description = desc;
+                                tx.category = sub.category != null ? sub.category : "Subscription";
+                                tx.paymentMethod = "Auto-Debit";
+                                tx.textType = "debit";
+                                db.transactionDao().insert(tx);
+                                billedCount++;
+                                totalBilledAmount += sub.amount;
+                            }
                         }
-                        sub.nextDueDate = sdf.format(nextCal.getTime());
+
+                        // Advance nextDueDate to future cycle
+                        sub.nextDueDate = calculateNextCycleDate(dueDate, today, sub.billingCycle);
                         db.subscriptionDao().updateSubscription(sub);
 
-                        showNotification(context, (int) (sub.id + 1000), "Auto-Subscription Logged",
-                                "Logged " + symbol + String.format(Locale.getDefault(), "%,.2f", sub.amount) + " for " + sub.name);
+                        if (billedCount > 0) {
+                            String notifMsg = (billedCount == 1)
+                                    ? "Logged " + symbol + String.format(Locale.getDefault(), "%,.2f", sub.amount) + " for " + sub.name
+                                    : "Logged " + billedCount + " catch-up payment(s) totaling " + symbol + String.format(Locale.getDefault(), "%,.2f", totalBilledAmount) + " for " + sub.name;
+                            showNotification(context, (int) (sub.id + 1000), "Auto-Subscription Logged", notifMsg);
+                        }
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Error processing subscription: " + sub.name, e);
@@ -130,6 +142,14 @@ public class SubscriptionWorker extends Worker {
     }
 
     private void showNotification(Context context, int notificationId, String title, String message) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.w(TAG, "Cannot show notification: POST_NOTIFICATIONS permission not granted");
+                return;
+            }
+        }
+
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager == null) return;
 
@@ -180,5 +200,60 @@ public class SubscriptionWorker extends Worker {
                 ExistingPeriodicWorkPolicy.KEEP,
                 workRequest
         );
+    }
+
+    public static List<String> calculateCatchUpDueDates(Date dueDate, Date today, String billingCycle) {
+        List<String> dates = new ArrayList<>();
+        if (dueDate == null || today == null) return dates;
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        Calendar cycleCal = Calendar.getInstance();
+        cycleCal.setTime(dueDate);
+
+        Calendar todayCal = Calendar.getInstance();
+        todayCal.setTime(today);
+        todayCal.set(Calendar.HOUR_OF_DAY, 0);
+        todayCal.set(Calendar.MINUTE, 0);
+        todayCal.set(Calendar.SECOND, 0);
+        todayCal.set(Calendar.MILLISECOND, 0);
+
+        int safetyLimit = 50;
+        while (!cycleCal.after(todayCal) && safetyLimit-- > 0) {
+            dates.add(sdf.format(cycleCal.getTime()));
+            if ("Yearly".equalsIgnoreCase(billingCycle)) {
+                cycleCal.add(Calendar.YEAR, 1);
+            } else if ("Weekly".equalsIgnoreCase(billingCycle)) {
+                cycleCal.add(Calendar.WEEK_OF_YEAR, 1);
+            } else {
+                cycleCal.add(Calendar.MONTH, 1);
+            }
+        }
+        return dates;
+    }
+
+    public static String calculateNextCycleDate(Date dueDate, Date today, String billingCycle) {
+        if (dueDate == null || today == null) return "";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        Calendar cycleCal = Calendar.getInstance();
+        cycleCal.setTime(dueDate);
+
+        Calendar todayCal = Calendar.getInstance();
+        todayCal.setTime(today);
+        todayCal.set(Calendar.HOUR_OF_DAY, 0);
+        todayCal.set(Calendar.MINUTE, 0);
+        todayCal.set(Calendar.SECOND, 0);
+        todayCal.set(Calendar.MILLISECOND, 0);
+
+        int safetyLimit = 50;
+        while (!cycleCal.after(todayCal) && safetyLimit-- > 0) {
+            if ("Yearly".equalsIgnoreCase(billingCycle)) {
+                cycleCal.add(Calendar.YEAR, 1);
+            } else if ("Weekly".equalsIgnoreCase(billingCycle)) {
+                cycleCal.add(Calendar.WEEK_OF_YEAR, 1);
+            } else {
+                cycleCal.add(Calendar.MONTH, 1);
+            }
+        }
+        return sdf.format(cycleCal.getTime());
     }
 }

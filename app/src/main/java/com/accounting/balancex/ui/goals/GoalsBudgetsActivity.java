@@ -24,11 +24,19 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.HorizontalScrollView;
+import com.google.android.material.chip.Chip;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class GoalsBudgetsActivity extends AppCompatActivity {
 
@@ -108,20 +116,12 @@ public class GoalsBudgetsActivity extends AppCompatActivity {
     private void calculateCategorySpends(Runnable onComplete) {
         transactionRepository.getAllTransactions(transactions -> {
             categoryExpenseMap.clear();
-            if (transactions != null) {
-                for (TransactionEntity tx : transactions) {
-                    if ("debit".equalsIgnoreCase(tx.textType)) {
-                        String cat = tx.category != null ? tx.category.trim().toLowerCase() : "general";
-                        double amt = 0;
-                        try {
-                            amt = Double.parseDouble(tx.amount.replaceAll("[^0-9.]", ""));
-                        } catch (Exception ignored) {}
-                        Double existing = categoryExpenseMap.get(cat);
-                        categoryExpenseMap.put(cat, (existing != null ? existing : 0.0) + amt);
-                    }
-                }
-            }
-            if (onComplete != null) onComplete.run();
+            Map<String, Double> monthly =
+                    com.accounting.balancex.finance.FinancialHealthEngine.calculateMonthlyCategoryExpenses(transactions);
+            categoryExpenseMap.putAll(monthly);
+            repository.syncBudgetSpends(categoryExpenseMap, () -> {
+                if (onComplete != null) onComplete.run();
+            });
         });
     }
 
@@ -300,6 +300,10 @@ public class GoalsBudgetsActivity extends AppCompatActivity {
                     String str = input.getText().toString().trim();
                     try {
                         double addAmt = Double.parseDouble(str);
+                        if (addAmt <= 0) {
+                            Toast.makeText(this, "Deposit amount must be greater than zero", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
                         goal.currentAmount += addAmt;
                         repository.update(goal, this::loadItems);
                         Toast.makeText(this, "Savings updated!", Toast.LENGTH_SHORT).show();
@@ -317,17 +321,81 @@ public class GoalsBudgetsActivity extends AppCompatActivity {
         dialog.setContentView(view);
 
         ChipGroup chipGroup = view.findViewById(R.id.chipGroupBudgetType);
-        TextInputEditText editTitle = view.findViewById(R.id.editBudgetGoalTitle);
+        AutoCompleteTextView editTitle = view.findViewById(R.id.editBudgetGoalTitle);
         TextInputEditText editTarget = view.findViewById(R.id.editBudgetTargetAmount);
         TextInputEditText editInitial = view.findViewById(R.id.editBudgetInitialAmount);
+        TextInputLayout layoutTitle = view.findViewById(R.id.inputLayoutTitle);
+        TextInputLayout layoutTarget = view.findViewById(R.id.inputLayoutTarget);
         TextInputLayout layoutInitial = view.findViewById(R.id.inputLayoutInitialAmount);
+        HorizontalScrollView scrollCategories = view.findViewById(R.id.scrollCategoryChips);
+        ChipGroup chipGroupCategories = view.findViewById(R.id.chipGroupCategories);
         View btnSave = view.findViewById(R.id.btnSaveBudgetGoal);
+
+        // Prepopulate available categories
+        List<String> defaultCategories = Arrays.asList(
+                "Food & Dining", "Shopping", "Fuel", "Groceries",
+                "Bills", "Entertainment", "Health", "General"
+        );
+        Set<String> categorySet = new LinkedHashSet<>(defaultCategories);
+
+        transactionRepository.getAllTransactions(transactions -> {
+            if (transactions != null) {
+                for (TransactionEntity t : transactions) {
+                    if (t.category != null && !t.category.trim().isEmpty() && !t.category.equalsIgnoreCase("NA")) {
+                        categorySet.add(t.category.trim());
+                    }
+                }
+            }
+            runOnUiThread(() -> {
+                List<String> categoryList = new ArrayList<>(categorySet);
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                        android.R.layout.simple_dropdown_item_1line, categoryList);
+                if (editTitle != null) {
+                    editTitle.setAdapter(adapter);
+                }
+
+                if (chipGroupCategories != null) {
+                    chipGroupCategories.removeAllViews();
+                    for (String cat : categoryList) {
+                        Chip chip = new Chip(this);
+                        chip.setText(cat);
+                        chip.setCheckable(true);
+                        chip.setClickable(true);
+                        chip.setOnClickListener(c -> {
+                            if (editTitle != null) {
+                                editTitle.setText(cat);
+                                editTitle.dismissDropDown();
+                            }
+                        });
+                        chipGroupCategories.addView(chip);
+                    }
+                }
+            });
+        });
+
+        if (editTitle != null) {
+            editTitle.setOnClickListener(v -> {
+                boolean isBudget = chipGroup == null || chipGroup.getCheckedChipId() == R.id.chipTypeBudget;
+                if (isBudget) {
+                    editTitle.showDropDown();
+                }
+            });
+        }
 
         if (chipGroup != null) {
             chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
                 boolean isGoal = checkedIds.contains(R.id.chipTypeGoal);
                 if (layoutInitial != null) {
                     layoutInitial.setVisibility(isGoal ? View.VISIBLE : View.GONE);
+                }
+                if (scrollCategories != null) {
+                    scrollCategories.setVisibility(isGoal ? View.GONE : View.VISIBLE);
+                }
+                if (layoutTitle != null) {
+                    layoutTitle.setHint(isGoal ? "Goal Title (e.g. Vacation, New Laptop)" : "Select or Type Category");
+                }
+                if (layoutTarget != null) {
+                    layoutTarget.setHint(isGoal ? "Target Savings Amount" : "Monthly Spending Limit");
                 }
             });
         }
@@ -338,8 +406,10 @@ public class GoalsBudgetsActivity extends AppCompatActivity {
                 String targetStr = editTarget != null && editTarget.getText() != null ? editTarget.getText().toString().trim() : "";
                 String initStr = editInitial != null && editInitial.getText() != null ? editInitial.getText().toString().trim() : "0";
 
+                boolean isGoal = chipGroup != null && chipGroup.getCheckedChipId() == R.id.chipTypeGoal;
+
                 if (title.isEmpty()) {
-                    Toast.makeText(this, "Please enter title/category", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, isGoal ? "Please enter a goal title" : "Please select or enter a category", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -351,19 +421,49 @@ public class GoalsBudgetsActivity extends AppCompatActivity {
                     return;
                 }
 
-                double initial = 0;
-                try {
-                    initial = Double.parseDouble(initStr);
-                } catch (Exception ignored) {}
+                if (target <= 0) {
+                    Toast.makeText(this, isGoal ? "Target amount must be greater than zero" : "Budget limit must be greater than zero", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-                boolean isGoal = chipGroup != null && chipGroup.getCheckedChipId() == R.id.chipTypeGoal;
+                double initial = 0;
+                if (isGoal) {
+                    try {
+                        initial = Double.parseDouble(initStr);
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Please enter a valid initial amount", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (initial < 0) {
+                        Toast.makeText(this, "Initial amount cannot be negative", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (initial > target) {
+                        Toast.makeText(this, "Initial amount cannot exceed target amount", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+
                 String type = isGoal ? BudgetGoalEntity.TYPE_GOAL : BudgetGoalEntity.TYPE_BUDGET;
 
-                BudgetGoalEntity entity = new BudgetGoalEntity(title, target, initial, title, type, isGoal ? "#2563EB" : "#D97706");
+                // Canonicalize category against existing categories if matched case-insensitively
+                String canonicalCategory = title;
+                if (!isGoal) {
+                    for (String cat : categorySet) {
+                        if (cat.equalsIgnoreCase(title)) {
+                            canonicalCategory = cat;
+                            break;
+                        }
+                    }
+                }
+
+                BudgetGoalEntity entity = new BudgetGoalEntity(
+                        canonicalCategory, target, initial, canonicalCategory, type, isGoal ? "#2563EB" : "#D97706"
+                );
                 repository.insert(entity, () -> {
                     runOnUiThread(() -> {
                         dialog.dismiss();
-                        loadItems();
+                        calculateCategorySpends(this::loadItems);
                         Toast.makeText(this, (isGoal ? "Goal" : "Budget") + " created!", Toast.LENGTH_SHORT).show();
                     });
                 });

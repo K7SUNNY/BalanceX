@@ -24,6 +24,9 @@ public interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE entryId = :id")
     TransactionEntity getTransactionById(long id);
 
+    @Query("SELECT EXISTS(SELECT 1 FROM transactions WHERE receiver = :receiver AND date = :date AND description = :description LIMIT 1)")
+    boolean hasAutoBilledTransaction(String receiver, String date, String description);
+
     @Update
     void update(TransactionEntity transaction);
 

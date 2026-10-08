@@ -21,22 +21,7 @@ public class SubscriptionRepository {
     public SubscriptionRepository(Context context) {
         AppDatabase db = AppDatabase.getDatabase(context);
         this.subscriptionDao = db.subscriptionDao();
-        this.executorService = Executors.newFixedThreadPool(4);
-
-        android.content.SharedPreferences sp = context.getSharedPreferences("balancex_phase3_prefs", Context.MODE_PRIVATE);
-        if (!sp.getBoolean("has_purged_phase3_mock_v1", false)) {
-            executorService.execute(() -> {
-                List<SubscriptionEntity> subs = subscriptionDao.getAllSubscriptions();
-                for (SubscriptionEntity s : subs) {
-                    if ("Netflix Premium".equalsIgnoreCase(s.name) ||
-                        "Spotify Duo".equalsIgnoreCase(s.name) ||
-                        "Google One Cloud (100GB)".equalsIgnoreCase(s.name)) {
-                        subscriptionDao.deleteSubscription(s);
-                    }
-                }
-                sp.edit().putBoolean("has_purged_phase3_mock_v1", true).apply();
-            });
-        }
+        this.executorService = AppDatabase.databaseWriteExecutor;
     }
 
     public interface OnSubscriptionsLoaded {
@@ -75,6 +60,13 @@ public class SubscriptionRepository {
         executorService.execute(() -> {
             List<SubscriptionEntity> list = subscriptionDao.getActiveSubscriptions();
             if (callback != null) callback.onLoaded(list);
+        });
+    }
+
+    public void deleteAll(Runnable onSuccess) {
+        executorService.execute(() -> {
+            subscriptionDao.deleteAll();
+            if (onSuccess != null) onSuccess.run();
         });
     }
 }

@@ -26,6 +26,9 @@ public interface BudgetGoalDao {
     @Query("DELETE FROM budget_goals WHERE id = :id")
     void deleteById(long id);
 
+    @Query("DELETE FROM budget_goals")
+    void deleteAll();
+
     @Query("SELECT * FROM budget_goals ORDER BY createdAt DESC")
     List<BudgetGoalEntity> getAll();
 

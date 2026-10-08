@@ -18,8 +18,14 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import androidx.core.content.ContextCompat;
+import android.widget.FrameLayout;
+
 import com.accounting.balancex.data.db.DatabaseMigrator;
+import com.accounting.balancex.data.repository.BudgetGoalRepository;
+import com.accounting.balancex.data.repository.SubscriptionRepository;
 import com.accounting.balancex.data.repository.TransactionRepository;
+import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
@@ -298,21 +304,49 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void showClearDataConfirmationDialog() {
         vibrateDevice();
+
+        final MaterialCheckBox checkIncludeAll = new MaterialCheckBox(this);
+        checkIncludeAll.setText("Also delete budgets, goals, and subscriptions");
+        checkIncludeAll.setTextSize(14f);
+        checkIncludeAll.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        checkIncludeAll.setPadding(pad, pad / 2, pad, pad / 2);
+
+        FrameLayout container = new FrameLayout(this);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.leftMargin = pad;
+        params.rightMargin = pad;
+        container.addView(checkIncludeAll, params);
+
         new MaterialAlertDialogBuilder(this)
-                .setTitle("Clear All Transactions?")
-                .setMessage("Are you sure you want to permanently delete all records stored in your ledger and database? This action cannot be reversed.")
-                .setPositiveButton("Clear All", (dialog, which) -> {
-                    clearLedgerData();
+                .setTitle("Clear Transaction Records?")
+                .setMessage("Are you sure you want to permanently delete all transactions from your ledger? This action cannot be reversed.")
+                .setView(container)
+                .setPositiveButton("Clear Data", (dialog, which) -> {
+                    boolean alsoClearPhase3 = checkIncludeAll.isChecked();
+                    clearLedgerData(alsoClearPhase3);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    private void clearLedgerData() {
+    private void clearLedgerData(boolean alsoClearPhase3) {
         try {
             // 1. Wipe Room Database
             TransactionRepository repo = new TransactionRepository(this);
             repo.deleteAll(() -> {
+                if (alsoClearPhase3) {
+                    BudgetGoalRepository bgRepo = new BudgetGoalRepository(SettingsActivity.this);
+                    bgRepo.deleteAll(null);
+                    SubscriptionRepository subRepo = new SubscriptionRepository(SettingsActivity.this);
+                    subRepo.deleteAll(null);
+                } else {
+                    BudgetGoalRepository bgRepo = new BudgetGoalRepository(SettingsActivity.this);
+                    bgRepo.resetAllBudgetSpends(null);
+                }
                 runOnUiThread(() -> {
                     loadLedgerStats();
                 });
@@ -338,7 +372,8 @@ public class SettingsActivity extends AppCompatActivity {
             }
 
             vibrateDevice();
-            Toast.makeText(this, "All transactions cleared successfully", Toast.LENGTH_SHORT).show();
+            String msg = alsoClearPhase3 ? "All transactions, budgets, and subscriptions cleared" : "All transactions cleared successfully";
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
             loadLedgerStats();
         } catch (Exception e) {
             Toast.makeText(this, "Error clearing records: " + e.getMessage(), Toast.LENGTH_SHORT).show();
