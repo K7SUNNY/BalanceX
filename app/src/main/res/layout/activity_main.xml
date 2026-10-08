@@ -469,22 +469,22 @@
                                 android:id="@+id/ImageViewbarGraph"
                                 android:layout_width="32dp"
                                 android:layout_height="32dp"
-                                android:background="@drawable/rounded_corner_unselected"
+                                android:background="@android:color/transparent"
                                 android:contentDescription="@string/bar_chart_desc"
                                 android:padding="6dp"
                                 app:srcCompat="@drawable/ic_bar_chart"
-                                app:tint="@color/text_primary" />
+                                app:tint="@color/text_tertiary" />
 
                             <ImageView
                                 android:id="@+id/ImageViewlineChart"
                                 android:layout_width="32dp"
                                 android:layout_height="32dp"
                                 android:layout_marginStart="4dp"
-                                android:background="@drawable/rounded_corner_unselected"
+                                android:background="@drawable/selected_title"
                                 android:contentDescription="@string/line_chart_desc"
                                 android:padding="6dp"
                                 app:srcCompat="@drawable/ic_line_chart"
-                                app:tint="@color/text_tertiary" />
+                                app:tint="@color/text_primary" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -759,7 +759,7 @@
                                 android:id="@+id/textHealthScoreNumber"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="84"
+                                android:text="—"
                                 android:textColor="@color/action_health_tint"
                                 android:textSize="20sp"
                                 android:textStyle="bold" />
@@ -783,7 +783,7 @@
                                 android:id="@+id/textHealthScoreRating"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Excellent • Strong Saver"
+                                android:text="Analyzing..."
                                 android:textColor="@color/text_primary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
@@ -793,7 +793,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Healthy savings rate &amp; disciplined budget"
+                                android:text="Calculating your monthly financial health score"
                                 android:textColor="@color/text_secondary"
                                 android:textSize="12sp" />
                         </LinearLayout>
@@ -825,7 +825,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="You saved 32% of your income this month! Keep Dining under budget to reach 90+."
+                            android:text="Track your income and expenses to unlock tailored financial recommendations."
                             android:textColor="@color/text_primary"
                             android:textSize="12sp"
                             android:lineSpacingExtra="2dp" />

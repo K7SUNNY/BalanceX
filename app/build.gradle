@@ -6,11 +6,9 @@ plugins {
 
 def getGitCommitCount() {
     try {
-        def process = "git rev-list --count HEAD".execute(null, project.rootDir)
-        process.waitFor()
-        if (process.exitValue() == 0) {
-            return process.inputStream.text.trim().toInteger()
-        }
+        // Use .text to safely consume the stream and avoid buffer deadlocks
+        def output = "git rev-list --count HEAD".execute(null, project.rootDir).text.trim()
+        return output.toInteger()
     } catch (Exception ignored) {}
     return 1
 }
@@ -20,8 +18,9 @@ def getGitVersionName(baseVersion) {
     def dirty = ""
     try {
         def process = "git status --porcelain".execute(null, project.rootDir)
-        process.waitFor()
-        if (process.exitValue() == 0 && process.inputStream.text.trim().length() > 0) {
+        // Read text FIRST to empty the buffer before the process finishes
+        def output = process.text.trim()
+        if (process.exitValue() == 0 && output.length() > 0) {
             dirty = "-dirty"
         }
     } catch (Exception ignored) {}
@@ -29,11 +28,11 @@ def getGitVersionName(baseVersion) {
 }
 
 android {
-    namespace 'com.accounting.balancex'
+    namespace 'com.k7sunny.balancex'
     compileSdk 37
 
     defaultConfig {
-        applicationId "com.accounting.balancex"
+        applicationId "com.k7sunny.balancex"
         minSdk 24
         targetSdk 35
         versionCode getGitCommitCount()

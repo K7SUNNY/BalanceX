@@ -91,7 +91,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="₹928.00"
+                        android:text="—"
                         android:textColor="@android:color/white"
                         android:textSize="28sp"
                         android:textStyle="bold" />
@@ -108,7 +108,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="3 Active Recurring Services"
+                            android:text="— Active Recurring Services"
                             android:textColor="#CCFFFFFF"
                             android:textSize="12sp" />
 
@@ -119,7 +119,7 @@
                             android:background="@drawable/bg_balance_filter_pill"
                             android:paddingHorizontal="10dp"
                             android:paddingVertical="4dp"
-                            android:text="2 Due This Week"
+                            android:text="— Due This Week"
                             android:textColor="@android:color/white"
                             android:textSize="11sp"
                             android:textStyle="bold" />

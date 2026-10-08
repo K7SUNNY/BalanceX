@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -43,7 +44,7 @@
                 android:id="@+id/textSubManageName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Netflix Premium"
+                tools:text="Netflix Premium"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -62,7 +63,7 @@
                     android:background="@drawable/bg_tag_subtle"
                     android:paddingHorizontal="8dp"
                     android:paddingVertical="2dp"
-                    android:text="Due 15 Oct"
+                    tools:text="Due 15 Oct"
                     android:textColor="@color/finance_expense"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -103,7 +104,7 @@
                 android:id="@+id/textSubManageAmount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="₹649.00"
+                tools:text="₹649.00"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp"
                 android:textStyle="bold" />

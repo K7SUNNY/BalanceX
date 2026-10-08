@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -17,7 +18,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="MacBook Pro Fund"
+            tools:text="MacBook Pro Fund"
             android:textColor="@color/text_primary"
             android:textSize="16sp"
             android:textStyle="bold" />
@@ -29,16 +30,27 @@
             android:background="@drawable/bg_tag_subtle"
             android:paddingHorizontal="8dp"
             android:paddingVertical="2dp"
-            android:text="54% Achieved"
+            tools:text="54% Achieved"
             android:textColor="@color/color_primary"
             android:textSize="11sp"
             android:textStyle="bold" />
 
         <ImageView
-            android:id="@+id/btnDeleteGoal"
+            android:id="@+id/btnEditGoal"
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Edit goal"
+            android:padding="4dp"
+            app:srcCompat="@drawable/ic_edit_pencil"
+            app:tint="@color/text_tertiary" />
+
+        <ImageView
+            android:id="@+id/btnDeleteGoal"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Delete goal"
             android:padding="4dp"
@@ -51,7 +63,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:progress="54"
+        tools:progress="54"
         app:indicatorColor="@color/color_primary"
         app:trackColor="@color/surface_input"
         app:trackCornerRadius="4dp"
@@ -69,7 +81,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Saved: ₹65,000 / ₹1,20,000"
+            tools:text="Saved: ₹65,000 / ₹1,20,000"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
 

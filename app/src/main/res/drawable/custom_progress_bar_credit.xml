@@ -6,7 +6,7 @@
         </shape>
     </item>
     <item android:id="@android:id/progress">
-        <clip android:clipOrientation="vertical" android:gravity="bottom">
+        <clip android:clipOrientation="horizontal" android:gravity="left">
             <shape android:shape="rectangle">
                 <corners android:radius="8dp"/>
                 <solid android:color="@color/finance_income"/> <!-- Credit bar color -->
