@@ -1011,6 +1011,7 @@ public class ReportsActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "Saved to Downloads: " + exportFile.getName(), Toast.LENGTH_LONG).show();
             }
+            com.k7sunny.balancex.notifications.AppNotificationManager.postReportExported(this, currentFormat.name(), exportFile.getName());
 
         } catch (Exception e) {
             Log.e(TAG, "Export failed", e);

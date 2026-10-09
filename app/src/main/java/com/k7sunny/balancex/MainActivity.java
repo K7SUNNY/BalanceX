@@ -1968,6 +1968,13 @@ public class MainActivity extends AppCompatActivity {
         if (modernPieChartBridge != null) {
             modernPieChartBridge.refresh();
         }
+        View viewNotifBadge = findViewById(R.id.viewNotificationBadge);
+        new com.k7sunny.balancex.data.repository.NotificationRepository(this).getUnreadCount(count -> runOnUiThread(() -> {
+            if (viewNotifBadge != null) {
+                viewNotifBadge.setVisibility(count > 0 ? View.VISIBLE : View.GONE);
+            }
+        }));
+        com.k7sunny.balancex.notifications.AppNotificationManager.syncSystemAndActiveAlerts(this, null);
         com.k7sunny.balancex.data.repository.TransactionRepository repo =
                 transactionRepository != null ? transactionRepository : new com.k7sunny.balancex.data.repository.TransactionRepository(this);
         com.k7sunny.balancex.data.db.DatabaseMigrator.migrateJsonToRoomIfNeeded(this, repo, () -> {

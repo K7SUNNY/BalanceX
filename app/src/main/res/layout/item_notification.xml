@@ -1,26 +1,152 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardNotification"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="10dp"
-    android:background="@color/surface_card">
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="6dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/surface_card"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/border_subtle"
+    app:strokeWidth="1dp">
 
-    <TextView
-        android:id="@+id/notificationTitle"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Notification Title"
-        android:textColor="@color/text_primary"
-        android:textSize="16sp"
-        android:textStyle="bold"/>
+        android:orientation="horizontal"
+        android:padding="14dp">
 
-    <TextView
-        android:id="@+id/notificationMessage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Notification message here"
-        android:textColor="@color/text_secondary"
-        android:textSize="14sp"/>
-</LinearLayout>
+        <!-- Icon Badge -->
+        <FrameLayout
+            android:id="@+id/layoutIconBadge"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_marginTop="2dp"
+            android:background="@drawable/bg_circle_icon_container">
+
+            <ImageView
+                android:id="@+id/imageNotifIcon"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                app:srcCompat="@drawable/ic_notification_bell"
+                app:tint="@color/color_primary" />
+        </FrameLayout>
+
+        <!-- Notification Content -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Top Row: Type Tag, Timestamp, Unread Dot -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/textNotifTag"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_notif_type_pill"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:text="REMINDER"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/textNotifTime"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="Just now"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="11sp" />
+
+                <View
+                    android:id="@+id/dotUnreadIndicator"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_notif_unread_dot" />
+            </LinearLayout>
+
+            <!-- Title -->
+            <TextView
+                android:id="@+id/textNotifTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Upcoming Bill Payment"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <!-- Message -->
+            <TextView
+                android:id="@+id/textNotifMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:lineSpacingExtra="2dp"
+                android:text="Your Netflix subscription of ₹799 is due tomorrow. Tap to review."
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <!-- Bottom Actions Row -->
+            <LinearLayout
+                android:id="@+id/layoutActionRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/btnNotifAction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_corner_container_fliter_section"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="View Details →"
+                    android:textColor="@color/color_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <ImageView
+                    android:id="@+id/btnDeleteNotif"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:contentDescription="Delete"
+                    android:focusable="true"
+                    android:padding="6dp"
+                    app:srcCompat="@drawable/ic_delete"
+                    app:tint="@color/text_tertiary" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

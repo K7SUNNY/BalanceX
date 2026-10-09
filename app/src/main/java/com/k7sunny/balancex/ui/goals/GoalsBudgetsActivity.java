@@ -328,6 +328,7 @@ public class GoalsBudgetsActivity extends AppCompatActivity {
                         }
                         goal.currentAmount += addAmt;
                         repository.update(goal, this::loadItems);
+                        com.k7sunny.balancex.notifications.AppNotificationManager.postGoalMilestone(this, goal.title, goal.currentAmount, goal.targetAmount);
                         Toast.makeText(this, "Savings updated!", Toast.LENGTH_SHORT).show();
                     } catch (Exception e) {
                         Toast.makeText(this, "Invalid amount", Toast.LENGTH_SHORT).show();

@@ -184,11 +184,41 @@ public class SettingsActivity extends AppCompatActivity {
         // Clear Data (Danger Action)
         findViewById(R.id.layoutClearData).setOnClickListener(v -> showClearDataConfirmationDialog());
 
+        // Notifications & Alerts
+        View layoutNotif = findViewById(R.id.layoutNotificationSetting);
+        if (layoutNotif != null) {
+            layoutNotif.setOnClickListener(v -> {
+                vibrateDevice();
+                startActivity(new Intent(this, NotificationActivity.class));
+            });
+        }
+
         // About BalanceX
         findViewById(R.id.layoutAboutApp).setOnClickListener(v -> {
             vibrateDevice();
             startActivity(new Intent(this, AboutActivity.class));
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadSavedSettings();
+        updateNotificationBadge();
+    }
+
+    private void updateNotificationBadge() {
+        TextView textSettingNotifBadge = findViewById(R.id.textSettingNotifBadge);
+        if (textSettingNotifBadge != null) {
+            new com.k7sunny.balancex.data.repository.NotificationRepository(this).getUnreadCount(count -> runOnUiThread(() -> {
+                if (count > 0) {
+                    textSettingNotifBadge.setVisibility(View.VISIBLE);
+                    textSettingNotifBadge.setText(count + " New");
+                } else {
+                    textSettingNotifBadge.setVisibility(View.GONE);
+                }
+            }));
+        }
     }
 
     private void showThemeDialog() {

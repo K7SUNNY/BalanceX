@@ -2,110 +2,250 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface_background"
-    android:fitsSystemWindows="true">
+    android:background="@color/surface_background">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/surface_background"
-        app:elevation="0dp">
-
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:title="Notifications"
-            app:titleCentered="true"
-            app:titleTextColor="@color/text_primary"
-            app:navigationIcon="@drawable/ic_back"
-            app:layout_scrollFlags="scroll|enterAlways|snap">
-            
-            <ImageView
-                android:id="@+id/imageViewAccount_Image"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="end"
-                android:layout_marginEnd="16dp"
-                android:padding="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                app:srcCompat="@drawable/ic_account" />
-                
-        </com.google.android.material.appbar.MaterialToolbar>
-
-        <!-- Modern Material 3 Tab Layout for Read/Unread toggling -->
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tabLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/surface_background"
-            app:tabIndicatorColor="@color/color_primary"
-            app:tabSelectedTextColor="@color/color_primary"
-            app:tabTextColor="@color/text_secondary"
-            app:tabMode="fixed">
-
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Unread" />
-
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Read" />
-        </com.google.android.material.tabs.TabLayout>
-
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:orientation="vertical">
 
-        <!-- RecyclerView for Notifications -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewNotifications"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:padding="12dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-            
+        <!-- Top Header Bar -->
         <LinearLayout
-            android:id="@+id/emptyStateLayout"
-            android:layout_width="wrap_content"
+            android:id="@+id/header_bar"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:visibility="gone"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="10dp">
 
-            <com.airbnb.lottie.LottieAnimationView
-                android:layout_width="200dp"
-                android:layout_height="200dp"
-                app:lottie_rawRes="@raw/empty_notification"
-                app:lottie_autoPlay="true"
-                app:lottie_loop="true" />
-                <!-- Note: Ensure empty_notification.json exists in res/raw -->
+            <ImageView
+                android:id="@+id/btnBack"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/back"
+                android:padding="6dp"
+                app:srcCompat="@drawable/ic_back"
+                app:tint="@color/text_primary" />
 
             <TextView
+                android:id="@+id/titleNotifications"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="Notifications"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <!-- Unread Badge Pill -->
+            <TextView
+                android:id="@+id/textUnreadBadge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="You're all caught up!"
-                android:textSize="18sp"
+                android:layout_marginEnd="10dp"
+                android:background="@drawable/rounded_corner_container_fliter_section"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="0 Unread"
+                android:textColor="@color/color_primary"
+                android:textSize="12sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_secondary"
-                android:layout_marginTop="16dp" />
-                
+                android:visibility="gone" />
+
+            <!-- Mark All As Read Button -->
+            <ImageView
+                android:id="@+id/btnMarkAllRead"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Mark all as read"
+                android:padding="7dp"
+                app:srcCompat="@drawable/ic_done_all"
+                app:tint="@color/text_primary" />
+
+            <!-- Clear All Notifications Button -->
+            <ImageView
+                android:id="@+id/btnClearAll"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Clear all"
+                android:padding="7dp"
+                app:srcCompat="@drawable/ic_delete"
+                app:tint="@color/text_secondary" />
         </LinearLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Filter Chips Row (Modern Segmented/Filter Pills) -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="8dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/layoutFilterChips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/chipFilterAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_corner_container_fliter_section"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="7dp"
+                    android:text="All"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/chipFilterUnread"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/rounded_corner_unselected"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="7dp"
+                    android:text="Unread"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/chipFilterBills"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/rounded_corner_unselected"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="7dp"
+                    android:text="Bills &amp; Dues"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/chipFilterBudgets"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/rounded_corner_unselected"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="7dp"
+                    android:text="Budgets &amp; Goals"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/chipFilterTransactions"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/rounded_corner_unselected"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="7dp"
+                    android:text="Transactions"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Main Content Area -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <!-- Swipe Refresh Layout & RecyclerView -->
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/swipeRefreshLayout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewNotifications"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:overScrollMode="never"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="24dp" />
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+            <!-- Empty State View -->
+            <LinearLayout
+                android:id="@+id/emptyStateLayout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingHorizontal="32dp"
+                android:visibility="gone">
+
+                <com.airbnb.lottie.LottieAnimationView
+                    android:id="@+id/lottieEmpty"
+                    android:layout_width="180dp"
+                    android:layout_height="180dp"
+                    app:lottie_autoPlay="true"
+                    app:lottie_loop="true"
+                    app:lottie_rawRes="@raw/empty_notification" />
+
+                <TextView
+                    android:id="@+id/textEmptyTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="All Caught Up!"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/textEmptySubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:lineSpacingExtra="3dp"
+                    android:text="No notifications in this view. We'll alert you about upcoming bills, budget limits, and financial milestones."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEmptyAction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="20dp"
+                    android:text="Sync Alerts"
+                    android:textColor="@color/btn_primary_text"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/btn_primary_bg"
+                    app:cornerRadius="22dp" />
+            </LinearLayout>
+
+        </FrameLayout>
+    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

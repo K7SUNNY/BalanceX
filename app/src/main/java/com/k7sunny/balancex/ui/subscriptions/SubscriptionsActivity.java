@@ -415,6 +415,15 @@ public class SubscriptionsActivity extends AppCompatActivity {
                             loadSubscriptions();
                             Toast.makeText(this, "Subscription saved!", Toast.LENGTH_SHORT).show();
                             checkAndRequestNotificationPermission();
+                            com.k7sunny.balancex.notifications.AppNotificationManager.postNotification(
+                                    this,
+                                    "Subscription Scheduled",
+                                    "Added " + newSub.name + " (" + SettingsManager.getCurrencySymbol(this) + String.format(java.util.Locale.getDefault(), "%,.2f", newSub.amount) + ") due on " + newSub.nextDueDate,
+                                    com.k7sunny.balancex.data.entity.NotificationEntity.TYPE_BILL,
+                                    com.k7sunny.balancex.data.entity.NotificationEntity.ACTION_SUBSCRIPTIONS,
+                                    newSub.name,
+                                    false
+                            );
                         });
                     });
                 }

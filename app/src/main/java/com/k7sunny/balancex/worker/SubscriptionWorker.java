@@ -117,6 +117,12 @@ public class SubscriptionWorker extends Worker {
                                     ? "Logged " + symbol + String.format(Locale.getDefault(), "%,.2f", sub.amount) + " for " + sub.name
                                     : "Logged " + billedCount + " catch-up payment(s) totaling " + symbol + String.format(Locale.getDefault(), "%,.2f", totalBilledAmount) + " for " + sub.name;
                             showNotification(context, (int) sub.id, "Auto-Subscription Logged", notifMsg);
+                            com.k7sunny.balancex.notifications.AppNotificationManager.postNotification(
+                                    context, "Auto-Subscription Logged", notifMsg,
+                                    com.k7sunny.balancex.data.entity.NotificationEntity.TYPE_BILL,
+                                    com.k7sunny.balancex.data.entity.NotificationEntity.ACTION_SUBSCRIPTIONS,
+                                    sub.name, false
+                            );
                         }
                     } else if (daysUntilDue > 0 && daysUntilDue <= sub.reminderDaysBefore) {
                         // 2. Pre-due reminder window: alert once per billing cycle
@@ -129,6 +135,7 @@ public class SubscriptionWorker extends Worker {
                                 msg = sub.name + " (" + symbol + String.format(Locale.getDefault(), "%,.2f", sub.amount) + ") is due in " + daysUntilDue + " days.";
                             }
                             showNotification(context, (int) sub.id, "Upcoming Bill Reminder", msg);
+                            com.k7sunny.balancex.notifications.AppNotificationManager.postBillReminder(context, sub.name, sub.amount, daysUntilDue, false);
                             prefs.edit().putBoolean(reminderKey, true).apply();
                         }
                     } else if (daysUntilDue <= 0 && !sub.autoAddTransaction) {
@@ -142,6 +149,7 @@ public class SubscriptionWorker extends Worker {
                                 msg = sub.name + " (" + symbol + String.format(Locale.getDefault(), "%,.2f", sub.amount) + ") is past due!";
                             }
                             showNotification(context, (int) sub.id, "Bill Payment Reminder", msg);
+                            com.k7sunny.balancex.notifications.AppNotificationManager.postBillReminder(context, sub.name, sub.amount, daysUntilDue, false);
                             prefs.edit().putBoolean(dueKey, true).apply();
                         }
                     }
@@ -189,11 +197,12 @@ public class SubscriptionWorker extends Worker {
         );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification_bell)
+                .setSmallIcon(R.drawable.balancex_white_logo)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setColor(ContextCompat.getColor(context, R.color.color_primary))
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent);
 

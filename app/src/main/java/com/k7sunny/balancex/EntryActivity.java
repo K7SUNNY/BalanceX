@@ -785,6 +785,7 @@ public class EntryActivity extends AppCompatActivity {
                 entity.textType = transactionType;
                 entity.paymentMethod = paymentMethod;
                 repo.insert(entity, null);
+                com.k7sunny.balancex.notifications.AppNotificationManager.postTransactionNotification(this, entity);
             } catch (Exception ignored) {}
 
             Toast.makeText(this, "Transaction saved successfully!", Toast.LENGTH_SHORT).show();
