@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
@@ -284,40 +285,50 @@ public class ReportsActivity extends AppCompatActivity {
         chipFinancialYear.setOnClickListener(v -> selectPeriod(PeriodType.FINANCIAL_YEAR));
         chipAllTime.setOnClickListener(v -> selectPeriod(PeriodType.ALL_TIME));
         chipCustomRange.setOnClickListener(v -> showCustomDateRangePicker());
+        updatePeriodChipsUI();
     }
 
     private void selectPeriod(PeriodType period) {
         currentPeriod = period;
         vibrateDevice();
+        updatePeriodChipsUI();
+        applyFiltersAndCalculate();
+    }
 
+    private void updatePeriodChipsUI() {
         int activeBg = R.drawable.rounded_corner_container_fliter_section;
         int inactiveBg = R.drawable.rounded_corner_unselected;
 
         int activeColor = ContextCompat.getColor(this, R.color.text_primary);
         int inactiveColor = ContextCompat.getColor(this, R.color.text_secondary);
 
-        chipThisMonth.setBackgroundResource(period == PeriodType.THIS_MONTH ? activeBg : inactiveBg);
-        chipThisMonth.setTextColor(period == PeriodType.THIS_MONTH ? activeColor : inactiveColor);
+        chipThisMonth.setBackgroundResource(currentPeriod == PeriodType.THIS_MONTH ? activeBg : inactiveBg);
+        chipThisMonth.setTextColor(currentPeriod == PeriodType.THIS_MONTH ? activeColor : inactiveColor);
+        chipThisMonth.setTypeface(null, currentPeriod == PeriodType.THIS_MONTH ? Typeface.BOLD : Typeface.NORMAL);
 
-        chipLastMonth.setBackgroundResource(period == PeriodType.LAST_MONTH ? activeBg : inactiveBg);
-        chipLastMonth.setTextColor(period == PeriodType.LAST_MONTH ? activeColor : inactiveColor);
+        chipLastMonth.setBackgroundResource(currentPeriod == PeriodType.LAST_MONTH ? activeBg : inactiveBg);
+        chipLastMonth.setTextColor(currentPeriod == PeriodType.LAST_MONTH ? activeColor : inactiveColor);
+        chipLastMonth.setTypeface(null, currentPeriod == PeriodType.LAST_MONTH ? Typeface.BOLD : Typeface.NORMAL);
 
-        chipLast30Days.setBackgroundResource(period == PeriodType.LAST_30_DAYS ? activeBg : inactiveBg);
-        chipLast30Days.setTextColor(period == PeriodType.LAST_30_DAYS ? activeColor : inactiveColor);
+        chipLast30Days.setBackgroundResource(currentPeriod == PeriodType.LAST_30_DAYS ? activeBg : inactiveBg);
+        chipLast30Days.setTextColor(currentPeriod == PeriodType.LAST_30_DAYS ? activeColor : inactiveColor);
+        chipLast30Days.setTypeface(null, currentPeriod == PeriodType.LAST_30_DAYS ? Typeface.BOLD : Typeface.NORMAL);
 
-        chipLastQuarter.setBackgroundResource(period == PeriodType.LAST_QUARTER ? activeBg : inactiveBg);
-        chipLastQuarter.setTextColor(period == PeriodType.LAST_QUARTER ? activeColor : inactiveColor);
+        chipLastQuarter.setBackgroundResource(currentPeriod == PeriodType.LAST_QUARTER ? activeBg : inactiveBg);
+        chipLastQuarter.setTextColor(currentPeriod == PeriodType.LAST_QUARTER ? activeColor : inactiveColor);
+        chipLastQuarter.setTypeface(null, currentPeriod == PeriodType.LAST_QUARTER ? Typeface.BOLD : Typeface.NORMAL);
 
-        chipFinancialYear.setBackgroundResource(period == PeriodType.FINANCIAL_YEAR ? activeBg : inactiveBg);
-        chipFinancialYear.setTextColor(period == PeriodType.FINANCIAL_YEAR ? activeColor : inactiveColor);
+        chipFinancialYear.setBackgroundResource(currentPeriod == PeriodType.FINANCIAL_YEAR ? activeBg : inactiveBg);
+        chipFinancialYear.setTextColor(currentPeriod == PeriodType.FINANCIAL_YEAR ? activeColor : inactiveColor);
+        chipFinancialYear.setTypeface(null, currentPeriod == PeriodType.FINANCIAL_YEAR ? Typeface.BOLD : Typeface.NORMAL);
 
-        chipAllTime.setBackgroundResource(period == PeriodType.ALL_TIME ? activeBg : inactiveBg);
-        chipAllTime.setTextColor(period == PeriodType.ALL_TIME ? activeColor : inactiveColor);
+        chipAllTime.setBackgroundResource(currentPeriod == PeriodType.ALL_TIME ? activeBg : inactiveBg);
+        chipAllTime.setTextColor(currentPeriod == PeriodType.ALL_TIME ? activeColor : inactiveColor);
+        chipAllTime.setTypeface(null, currentPeriod == PeriodType.ALL_TIME ? Typeface.BOLD : Typeface.NORMAL);
 
-        chipCustomRange.setBackgroundResource(period == PeriodType.CUSTOM ? activeBg : inactiveBg);
-        textCustomRangeLabel.setTextColor(period == PeriodType.CUSTOM ? activeColor : inactiveColor);
-
-        applyFiltersAndCalculate();
+        chipCustomRange.setBackgroundResource(currentPeriod == PeriodType.CUSTOM ? activeBg : inactiveBg);
+        textCustomRangeLabel.setTextColor(currentPeriod == PeriodType.CUSTOM ? activeColor : inactiveColor);
+        textCustomRangeLabel.setTypeface(null, currentPeriod == PeriodType.CUSTOM ? Typeface.BOLD : Typeface.NORMAL);
     }
 
     private void showCustomDateRangePicker() {
@@ -359,26 +370,32 @@ public class ReportsActivity extends AppCompatActivity {
         tabScopeAll.setOnClickListener(v -> setExportScope("All"));
         tabScopeDebit.setOnClickListener(v -> setExportScope("Debit"));
         tabScopeCredit.setOnClickListener(v -> setExportScope("Credit"));
+        updateScopeTabsUI();
     }
 
     private void setExportScope(String scope) {
         exportScope = scope;
         vibrateDevice();
+        updateScopeTabsUI();
+        updateExportButtonBadges();
+    }
 
+    private void updateScopeTabsUI() {
         int activeBg = R.drawable.bg_segmented_active;
         int activeColor = ContextCompat.getColor(this, R.color.text_primary);
         int inactiveColor = ContextCompat.getColor(this, R.color.text_secondary);
 
-        tabScopeAll.setBackgroundResource("All".equals(scope) ? activeBg : android.R.color.transparent);
-        tabScopeAll.setTextColor("All".equals(scope) ? activeColor : inactiveColor);
+        tabScopeAll.setBackgroundResource("All".equals(exportScope) ? activeBg : android.R.color.transparent);
+        tabScopeAll.setTextColor("All".equals(exportScope) ? activeColor : inactiveColor);
+        tabScopeAll.setTypeface(null, "All".equals(exportScope) ? Typeface.BOLD : Typeface.NORMAL);
 
-        tabScopeDebit.setBackgroundResource("Debit".equals(scope) ? activeBg : android.R.color.transparent);
-        tabScopeDebit.setTextColor("Debit".equals(scope) ? activeColor : inactiveColor);
+        tabScopeDebit.setBackgroundResource("Debit".equals(exportScope) ? activeBg : android.R.color.transparent);
+        tabScopeDebit.setTextColor("Debit".equals(exportScope) ? activeColor : inactiveColor);
+        tabScopeDebit.setTypeface(null, "Debit".equals(exportScope) ? Typeface.BOLD : Typeface.NORMAL);
 
-        tabScopeCredit.setBackgroundResource("Credit".equals(scope) ? activeBg : android.R.color.transparent);
-        tabScopeCredit.setTextColor("Credit".equals(scope) ? activeColor : inactiveColor);
-
-        updateExportButtonBadges();
+        tabScopeCredit.setBackgroundResource("Credit".equals(exportScope) ? activeBg : android.R.color.transparent);
+        tabScopeCredit.setTextColor("Credit".equals(exportScope) ? activeColor : inactiveColor);
+        tabScopeCredit.setTypeface(null, "Credit".equals(exportScope) ? Typeface.BOLD : Typeface.NORMAL);
     }
 
     private void setupFormatSelection() {

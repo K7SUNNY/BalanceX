@@ -347,7 +347,9 @@ public class GoalsBudgetsActivity extends AppCompatActivity {
         dialog.setContentView(view);
 
         TextView textSheetTitle = view.findViewById(R.id.textAddBudgetGoalTitle);
-        ChipGroup chipGroup = view.findViewById(R.id.chipGroupBudgetType);
+        View segmentedTypeContainer = view.findViewById(R.id.segmentedTypeContainer);
+        TextView tabTypeBudget = view.findViewById(R.id.tabTypeBudget);
+        TextView tabTypeGoal = view.findViewById(R.id.tabTypeGoal);
         AutoCompleteTextView editTitle = view.findViewById(R.id.editBudgetGoalTitle);
         TextInputEditText editTarget = view.findViewById(R.id.editBudgetTargetAmount);
         TextInputEditText editInitial = view.findViewById(R.id.editBudgetInitialAmount);
@@ -360,28 +362,69 @@ public class GoalsBudgetsActivity extends AppCompatActivity {
 
         boolean isEditing = existing != null;
         boolean initialIsGoal = isEditing && BudgetGoalEntity.TYPE_GOAL.equalsIgnoreCase(existing.type);
+        final boolean[] isGoalSelected = { initialIsGoal };
+
+        Runnable updateTypeUI = () -> {
+            boolean isGoal = isGoalSelected[0];
+            int activeBg = R.drawable.bg_segmented_active;
+            int activeText = ContextCompat.getColor(this, R.color.text_primary);
+            int inactiveText = ContextCompat.getColor(this, R.color.text_secondary);
+
+            if (tabTypeBudget != null) {
+                tabTypeBudget.setBackgroundResource(!isGoal ? activeBg : android.R.color.transparent);
+                tabTypeBudget.setTextColor(!isGoal ? activeText : inactiveText);
+            }
+            if (tabTypeGoal != null) {
+                tabTypeGoal.setBackgroundResource(isGoal ? activeBg : android.R.color.transparent);
+                tabTypeGoal.setTextColor(isGoal ? activeText : inactiveText);
+            }
+
+            if (layoutInitial != null) {
+                layoutInitial.setVisibility(isGoal ? View.VISIBLE : View.GONE);
+            }
+            if (scrollCategories != null) {
+                scrollCategories.setVisibility(isGoal ? View.GONE : View.VISIBLE);
+            }
+            if (layoutTitle != null) {
+                layoutTitle.setHint(isGoal ? "Goal Title (e.g. Vacation, New Laptop)" : "Select or Type Category");
+            }
+            if (layoutTarget != null) {
+                layoutTarget.setHint(isGoal ? "Target Savings Amount" : "Monthly Spending Limit");
+            }
+        };
+
+        if (tabTypeBudget != null) {
+            tabTypeBudget.setOnClickListener(v -> {
+                if (isGoalSelected[0]) {
+                    isGoalSelected[0] = false;
+                    updateTypeUI.run();
+                }
+            });
+        }
+
+        if (tabTypeGoal != null) {
+            tabTypeGoal.setOnClickListener(v -> {
+                if (!isGoalSelected[0]) {
+                    isGoalSelected[0] = true;
+                    updateTypeUI.run();
+                }
+            });
+        }
 
         if (isEditing) {
-            if (chipGroup != null) chipGroup.setVisibility(View.GONE);
+            if (segmentedTypeContainer != null) segmentedTypeContainer.setVisibility(View.GONE);
             if (initialIsGoal) {
                 if (textSheetTitle != null) textSheetTitle.setText("Edit Goal");
                 if (btnSave instanceof TextView) ((TextView) btnSave).setText("Update Goal");
-                if (layoutInitial != null) layoutInitial.setVisibility(View.VISIBLE);
-                if (scrollCategories != null) scrollCategories.setVisibility(View.GONE);
-                if (layoutTitle != null) layoutTitle.setHint("Goal Title (e.g. Vacation, New Laptop)");
-                if (layoutTarget != null) layoutTarget.setHint("Target Savings Amount");
                 if (editInitial != null) editInitial.setText(String.format(Locale.US, "%.2f", existing.currentAmount));
             } else {
                 if (textSheetTitle != null) textSheetTitle.setText("Edit Budget");
                 if (btnSave instanceof TextView) ((TextView) btnSave).setText("Update Budget");
-                if (layoutInitial != null) layoutInitial.setVisibility(View.GONE);
-                if (scrollCategories != null) scrollCategories.setVisibility(View.VISIBLE);
-                if (layoutTitle != null) layoutTitle.setHint("Select or Type Category");
-                if (layoutTarget != null) layoutTarget.setHint("Monthly Spending Limit");
             }
             if (editTitle != null) editTitle.setText(existing.title);
             if (editTarget != null) editTarget.setText(String.format(Locale.US, "%.2f", existing.targetAmount));
         }
+        updateTypeUI.run();
 
         // Prepopulate available categories
         List<String> defaultCategories = Arrays.asList(
@@ -427,27 +470,9 @@ public class GoalsBudgetsActivity extends AppCompatActivity {
 
         if (editTitle != null) {
             editTitle.setOnClickListener(v -> {
-                boolean isBudget = !isEditing ? (chipGroup == null || chipGroup.getCheckedChipId() == R.id.chipTypeBudget) : !initialIsGoal;
+                boolean isBudget = !isGoalSelected[0];
                 if (isBudget) {
                     editTitle.showDropDown();
-                }
-            });
-        }
-
-        if (chipGroup != null && !isEditing) {
-            chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
-                boolean isGoal = checkedIds.contains(R.id.chipTypeGoal);
-                if (layoutInitial != null) {
-                    layoutInitial.setVisibility(isGoal ? View.VISIBLE : View.GONE);
-                }
-                if (scrollCategories != null) {
-                    scrollCategories.setVisibility(isGoal ? View.GONE : View.VISIBLE);
-                }
-                if (layoutTitle != null) {
-                    layoutTitle.setHint(isGoal ? "Goal Title (e.g. Vacation, New Laptop)" : "Select or Type Category");
-                }
-                if (layoutTarget != null) {
-                    layoutTarget.setHint(isGoal ? "Target Savings Amount" : "Monthly Spending Limit");
                 }
             });
         }
@@ -458,7 +483,7 @@ public class GoalsBudgetsActivity extends AppCompatActivity {
                 String targetStr = editTarget != null && editTarget.getText() != null ? editTarget.getText().toString().trim() : "";
                 String initStr = editInitial != null && editInitial.getText() != null ? editInitial.getText().toString().trim() : "0";
 
-                boolean isGoal = isEditing ? initialIsGoal : (chipGroup != null && chipGroup.getCheckedChipId() == R.id.chipTypeGoal);
+                boolean isGoal = isGoalSelected[0];
 
                 if (title.isEmpty()) {
                     Toast.makeText(this, isGoal ? "Please enter a goal title" : "Please select or enter a category", Toast.LENGTH_SHORT).show();
