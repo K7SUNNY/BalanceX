@@ -42,23 +42,19 @@
         android:screenOrientation="portrait"
         android:supportsRtl="true"
         android:theme="@style/Theme.BalanceX">
-        <!-- Splash Activity Declaration -->
-        <activity
-            android:name=".SplashActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity> <!-- Main Activity Declaration -->
+        <!-- Main Activity Declaration (Launcher) -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.BalanceX"
             android:windowNoTitle="true"
-            android:windowSoftInputMode="adjustPan"/> <!-- Transaction Page -->
+            android:windowSoftInputMode="adjustPan">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity> <!-- Transaction Page -->
         <activity
             android:name=".HistoryActivity"
             android:screenOrientation="portrait"

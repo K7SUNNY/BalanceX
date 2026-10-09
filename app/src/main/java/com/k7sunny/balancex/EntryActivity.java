@@ -148,7 +148,6 @@ public class EntryActivity extends AppCompatActivity {
         setupCategories();
         setDateField();
         loadRecentPayees();
-        requestStoragePermission();
         setNavigationListeners();
         copyTessDataFiles();
         initTesseract();
@@ -979,7 +978,7 @@ public class EntryActivity extends AppCompatActivity {
                     if (selectedOption == 0) {
                         captureImageFromCamera();
                     } else {
-                        pickImageFromGallery();
+                        requestGalleryPermissionAndPick();
                     }
                     warningDialog.dismiss();
                 });
@@ -992,6 +991,16 @@ public class EntryActivity extends AppCompatActivity {
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
         }
+    }
+
+    private void requestGalleryPermissionAndPick() {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
+                return;
+            }
+        }
+        pickImageFromGallery();
     }
 
     private void pickImageFromGallery() {
@@ -1011,6 +1020,10 @@ public class EntryActivity extends AppCompatActivity {
         } else if (requestCode == CONTACT_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 openContactPicker();
+            }
+        } else if (requestCode == STORAGE_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                pickImageFromGallery();
             }
         }
     }
@@ -1234,33 +1247,6 @@ public class EntryActivity extends AppCompatActivity {
         } catch (ParseException e) {
             e.printStackTrace();
             return extractedDate;
-        }
-    }
-
-    private void requestStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (!Environment.isExternalStorageManager()) {
-                new AlertDialog.Builder(this)
-                        .setTitle("Storage Permission Required")
-                        .setMessage("This app requires access to manage all files on your device. Please grant permission to continue.")
-                        .setPositiveButton("Allow", (dialog, which) -> {
-                            Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                            startActivity(intent);
-                        })
-                        .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                        .show();
-            }
-        } else {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                new AlertDialog.Builder(this)
-                        .setTitle("Storage Permission Required")
-                        .setMessage("This app needs storage access to save your transactions. Please grant permission.")
-                        .setPositiveButton("Allow", (dialog, which) -> {
-                            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
-                        })
-                        .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                        .show();
-            }
         }
     }
 

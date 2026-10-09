@@ -7,7 +7,9 @@ import android.graphics.RenderEffect;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import androidx.appcompat.widget.PopupMenu;
 import android.net.Uri;
 import android.os.Build;
@@ -17,14 +19,18 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
@@ -138,6 +144,9 @@ public class MainActivity extends AppCompatActivity {
         com.k7sunny.balancex.data.db.DatabaseMigrator.migrateJsonToRoomIfNeeded(this, repo, () -> {
             runOnUiThread(this::updateDrawerStats);
         });
+
+        // Prompt for any essential runtime permissions not yet granted
+        checkAndRequestAppPermissions();
 
         // 3. Query the encrypted database to verify data is there
         repo.getAllTransactions(transactions -> {
@@ -2006,4 +2015,60 @@ public class MainActivity extends AppCompatActivity {
         SettingsManager.vibrate(this);
     }
 
+    // ==================== RUNTIME PERMISSION MANAGEMENT ====================
+
+    private static final int REQUEST_CODE_APP_PERMISSIONS = 9001;
+
+    private void checkAndRequestAppPermissions() {
+        List<String> permissionsToRequest = new ArrayList<>();
+
+        // 1. Notification permission (Android 13+ / API 33+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+
+        // 2. Contact permission (for payee suggestion/contact picker in Entry)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.READ_CONTACTS);
+        }
+
+        // 3. Camera permission (for receipt scanner in Entry)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.CAMERA);
+        }
+
+        // 4. Storage permissions (for Android 12 and below)
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            }
+        }
+
+        if (!permissionsToRequest.isEmpty()) {
+            ActivityCompat.requestPermissions(
+                    this,
+                    permissionsToRequest.toArray(new String[0]),
+                    REQUEST_CODE_APP_PERMISSIONS
+            );
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CODE_APP_PERMISSIONS) {
+            // Re-schedule daily bill reminders if notifications were granted
+            com.k7sunny.balancex.worker.SubscriptionWorker.scheduleDailyCheck(this);
+        }
+    }
 }
