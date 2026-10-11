@@ -21,6 +21,8 @@ ui = "1.12.1"
 work = "2.9.1"
 biometric = "1.2.0-alpha05"
 biometricVersion = "1.1.0"
+lifecycle = "2.8.7"
+desugarJdkLibs = "2.1.4"
 
 [libraries]
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
@@ -50,6 +52,10 @@ work-runtime = { module = "androidx.work:work-runtime", version.ref = "work" }
 biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
 ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometricVersion" }
+desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugarJdkLibs" }
+lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycle" }
+lifecycle-livedata = { module = "androidx.lifecycle:lifecycle-livedata", version.ref = "lifecycle" }
+room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
