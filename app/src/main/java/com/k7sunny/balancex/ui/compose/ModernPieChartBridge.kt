@@ -45,55 +45,30 @@ class ModernPieChartBridge(
     }
 
     /**
-     * Reload category expense totals and update compose state
+     * Reload category expense totals from Room and update compose state
      */
     fun refresh() {
-        val categoryTotals = LinkedHashMap<String, Float>()
-
-        try {
-            val file = DatabaseMigrator.findJsonFile(context)
-                ?: File("/storage/emulated/0/Documents/Accounting/transactions.json")
-
-            if (file.exists() && file.length() > 2) {
-                val reader = BufferedReader(FileReader(file))
-                val sb = StringBuilder()
-                var line: String?
-                while (reader.readLine().also { line = it } != null) {
-                    sb.append(line)
+        val db = com.k7sunny.balancex.data.db.AppDatabase.getDatabase(context)
+        com.k7sunny.balancex.data.db.AppDatabase.databaseWriteExecutor.execute {
+            val summaries = db.transactionDao().getCategoryExpensesAllTime()
+            val items = summaries
+                .filter { it.totalAmountMinor > 0 }
+                .mapIndexed { index, summary ->
+                    CategoryBreakdownItem(
+                        category = summary.category ?: "General",
+                        amount = summary.totalAmountMinor / 100f,
+                        color = modernPalette[index % modernPalette.size]
+                    )
                 }
-                reader.close()
 
-                val array = JSONArray(sb.toString().trim())
-                for (i in 0 until array.length()) {
-                    val obj = array.getJSONObject(i)
-                    val cat = obj.optString("category", "General")
-                    val amtStr = obj.optString("amount", "0")
-                    val amt = amtStr.replace("[^0-9.]".toRegex(), "").toFloatOrNull() ?: 0f
-
-                    // Count expense / debit transactions primarily, or fallback to all
-                    val type = obj.optString("textType", obj.optString("transactionType", "Debit"))
-                    if (type.equals("Debit", ignoreCase = true) || !type.equals("Credit", ignoreCase = true)) {
-                        categoryTotals[cat] = (categoryTotals[cat] ?: 0f) + amt
-                    }
-                }
+            val updateAction = Runnable {
+                chartState = items
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+            if (context is android.app.Activity) {
+                context.runOnUiThread(updateAction)
+            } else {
+                updateAction.run()
+            }
         }
-
-        // Sort descending by amount
-        val sortedList = categoryTotals.entries
-            .filter { it.value > 0f }
-            .sortedByDescending { it.value }
-
-        val items = sortedList.mapIndexed { index, entry ->
-            CategoryBreakdownItem(
-                category = entry.key,
-                amount = entry.value,
-                color = modernPalette[index % modernPalette.size]
-            )
-        }
-
-        chartState = items
     }
 }

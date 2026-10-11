@@ -29,10 +29,13 @@ import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.checkbox.MaterialCheckBox;
+import com.k7sunny.balancex.data.entity.TransactionEntity;
+import com.k7sunny.balancex.ui.viewmodel.ReportsViewModel;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -112,6 +115,7 @@ public class ReportsActivity extends AppCompatActivity {
     // Raw & Filtered Data
     private final List<Transaction> allTransactions = new ArrayList<>();
     private final List<Transaction> periodTransactions = new ArrayList<>();
+    private ReportsViewModel reportsViewModel;
 
     // Aggregates
     private double totalInflowSum = 0;
@@ -138,7 +142,7 @@ public class ReportsActivity extends AppCompatActivity {
         setupExportConfig();
         setupActionButtons();
 
-        loadTransactions();
+        setupViewModel();
     }
 
     @Override
@@ -146,7 +150,6 @@ public class ReportsActivity extends AppCompatActivity {
         super.onResume();
         SettingsManager.applyTheme(this);
         loadPreferences();
-        loadTransactions();
     }
 
     private void loadPreferences() {
@@ -460,73 +463,22 @@ public class ReportsActivity extends AppCompatActivity {
         });
     }
 
-    private void loadTransactions() {
-        allTransactions.clear();
-        try {
-            File file = com.k7sunny.balancex.data.db.DatabaseMigrator.findJsonFile(this);
-            if (file == null) {
-                file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Accounting/transactions.json");
-            }
-            if (!file.exists()) {
-                file = new File(getFilesDir(), "transactions.json");
-            }
-
-            if (file.exists() && file.length() > 2) {
-                String json;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    json = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-                } else {
-                    FileInputStream fis = new FileInputStream(file);
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8));
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        sb.append(line);
-                    }
-                    reader.close();
-                    json = sb.toString();
-                }
-                JSONArray array = new JSONArray(json.trim());
-                for (int i = 0; i < array.length(); i++) {
-                    JSONObject obj = array.getJSONObject(i);
+    private void setupViewModel() {
+        reportsViewModel = new ViewModelProvider(this).get(ReportsViewModel.class);
+        reportsViewModel.getAllTransactions().observe(this, entities -> {
+            allTransactions.clear();
+            if (entities != null) {
+                for (TransactionEntity e : entities) {
                     allTransactions.add(new Transaction(
-                            obj.optString("date", "N/A"),
-                            obj.optString("amount", "0"),
-                            obj.optString("receiver", "Unknown"),
-                            obj.optString("description", ""),
-                            obj.optString("utr", "N/A"),
-                            obj.optString("comments", ""),
-                            obj.optString("category", "General"),
-                            obj.optString("transactionId", "N/A"),
-                            obj.optString("paymentMethod", "Cash"),
-                            obj.optString("textType", "Debit"),
-                            obj.optLong("entryId", System.currentTimeMillis() - i * 1000L)
+                            e.date, e.amount, e.receiver, e.description,
+                            e.utr, e.comments, e.category, e.transactionId,
+                            e.paymentMethod, e.textType, e.entryId,
+                            e.amountMinor, e.dateEpochDay, e.dateValid
                     ));
                 }
             }
-        } catch (Exception e) {
-            Log.e(TAG, "Error loading transactions", e);
-        }
-
-        if (allTransactions.isEmpty()) {
-            com.k7sunny.balancex.data.repository.TransactionRepository repo =
-                    new com.k7sunny.balancex.data.repository.TransactionRepository(this);
-            repo.getAllTransactions(entities -> {
-                if (entities != null && !entities.isEmpty()) {
-                    for (com.k7sunny.balancex.data.entity.TransactionEntity e : entities) {
-                        allTransactions.add(new Transaction(
-                                e.date, e.amount, e.receiver, e.description,
-                                e.utr, e.comments, e.category, e.transactionId,
-                                e.paymentMethod, e.textType, e.entryId
-                        ));
-                    }
-                }
-                runOnUiThread(this::applyFiltersAndCalculate);
-            });
-            return;
-        }
-
-        applyFiltersAndCalculate();
+            applyFiltersAndCalculate();
+        });
     }
 
     private void applyFiltersAndCalculate() {

@@ -24,7 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Database(entities = {TransactionEntity.class, SubscriptionEntity.class, BudgetGoalEntity.class, NotificationEntity.class}, version = 3, exportSchema = false)
+@Database(entities = {TransactionEntity.class, SubscriptionEntity.class, BudgetGoalEntity.class, NotificationEntity.class}, version = 4, exportSchema = true)
 public abstract class AppDatabase extends RoomDatabase {
 
     private static volatile AppDatabase INSTANCE;
@@ -52,6 +52,35 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    public static final Migration MIGRATION_3_4 = new Migration(3, 4) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE `transactions` ADD COLUMN `amountMinor` INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE `transactions` ADD COLUMN `dateEpochDay` INTEGER DEFAULT NULL");
+            database.execSQL("ALTER TABLE `transactions` ADD COLUMN `dateValid` INTEGER NOT NULL DEFAULT 1");
+
+            android.database.Cursor cursor = database.query("SELECT `entryId`, `amount`, `date` FROM `transactions`");
+            if (cursor != null) {
+                try {
+                    while (cursor.moveToNext()) {
+                        long entryId = cursor.getLong(0);
+                        String rawAmount = cursor.getString(1);
+                        String rawDate = cursor.getString(2);
+
+                        long amountMinor = com.k7sunny.balancex.util.MoneyDateUtils.parseAmountToMinor(rawAmount);
+                        Long epochDay = com.k7sunny.balancex.util.MoneyDateUtils.parseDateToEpochDay(rawDate);
+                        int dateValid = (epochDay != null) ? 1 : 0;
+
+                        database.execSQL("UPDATE `transactions` SET `amountMinor` = ?, `dateEpochDay` = ?, `dateValid` = ? WHERE `entryId` = ?",
+                                new Object[]{amountMinor, epochDay, dateValid, entryId});
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+        }
+    };
+
     public static AppDatabase getDatabase(final Context context) {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
@@ -64,7 +93,7 @@ public abstract class AppDatabase extends RoomDatabase {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                             AppDatabase.class, "balancex_encrypted_database.db")
                             .openHelperFactory(factory)
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                             .build();
                 }
             }

@@ -50,17 +50,43 @@ class ModernChartBridge(
     }
 
     /**
-     * Reload transactions from disk/database and update compose state
+     * Reload transactions from database and update compose state
      */
     fun refresh() {
-        val transactions = DatabaseMigrator.loadTransactionsFromJson(context)
-        val points = processTransactions(transactions, currentTimeline)
-
-        chartState = ChartUiState(
-            dataPoints = points,
-            timeline = currentTimeline,
-            graphType = currentGraphType
-        )
+        val repo = com.k7sunny.balancex.data.repository.TransactionRepository(context)
+        repo.getAllTransactions { entities ->
+            val transactions = (entities ?: emptyList()).map { e ->
+                Transaction(
+                    e.date,
+                    e.amount,
+                    e.receiver,
+                    e.description,
+                    e.utr,
+                    e.comments,
+                    e.category,
+                    e.transactionId,
+                    e.paymentMethod,
+                    e.textType,
+                    e.entryId,
+                    e.amountMinor,
+                    e.dateEpochDay,
+                    e.dateValid
+                )
+            }
+            val points = processTransactions(transactions, currentTimeline)
+            val updateAction = Runnable {
+                chartState = ChartUiState(
+                    dataPoints = points,
+                    timeline = currentTimeline,
+                    graphType = currentGraphType
+                )
+            }
+            if (context is android.app.Activity) {
+                context.runOnUiThread(updateAction)
+            } else {
+                updateAction.run()
+            }
+        }
     }
 
     private fun processTransactions(
@@ -172,8 +198,7 @@ class ModernChartBridge(
         for (txn in transactions) {
             val dateStr = txn.date ?: continue
             val type = txn.transactionType ?: "Debit"
-            val amtStr = txn.amount?.replace("[^0-9.]".toRegex(), "") ?: "0"
-            val amt = amtStr.toFloatOrNull() ?: 0f
+            val amt = if (txn.amountMinor > 0) txn.amountMinor / 100f else (txn.amount?.replace("[^0-9.]".toRegex(), "")?.toFloatOrNull() ?: 0f)
             if (amt <= 0f) continue
 
             val periodKey = extractPeriod(dateStr, timeline) ?: continue

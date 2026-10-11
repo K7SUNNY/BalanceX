@@ -96,12 +96,15 @@ public class SubscriptionWorker extends Worker {
                             if (!alreadyExists) {
                                 TransactionEntity tx = new TransactionEntity();
                                 tx.date = cycleDateStr;
-                                tx.amount = String.format(Locale.getDefault(), "%.2f", sub.amount);
+                                tx.amount = String.format(Locale.ROOT, "%.2f", sub.amount);
+                                tx.amountMinor = com.k7sunny.balancex.util.MoneyDateUtils.majorToMinor(sub.amount);
+                                tx.dateEpochDay = com.k7sunny.balancex.util.MoneyDateUtils.parseDateToEpochDay(cycleDateStr);
+                                tx.dateValid = 1;
                                 tx.receiver = sub.name;
                                 tx.description = desc;
                                 tx.category = sub.category != null ? sub.category : "Subscription";
                                 tx.paymentMethod = "Auto-Debit";
-                                tx.textType = "debit";
+                                tx.textType = "Debit";
                                 db.transactionDao().insert(tx);
                                 billedCount++;
                                 totalBilledAmount += sub.amount;

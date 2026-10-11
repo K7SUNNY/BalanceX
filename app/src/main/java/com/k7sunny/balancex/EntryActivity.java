@@ -81,9 +81,6 @@ public class EntryActivity extends AppCompatActivity {
     private static final int REQUEST_IMAGE_PICK = 104;
     private static final int CAMERA_PERMISSION_CODE = 105;
 
-    private static final String FOLDER_NAME = "Accounting";
-    private static final String FILE_NAME = "transactions.json";
-
     // UI Elements
     private TextView textCurrencySymbol;
     private EditText amountInput;
@@ -101,6 +98,10 @@ public class EntryActivity extends AppCompatActivity {
     private Button saveButton;
     private ImageView addFromContactButton;
 
+    public static final String EXTRA_EDIT_ENTRY_ID = "extra_edit_entry_id";
+    private boolean isEditMode = false;
+    private long editingEntryId = -1L;
+
     // Additional Details (Bottom Sheet values)
     private String utrVal = "";
     private String transactionIdVal = "";
@@ -117,7 +118,6 @@ public class EntryActivity extends AppCompatActivity {
     // OCR / Tesseract
     private TessBaseAPI tessBaseAPI;
     private AlertDialog loadingDialog;
-    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -153,6 +153,7 @@ public class EntryActivity extends AppCompatActivity {
         initTesseract();
 
         applySettingsDefaults();
+        checkForEditMode();
     }
 
     private void initializeUI() {
@@ -589,36 +590,77 @@ public class EntryActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void loadRecentPayees() {
-        new Thread(() -> {
-            Set<String> uniquePayees = new LinkedHashSet<>();
-            try {
-                File file = com.k7sunny.balancex.data.db.DatabaseMigrator.findJsonFile(this);
-                if (file == null) {
-                    file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
-                }
-                if (file.exists() && file.length() > 0) {
-                    FileInputStream fis = new FileInputStream(file);
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8));
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) sb.append(line);
-                    reader.close();
-                    fis.close();
-
-                    JSONArray array = new JSONArray(sb.toString());
-                    for (int i = 0; i < array.length(); i++) {
-                        JSONObject obj = array.getJSONObject(i);
-                        String receiver = obj.optString("receiver", "").trim();
-                        if (!receiver.isEmpty() && !receiver.equalsIgnoreCase("Unknown") &&
-                                !receiver.equalsIgnoreCase("N/A") && !receiver.equalsIgnoreCase("NA")) {
-                            uniquePayees.add(receiver);
-                            if (uniquePayees.size() >= 25) break;
-                        }
+    private void checkForEditMode() {
+        if (getIntent() != null && getIntent().hasExtra(EXTRA_EDIT_ENTRY_ID)) {
+            isEditMode = true;
+            editingEntryId = getIntent().getLongExtra(EXTRA_EDIT_ENTRY_ID, -1L);
+            if (editingEntryId > 0) {
+                com.k7sunny.balancex.data.repository.TransactionRepository repo =
+                        new com.k7sunny.balancex.data.repository.TransactionRepository(this);
+                repo.getTransactionById(editingEntryId, entity -> {
+                    if (entity != null) {
+                        runOnUiThread(() -> populateFieldsForEdit(entity));
                     }
-                }
-            } catch (Exception ignored) {}
+                });
+            }
+        }
+    }
 
+    private void populateFieldsForEdit(com.k7sunny.balancex.data.entity.TransactionEntity entity) {
+        if (entity == null) return;
+        if (entity.amount != null && !entity.amount.isEmpty()) {
+            amountInput.setText(entity.amount);
+        } else if (entity.amountMinor > 0) {
+            amountInput.setText(String.format(java.util.Locale.ROOT, "%.2f", entity.amountMinor / 100.0));
+        }
+        if (entity.receiver != null) {
+            receiverName.setText(entity.receiver);
+        }
+        isExpense = !"Credit".equalsIgnoreCase(entity.textType);
+        if (entity.category != null && !entity.category.isEmpty()) {
+            selectedCategory = entity.category;
+        }
+        if (entity.paymentMethod != null && !entity.paymentMethod.isEmpty()) {
+            selectedPaymentMethod = entity.paymentMethod;
+            if (textSelectedAccount != null) {
+                textSelectedAccount.setText(selectedPaymentMethod);
+            }
+        }
+        utrVal = entity.utr != null && !entity.utr.equals("NA") ? entity.utr : "";
+        transactionIdVal = entity.transactionId != null && !entity.transactionId.equals("NA") ? entity.transactionId : "";
+        descriptionVal = entity.description != null && !entity.description.equals("NA") ? entity.description : "";
+        commentsVal = entity.comments != null && !entity.comments.equals("NA") ? entity.comments : "";
+
+        if (entity.dateEpochDay != null) {
+            java.time.LocalDate ld = java.time.LocalDate.ofEpochDay(entity.dateEpochDay);
+            calendar.set(ld.getYear(), ld.getMonthValue() - 1, ld.getDayOfMonth());
+            updateDateDisplay();
+        } else if (entity.date != null && !entity.date.isEmpty() && !entity.date.equals("N/A")) {
+            Long ed = com.k7sunny.balancex.util.MoneyDateUtils.parseDateToEpochDay(entity.date);
+            if (ed != null) {
+                java.time.LocalDate ld = java.time.LocalDate.ofEpochDay(ed);
+                calendar.set(ld.getYear(), ld.getMonthValue() - 1, ld.getDayOfMonth());
+                updateDateDisplay();
+            }
+        }
+
+        updateSegmentedUI();
+        setupCategories();
+        updateDetailsBadge();
+
+        if (saveButton != null) {
+            saveButton.setText("Update Transaction");
+        }
+    }
+
+    private void loadRecentPayees() {
+        com.k7sunny.balancex.data.repository.TransactionRepository repo =
+                new com.k7sunny.balancex.data.repository.TransactionRepository(this);
+        repo.getRecentPayees(25, payees -> {
+            Set<String> uniquePayees = new LinkedHashSet<>();
+            if (payees != null) {
+                uniquePayees.addAll(payees);
+            }
             if (uniquePayees.isEmpty()) {
                 uniquePayees.add("DMart");
                 uniquePayees.add("Amazon");
@@ -666,7 +708,7 @@ public class EntryActivity extends AppCompatActivity {
                     textQuickRecentPayee.setText(payeeList.get(0));
                 }
             });
-        }).start();
+        });
     }
 
     // ==================== TRANSACTION SAVING ====================
@@ -681,17 +723,10 @@ public class EntryActivity extends AppCompatActivity {
             return;
         }
 
-        double amountVal;
-        try {
-            amountVal = Double.parseDouble(rawAmount.replaceAll("[^0-9.]", ""));
-            if (amountVal <= 0) {
-                amountInput.requestFocus();
-                Toast.makeText(this, "Amount must be greater than zero!", Toast.LENGTH_SHORT).show();
-                return;
-            }
-        } catch (Exception e) {
+        long amountMinor = com.k7sunny.balancex.util.MoneyDateUtils.parseAmountToMinor(rawAmount);
+        if (amountMinor <= 0) {
             amountInput.requestFocus();
-            Toast.makeText(this, "Please enter a valid amount!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Amount must be greater than zero!", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -700,113 +735,50 @@ public class EntryActivity extends AppCompatActivity {
             receiver = isExpense ? "General Expense" : "Income";
         }
 
-        showSavingDialog();
-        final String finalReceiver = receiver;
-        new Handler().postDelayed(() -> saveTransaction(finalReceiver), 1000);
+        saveTransaction(receiver, amountMinor);
     }
 
-    private void saveTransaction(String receiver) {
-        SimpleDateFormat storageDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+    private void saveTransaction(String receiver, long amountMinor) {
+        String storageAmount = com.k7sunny.balancex.util.MoneyDateUtils.formatStorageAmount(amountMinor);
+        SimpleDateFormat storageDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
         String selectedDate = storageDateFormat.format(calendar.getTime());
-        String formattedDate = new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(calendar.getTime());
+        Long epochDay = com.k7sunny.balancex.util.MoneyDateUtils.parseDateToEpochDay(selectedDate);
+        int dateValid = (epochDay != null) ? 1 : 0;
 
         String transactionType = isExpense ? "Debit" : "Credit";
         String paymentMethod = selectedPaymentMethod;
-        String amount = amountInput.getText().toString().trim();
 
-        File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), FOLDER_NAME);
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
-        File file = new File(directory, FILE_NAME);
-        JSONArray transactionsArray = new JSONArray();
-        int entryCounter = 1;
+        com.k7sunny.balancex.data.repository.TransactionRepository repo =
+                new com.k7sunny.balancex.data.repository.TransactionRepository(this);
+        com.k7sunny.balancex.data.entity.TransactionEntity entity =
+                new com.k7sunny.balancex.data.entity.TransactionEntity();
+        entity.date = selectedDate;
+        entity.amount = storageAmount;
+        entity.amountMinor = amountMinor;
+        entity.dateEpochDay = epochDay;
+        entity.dateValid = dateValid;
+        entity.receiver = receiver;
+        entity.description = descriptionVal.isEmpty() ? "NA" : descriptionVal;
+        entity.utr = utrVal.isEmpty() ? "NA" : utrVal;
+        entity.transactionId = transactionIdVal.isEmpty() ? "NA" : transactionIdVal;
+        entity.comments = commentsVal.isEmpty() ? "NA" : commentsVal;
+        entity.category = selectedCategory;
+        entity.textType = transactionType;
+        entity.paymentMethod = paymentMethod;
 
-        try {
-            if (file.exists()) {
-                String content = null;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-                }
-                if (content != null && !content.trim().isEmpty()) {
-                    transactionsArray = new JSONArray(content);
-
-                    for (int i = transactionsArray.length() - 1; i >= 0; i--) {
-                        JSONObject obj = transactionsArray.getJSONObject(i);
-                        if (obj.has("entryId") && obj.getString("entryId").startsWith(formattedDate)) {
-                            entryCounter = Integer.parseInt(obj.getString("entryId").substring(8)) + 1;
-                            break;
-                        }
-                    }
-                }
-            }
-        } catch (IOException | JSONException e) {
-            e.printStackTrace();
-        }
-
-        String entryId = formattedDate + String.format(Locale.getDefault(), "%06d", entryCounter);
-        JSONObject transaction = new JSONObject();
-
-        try {
-            transaction.put("entryId", entryId);
-            transaction.put("date", selectedDate.isEmpty() ? "N/A" : selectedDate);
-            transaction.put("amount", amount);
-            transaction.put("receiver", receiver);
-            transaction.put("description", descriptionVal.isEmpty() ? "NA" : descriptionVal);
-            transaction.put("utr", utrVal.isEmpty() ? "NA" : utrVal);
-            transaction.put("transactionId", transactionIdVal.isEmpty() ? "NA" : transactionIdVal);
-            transaction.put("comments", commentsVal.isEmpty() ? "NA" : commentsVal);
-            transaction.put("category", selectedCategory);
-            transaction.put("textType", transactionType);
-            transaction.put("paymentMethod", paymentMethod);
-
-            transactionsArray.put(transaction);
-
-            try (FileWriter writer = new FileWriter(file)) {
-                writer.write(transactionsArray.toString(4));
-            }
-
-            // Sync with Room
-            try {
-                com.k7sunny.balancex.data.repository.TransactionRepository repo =
-                        new com.k7sunny.balancex.data.repository.TransactionRepository(this);
-                com.k7sunny.balancex.data.entity.TransactionEntity entity =
-                        new com.k7sunny.balancex.data.entity.TransactionEntity();
-                entity.entryId = Long.parseLong(entryId);
-                entity.date = selectedDate.isEmpty() ? "N/A" : selectedDate;
-                entity.amount = amount;
-                entity.receiver = receiver;
-                entity.description = descriptionVal.isEmpty() ? "NA" : descriptionVal;
-                entity.utr = utrVal.isEmpty() ? "NA" : utrVal;
-                entity.transactionId = transactionIdVal.isEmpty() ? "NA" : transactionIdVal;
-                entity.comments = commentsVal.isEmpty() ? "NA" : commentsVal;
-                entity.category = selectedCategory;
-                entity.textType = transactionType;
-                entity.paymentMethod = paymentMethod;
-                repo.insert(entity, null);
+        if (isEditMode && editingEntryId > 0) {
+            entity.entryId = editingEntryId;
+            repo.update(entity, () -> runOnUiThread(() -> {
+                Toast.makeText(this, "Transaction updated successfully!", Toast.LENGTH_SHORT).show();
+                finish();
+            }));
+        } else {
+            repo.insert(entity, () -> runOnUiThread(() -> {
                 com.k7sunny.balancex.notifications.AppNotificationManager.postTransactionNotification(this, entity);
-            } catch (Exception ignored) {}
-
-            Toast.makeText(this, "Transaction saved successfully!", Toast.LENGTH_SHORT).show();
-
-            // Finish and return to MainActivity
-            onBackPressed();
-
-        } catch (JSONException | IOException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Error saving transaction!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Transaction saved successfully!", Toast.LENGTH_SHORT).show();
+                finish();
+            }));
         }
-
-        if (progressDialog != null && progressDialog.isShowing()) {
-            progressDialog.dismiss();
-        }
-    }
-
-    private void showSavingDialog() {
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Saving transaction...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
     }
 
     // ==================== CLEAR FIELDS ====================
@@ -909,10 +881,6 @@ public class EntryActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        Intent intent = new Intent(this, MainActivity.class);
-        startActivity(intent);
-        vibrateDevice();
-        finish();
     }
 
     // ==================== CONTACT PICKER ====================

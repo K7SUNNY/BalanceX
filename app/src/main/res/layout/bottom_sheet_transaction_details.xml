@@ -288,11 +288,49 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Action Buttons -->
+    <!-- Primary Actions: Edit & Delete -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/bsBtnEdit"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:text="Edit"
+            android:textSize="13sp"
+            app:icon="@drawable/ic_edit_pencil"
+            app:iconGravity="textStart"
+            app:iconSize="16dp"
+            app:cornerRadius="14dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/bsBtnDelete"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:text="Delete"
+            android:textSize="13sp"
+            android:textColor="@color/finance_expense"
+            app:icon="@drawable/ic_delete"
+            app:iconTint="@color/finance_expense"
+            app:iconGravity="textStart"
+            app:iconSize="16dp"
+            app:cornerRadius="14dp" />
+    </LinearLayout>
+
+    <!-- Secondary Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:orientation="horizontal">
 
         <!-- All Transactions With Contact -->
@@ -300,9 +338,9 @@
             android:id="@+id/bsBtnContactHistory"
             style="@style/Widget.Material3.Button"
             android:layout_width="0dp"
-            android:layout_height="52dp"
+            android:layout_height="48dp"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="6dp"
             android:text="Person History"
             android:textSize="13sp"
             android:textColor="@color/btn_primary_text"
@@ -314,9 +352,9 @@
             android:id="@+id/bsBtnShare"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="52dp"
+            android:layout_height="48dp"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="6dp"
             android:text="Share Receipt"
             android:textSize="13sp"
             android:textColor="@color/btn_primary_bg"

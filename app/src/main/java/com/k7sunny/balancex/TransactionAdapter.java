@@ -27,6 +27,16 @@ import java.util.List;
 public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.ViewHolder> {
     private final Context context;
     private List<Transaction> transactionList;
+    private OnTransactionModifiedListener onTransactionModifiedListener;
+
+    public interface OnTransactionModifiedListener {
+        void onTransactionDeleted(Transaction transaction);
+        void onTransactionRestored(Transaction transaction);
+    }
+
+    public void setOnTransactionModifiedListener(OnTransactionModifiedListener listener) {
+        this.onTransactionModifiedListener = listener;
+    }
 
     public TransactionAdapter(Context context, List<Transaction> transactionList) {
         this.context = context;
@@ -98,6 +108,10 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
         }
         holder.textDate.setText(date);
 
+        if (holder.textBadgeAuto != null) {
+            holder.textBadgeAuto.setVisibility(transaction.isAutoBilled() ? View.VISIBLE : View.GONE);
+        }
+
         // 4. Divider Visibility (hide for last item)
         if (holder.itemDivider != null) {
             holder.itemDivider.setVisibility(position == getItemCount() - 1 ? View.GONE : View.VISIBLE);
@@ -135,7 +149,7 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
         MaterialCardView cardIconContainer;
         ImageView iconTransactionType;
         TextView textReceiverName, textCategory, textDate;
-        TextView textAmount, textType;
+        TextView textAmount, textType, textBadgeAuto;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -143,6 +157,7 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
             cardIconContainer = itemView.findViewById(R.id.cardIconContainer);
             iconTransactionType = itemView.findViewById(R.id.iconTransactionType);
             textReceiverName = itemView.findViewById(R.id.textReceiverName);
+            textBadgeAuto = itemView.findViewById(R.id.textBadgeAuto);
             textCategory = itemView.findViewById(R.id.textCategory);
             textDate = itemView.findViewById(R.id.textDate);
             textAmount = itemView.findViewById(R.id.textAmount);
@@ -173,6 +188,8 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
 
         MaterialButton bsBtnContactHistory = view.findViewById(R.id.bsBtnContactHistory);
         MaterialButton bsBtnShare = view.findViewById(R.id.bsBtnShare);
+        MaterialButton bsBtnEdit = view.findViewById(R.id.bsBtnEdit);
+        MaterialButton bsBtnDelete = view.findViewById(R.id.bsBtnDelete);
 
         boolean isCredit = transaction.getTransactionType() != null &&
                 transaction.getTransactionType().equalsIgnoreCase("Credit");
@@ -219,6 +236,64 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
 
         bsCopyUTR.setOnClickListener(v -> copyToClipboard(ctx, "UTR", bsTextUTR.getText().toString()));
         bsCopyTxnId.setOnClickListener(v -> copyToClipboard(ctx, "Transaction ID", bsTextTxnId.getText().toString()));
+
+        if (bsBtnEdit != null) {
+            bsBtnEdit.setOnClickListener(v -> {
+                dialog.dismiss();
+                Intent intent = new Intent(ctx, EntryActivity.class);
+                intent.putExtra(EntryActivity.EXTRA_EDIT_ENTRY_ID, transaction.getEntryId());
+                ctx.startActivity(intent);
+            });
+        }
+
+        if (bsBtnDelete != null) {
+            bsBtnDelete.setOnClickListener(v -> {
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(ctx)
+                        .setTitle("Delete Transaction")
+                        .setMessage("Are you sure you want to delete this transaction?")
+                        .setPositiveButton("Delete", (d, which) -> {
+                            dialog.dismiss();
+                            com.k7sunny.balancex.data.repository.TransactionRepository repo =
+                                    new com.k7sunny.balancex.data.repository.TransactionRepository(ctx);
+                            repo.getTransactionById(transaction.getEntryId(), entity -> {
+                                if (entity != null) {
+                                    repo.delete(entity, () -> {
+                                        if (onTransactionModifiedListener != null) {
+                                            if (ctx instanceof android.app.Activity) {
+                                                ((android.app.Activity) ctx).runOnUiThread(() ->
+                                                        onTransactionModifiedListener.onTransactionDeleted(transaction));
+                                            } else {
+                                                onTransactionModifiedListener.onTransactionDeleted(transaction);
+                                            }
+                                        }
+
+                                        if (ctx instanceof android.app.Activity) {
+                                            android.app.Activity act = (android.app.Activity) ctx;
+                                            act.runOnUiThread(() -> {
+                                                View rootView = act.findViewById(android.R.id.content);
+                                                if (rootView != null) {
+                                                    com.google.android.material.snackbar.Snackbar.make(
+                                                            rootView, "Transaction deleted", com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                                                            .setAction("Undo", vUndo -> {
+                                                                repo.insert(entity, () -> {
+                                                                    if (onTransactionModifiedListener != null) {
+                                                                        act.runOnUiThread(() ->
+                                                                                onTransactionModifiedListener.onTransactionRestored(transaction));
+                                                                    }
+                                                                });
+                                                            })
+                                                            .show();
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            });
+        }
 
         bsBtnContactHistory.setOnClickListener(v -> {
             dialog.dismiss();

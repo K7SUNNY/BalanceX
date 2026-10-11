@@ -23,20 +23,15 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.k7sunny.balancex.data.entity.TransactionEntity;
+import com.k7sunny.balancex.ui.viewmodel.HistoryViewModel;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -52,6 +47,7 @@ public class HistoryActivity extends AppCompatActivity {
     private final List<Transaction> allTransactions = new ArrayList<>();
     private final List<Transaction> filteredTransactions = new ArrayList<>();
     private TransactionAdapter adapter;
+    private HistoryViewModel historyViewModel;
 
     // Views
     private RecyclerView recyclerView;
@@ -73,7 +69,7 @@ public class HistoryActivity extends AppCompatActivity {
 
     // Active Filter State
     private String currentTypeFilter = "All"; // "All", "Credit", "Debit"
-    private String currentDateFilter = "All"; // "All", "Today", "Month", "Custom"
+    private String currentDateFilter = "All"; // "All", "Today", "Month", "Custom", "Undated"
     private String customSelectedDate = "";
     private String currentSearchQuery = "";
     private int currentSortOption = R.id.option_newest_to_oldest;
@@ -91,8 +87,7 @@ public class HistoryActivity extends AppCompatActivity {
         setupSearch();
         setupSwipeRefresh();
         setupScrollListener();
-
-        loadTransactionsFromFile();
+        setupViewModel();
     }
 
     private void setupWindowInsets() {
@@ -260,9 +255,8 @@ public class HistoryActivity extends AppCompatActivity {
         swipeRefreshLayout.setColorSchemeColors(ContextCompat.getColor(this, R.color.color_primary));
         swipeRefreshLayout.setOnRefreshListener(() -> {
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                loadTransactionsFromFile();
                 swipeRefreshLayout.setRefreshing(false);
-            }, 800);
+            }, 300);
         });
     }
 
@@ -340,73 +334,24 @@ public class HistoryActivity extends AppCompatActivity {
         }
     }
 
-    private void loadTransactionsFromFile() {
+    private void setupViewModel() {
         loadingText.setVisibility(View.VISIBLE);
-        allTransactions.clear();
-
-        File file = com.k7sunny.balancex.data.db.DatabaseMigrator.findJsonFile(this);
-        if (file == null) {
-            file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
-        }
-        if (!file.exists()) {
+        historyViewModel = new ViewModelProvider(this).get(HistoryViewModel.class);
+        historyViewModel.getAllTransactions().observe(this, entities -> {
+            allTransactions.clear();
+            if (entities != null) {
+                for (TransactionEntity e : entities) {
+                    allTransactions.add(new Transaction(
+                            e.date, e.amount, e.receiver, e.description,
+                            e.utr, e.comments, e.category, e.transactionId,
+                            e.paymentMethod, e.textType, e.entryId,
+                            e.amountMinor, e.dateEpochDay, e.dateValid
+                    ));
+                }
+            }
             loadingText.setVisibility(View.GONE);
             applyFiltersAndSort();
-            return;
-        }
-
-        try (FileInputStream fis = new FileInputStream(file);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8))) {
-
-            StringBuilder jsonBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                jsonBuilder.append(line);
-            }
-
-            JSONArray jsonArray = new JSONArray(jsonBuilder.toString());
-            for (int i = 0; i < jsonArray.length(); i++) {
-                JSONObject obj = jsonArray.getJSONObject(i);
-                allTransactions.add(new Transaction(
-                        obj.optString("date", "N/A"),
-                        obj.optString("amount", "0"),
-                        obj.optString("receiver", "Unknown"),
-                        obj.optString("description", ""),
-                        obj.optString("utr", "Unknown"),
-                        obj.optString("comments", ""),
-                        obj.optString("category", "General"),
-                        obj.optString("transactionId", "N/A"),
-                        obj.optString("paymentMethod", "Cash"),
-                        obj.optString("textType", "Unknown"),
-                        obj.optLong("entryId", System.currentTimeMillis() - i * 1000L)
-                ));
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error loading transactions from JSON file", e);
-        }
-
-        if (allTransactions.isEmpty()) {
-            com.k7sunny.balancex.data.repository.TransactionRepository repo =
-                    new com.k7sunny.balancex.data.repository.TransactionRepository(this);
-            repo.getAllTransactions(entities -> {
-                if (entities != null && !entities.isEmpty()) {
-                    for (com.k7sunny.balancex.data.entity.TransactionEntity e : entities) {
-                        allTransactions.add(new Transaction(
-                                e.date, e.amount, e.receiver, e.description,
-                                e.utr, e.comments, e.category, e.transactionId,
-                                e.paymentMethod, e.textType, e.entryId
-                        ));
-                    }
-                }
-                runOnUiThread(() -> {
-                    loadingText.setVisibility(View.GONE);
-                    applyFiltersAndSort();
-                });
-            });
-            return;
-        }
-
-        loadingText.setVisibility(View.GONE);
-        applyFiltersAndSort();
+        });
     }
 
     private void applyFiltersAndSort() {
@@ -433,6 +378,10 @@ public class HistoryActivity extends AppCompatActivity {
                 }
             } else if (currentDateFilter.equals("Custom")) {
                 if (t.getDate() == null || !t.getDate().startsWith(customSelectedDate)) {
+                    continue;
+                }
+            } else if (currentDateFilter.equals("Undated")) {
+                if (t.isDateValid()) {
                     continue;
                 }
             }
@@ -496,21 +445,35 @@ public class HistoryActivity extends AppCompatActivity {
         if (list == null || list.isEmpty()) return;
 
         if (sortOptionId == R.id.option_newest_to_oldest) {
-            Collections.sort(list, (t1, t2) -> Long.compare(t2.getEntryId(), t1.getEntryId()));
+            Collections.sort(list, (t1, t2) -> {
+                Long d1 = t1.getDateEpochDay();
+                Long d2 = t2.getDateEpochDay();
+                if (d1 == null && d2 == null) {
+                    return Long.compare(t2.getEntryId(), t1.getEntryId());
+                }
+                if (d1 == null) return 1;
+                if (d2 == null) return -1;
+                int cmp = Long.compare(d2, d1);
+                if (cmp != 0) return cmp;
+                return Long.compare(t2.getEntryId(), t1.getEntryId());
+            });
         } else if (sortOptionId == R.id.option_oldest_to_newest) {
-            Collections.sort(list, (t1, t2) -> Long.compare(t1.getEntryId(), t2.getEntryId()));
+            Collections.sort(list, (t1, t2) -> {
+                Long d1 = t1.getDateEpochDay();
+                Long d2 = t2.getDateEpochDay();
+                if (d1 == null && d2 == null) {
+                    return Long.compare(t1.getEntryId(), t2.getEntryId());
+                }
+                if (d1 == null) return 1;
+                if (d2 == null) return -1;
+                int cmp = Long.compare(d1, d2);
+                if (cmp != 0) return cmp;
+                return Long.compare(t1.getEntryId(), t2.getEntryId());
+            });
         } else if (sortOptionId == R.id.option_amount_high) {
-            Collections.sort(list, (t1, t2) -> {
-                double a1 = parseAmount(t1.getAmount());
-                double a2 = parseAmount(t2.getAmount());
-                return Double.compare(a2, a1);
-            });
+            Collections.sort(list, (t1, t2) -> Long.compare(t2.getAmountMinor(), t1.getAmountMinor()));
         } else if (sortOptionId == R.id.option_amount_low) {
-            Collections.sort(list, (t1, t2) -> {
-                double a1 = parseAmount(t1.getAmount());
-                double a2 = parseAmount(t2.getAmount());
-                return Double.compare(a1, a2);
-            });
+            Collections.sort(list, (t1, t2) -> Long.compare(t1.getAmountMinor(), t2.getAmountMinor()));
         }
     }
 
@@ -543,7 +506,6 @@ public class HistoryActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         SettingsManager.applyTheme(this);
-        loadTransactionsFromFile();
     }
 
     private void showFilterSortMenu(View anchor) {
@@ -576,6 +538,10 @@ public class HistoryActivity extends AppCompatActivity {
                 return true;
             } else if (itemId == R.id.option_filter_custom_date) {
                 pickCustomDate();
+                return true;
+            } else if (itemId == R.id.option_filter_undated) {
+                currentDateFilter = "Undated";
+                applyFiltersAndSort();
                 return true;
             }
 

@@ -26,66 +26,96 @@ public class DatabaseMigrator {
 
     private static final String TAG = "DatabaseMigrator";
 
+    public static final String PREF_KEY_LEGACY_IMPORTED = "legacy_json_imported";
+    private static final String PREF_NAME = "balancex_prefs";
+
     public static void migrateJsonToRoomIfNeeded(Context context, TransactionRepository repository) {
         migrateJsonToRoomIfNeeded(context, repository, null);
     }
 
     public static void migrateJsonToRoomIfNeeded(Context context, TransactionRepository repository, Runnable onComplete) {
+        if (context == null || repository == null) {
+            if (onComplete != null) onComplete.run();
+            return;
+        }
+
+        android.content.SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        boolean alreadyImported = prefs.getBoolean(PREF_KEY_LEGACY_IMPORTED, false);
+        if (alreadyImported) {
+            Log.d(TAG, "Legacy JSON already imported previously. Skipping.");
+            if (onComplete != null) onComplete.run();
+            return;
+        }
+
+        File file = findJsonFile(context);
+        if (file == null || !file.exists() || file.length() <= 2) {
+            Log.d(TAG, "No legacy JSON file found to import.");
+            prefs.edit().putBoolean(PREF_KEY_LEGACY_IMPORTED, true).apply();
+            if (onComplete != null) onComplete.run();
+            return;
+        }
+
         List<TransactionEntity> jsonEntities = loadEntitiesFromJson(context);
         if (jsonEntities == null || jsonEntities.isEmpty()) {
-            Log.d(TAG, "No JSON transactions found to migrate.");
+            prefs.edit().putBoolean(PREF_KEY_LEGACY_IMPORTED, true).apply();
             if (onComplete != null) onComplete.run();
             return;
         }
 
         repository.getAllTransactions(roomTransactions -> {
             int roomCount = (roomTransactions != null) ? roomTransactions.size() : 0;
-            Log.d(TAG, "Found " + jsonEntities.size() + " in JSON, " + roomCount + " in Room.");
+            Log.d(TAG, "Found " + jsonEntities.size() + " in legacy JSON, " + roomCount + " in Room.");
 
-            // If Room has fewer transactions than the JSON file, or if new transactions exist
-            if (roomTransactions == null || roomTransactions.isEmpty()) {
-                // Initial or complete migration
-                repository.insertAll(jsonEntities, () -> {
-                    Log.d(TAG, "Successfully inserted " + jsonEntities.size() + " transactions into Room.");
+            Set<String> existingSignatures = new HashSet<>();
+            if (roomTransactions != null) {
+                for (TransactionEntity r : roomTransactions) {
+                    existingSignatures.add(makeSignature(r));
+                }
+            }
+
+            List<TransactionEntity> missingEntities = new ArrayList<>();
+            for (TransactionEntity j : jsonEntities) {
+                // Reset entryId so Room assigns a clean auto-generated ID
+                j.entryId = 0;
+                String sig = makeSignature(j);
+                if (!existingSignatures.contains(sig)) {
+                    missingEntities.add(j);
+                    existingSignatures.add(sig); // deduplicate within json too
+                }
+            }
+
+            if (!missingEntities.isEmpty()) {
+                Log.d(TAG, "Syncing " + missingEntities.size() + " legacy transactions from JSON into Room.");
+                repository.insertAll(missingEntities, () -> {
+                    prefs.edit().putBoolean(PREF_KEY_LEGACY_IMPORTED, true).apply();
+                    Log.d(TAG, "Legacy JSON migration complete (file preserved).");
                     if (onComplete != null) onComplete.run();
                 });
-            } else if (jsonEntities.size() > roomTransactions.size()) {
-                // Find and insert any missing transactions
-                Set<String> existingSignatures = new HashSet<>();
-                for (TransactionEntity r : roomTransactions) {
-                    existingSignatures.add(makeSignature(r.date, r.amount, r.receiver, r.textType, r.description));
-                }
-
-                List<TransactionEntity> missingEntities = new ArrayList<>();
-                for (TransactionEntity j : jsonEntities) {
-                    String sig = makeSignature(j.date, j.amount, j.receiver, j.textType, j.description);
-                    if (!existingSignatures.contains(sig)) {
-                        missingEntities.add(j);
-                    }
-                }
-
-                if (!missingEntities.isEmpty()) {
-                    Log.d(TAG, "Syncing " + missingEntities.size() + " new transactions from JSON into Room.");
-                    repository.insertAll(missingEntities, () -> {
-                        Log.d(TAG, "Sync complete.");
-                        if (onComplete != null) onComplete.run();
-                    });
-                } else {
-                    if (onComplete != null) onComplete.run();
-                }
             } else {
-                Log.d(TAG, "Room is already up to date with JSON records.");
+                prefs.edit().putBoolean(PREF_KEY_LEGACY_IMPORTED, true).apply();
+                Log.d(TAG, "Room is already up to date with legacy JSON records.");
                 if (onComplete != null) onComplete.run();
             }
         });
     }
 
+    public static String makeSignature(TransactionEntity entity) {
+        if (entity == null) return "";
+        return (entity.dateEpochDay != null ? entity.dateEpochDay : entity.date) + "|"
+                + entity.amountMinor + "|"
+                + (entity.receiver != null ? entity.receiver.trim().toLowerCase(java.util.Locale.ROOT) : "") + "|"
+                + (entity.textType != null ? entity.textType.trim().toLowerCase(java.util.Locale.ROOT) : "") + "|"
+                + (entity.description != null ? entity.description.trim() : "");
+    }
+
     public static String makeSignature(String date, String amount, String receiver, String textType, String description) {
-        return (date != null ? date : "") + "|"
-                + (amount != null ? amount : "") + "|"
-                + (receiver != null ? receiver : "") + "|"
-                + (textType != null ? textType : "") + "|"
-                + (description != null ? description : "");
+        long minor = com.k7sunny.balancex.util.MoneyDateUtils.parseAmountToMinor(amount);
+        Long epochDay = com.k7sunny.balancex.util.MoneyDateUtils.parseDateToEpochDay(date);
+        return (epochDay != null ? epochDay : date) + "|"
+                + minor + "|"
+                + (receiver != null ? receiver.trim().toLowerCase(java.util.Locale.ROOT) : "") + "|"
+                + (textType != null ? textType.trim().toLowerCase(java.util.Locale.ROOT) : "") + "|"
+                + (description != null ? description.trim() : "");
     }
 
     public static File findJsonFile(Context context) {
@@ -195,6 +225,10 @@ public class DatabaseMigrator {
                     entity.textType = "Debit";
                 }
 
+                entity.amountMinor = com.k7sunny.balancex.util.MoneyDateUtils.parseAmountToMinor(entity.amount);
+                entity.dateEpochDay = com.k7sunny.balancex.util.MoneyDateUtils.parseDateToEpochDay(entity.date);
+                entity.dateValid = (entity.dateEpochDay != null) ? 1 : 0;
+
                 entities.add(entity);
             }
 
@@ -221,7 +255,10 @@ public class DatabaseMigrator {
                     e.transactionId,
                     e.paymentMethod,
                     e.textType,
-                    e.entryId
+                    e.entryId,
+                    e.amountMinor,
+                    e.dateEpochDay,
+                    e.dateValid
             ));
         }
         return transactions;

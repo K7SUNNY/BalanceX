@@ -27,5 +27,8 @@
         <item
             android:id="@+id/option_filter_custom_date"
             android:title="Period: Pick Custom Date..." />
+        <item
+            android:id="@+id/option_filter_undated"
+            android:title="Period: Undated Entries" />
     </group>
 </menu>

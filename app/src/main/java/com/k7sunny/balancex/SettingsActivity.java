@@ -141,13 +141,8 @@ public class SettingsActivity extends AppCompatActivity {
         String savedTxType = SettingsManager.getDefaultTransactionType(this);
         textCurrentTxType.setText(savedTxType);
 
-        // Storage Path display
-        File file = DatabaseMigrator.findJsonFile(this);
-        if (file != null && file.exists()) {
-            textStoragePath.setText(file.getAbsolutePath());
-        } else {
-            textStoragePath.setText("/storage/emulated/0/Documents/Accounting/transactions.json");
-        }
+        // Load Ledger & DB Stats
+        loadLedgerStats();
 
         // Version Display
         textVersionDisplay.setText("v" + getAppVersion());
@@ -365,9 +360,9 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void clearLedgerData(boolean alsoClearPhase3) {
         try {
-            // 1. Wipe Room Database
+            // 1. Wipe Room Database atomically
             TransactionRepository repo = new TransactionRepository(this);
-            repo.deleteAll(() -> {
+            repo.clearAllTransactionsAtomic(() -> {
                 if (alsoClearPhase3) {
                     BudgetGoalRepository bgRepo = new BudgetGoalRepository(SettingsActivity.this);
                     bgRepo.deleteAll(null);
@@ -378,33 +373,12 @@ public class SettingsActivity extends AppCompatActivity {
                     bgRepo.resetAllBudgetSpends(null);
                 }
                 runOnUiThread(() -> {
+                    vibrateDevice();
+                    String msg = alsoClearPhase3 ? "All transactions, budgets, and subscriptions cleared" : "All transactions cleared successfully";
+                    Toast.makeText(SettingsActivity.this, msg, Toast.LENGTH_SHORT).show();
                     loadLedgerStats();
                 });
             });
-
-            // 2. Wipe JSON files in all candidate storage locations
-            File[] candidatePaths = new File[] {
-                    new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "transactions.json"),
-                    new File("/storage/emulated/0/Documents/transactions.json"),
-                    new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Accounting/transactions.json"),
-                    new File("/storage/emulated/0/Documents/Accounting/transactions.json"),
-                    getExternalFilesDir(null) != null ? new File(getExternalFilesDir(null), "transactions.json") : null,
-                    getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) != null ? new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "transactions.json") : null,
-                    new File(getFilesDir(), "transactions.json")
-            };
-            for (File file : candidatePaths) {
-                if (file != null && file.exists()) {
-                    try (FileWriter writer = new FileWriter(file, false)) {
-                        writer.write("[]");
-                        writer.flush();
-                    } catch (Exception ignored) {}
-                }
-            }
-
-            vibrateDevice();
-            String msg = alsoClearPhase3 ? "All transactions, budgets, and subscriptions cleared" : "All transactions cleared successfully";
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-            loadLedgerStats();
         } catch (Exception e) {
             Toast.makeText(this, "Error clearing records: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
@@ -412,44 +386,37 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void loadLedgerStats() {
         try {
-            File file = DatabaseMigrator.findJsonFile(this);
-            if (file == null) {
-                file = new File("/storage/emulated/0/Documents/Accounting/transactions.json");
-            }
-            if (file != null && file.exists()) {
-                textStoragePath.setText(file.getAbsolutePath());
-                long bytes = file.length();
-                String formattedSize;
-                if (bytes < 1024) {
-                    formattedSize = bytes + " B";
-                } else if (bytes < 1024 * 1024) {
-                    formattedSize = String.format(Locale.getDefault(), "%.1f KB", bytes / 1024.0);
-                } else {
-                    formattedSize = String.format(Locale.getDefault(), "%.2f MB", bytes / (1024.0 * 1024.0));
-                }
-                textFileSize.setText(formattedSize);
-
-                BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
-                StringBuilder sb = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line);
-                }
-                reader.close();
-
-                JSONArray jsonArray = new JSONArray(sb.toString().trim());
-                int count = jsonArray.length();
-                textTransactionsCount.setText(count + (count == 1 ? " record" : " records"));
+            File dbFile = getDatabasePath("balancex_encrypted_database.db");
+            long bytes = (dbFile != null && dbFile.exists()) ? dbFile.length() : 0;
+            String formattedSize;
+            if (bytes < 1024) {
+                formattedSize = bytes + " B";
+            } else if (bytes < 1024 * 1024) {
+                formattedSize = String.format(Locale.getDefault(), "%.1f KB", bytes / 1024.0);
             } else {
-                textStoragePath.setText("/storage/emulated/0/Documents/Accounting/transactions.json");
-                // Check Room DB as fallback
-                TransactionRepository repo = new TransactionRepository(this);
-                repo.getAllTransactions(transactions -> runOnUiThread(() -> {
-                    int count = transactions != null ? transactions.size() : 0;
-                    textTransactionsCount.setText(count + (count == 1 ? " record" : " records"));
-                    textFileSize.setText("0 KB");
-                }));
+                formattedSize = String.format(Locale.getDefault(), "%.2f MB", bytes / (1024.0 * 1024.0));
             }
+            textFileSize.setText(formattedSize);
+
+            // Legacy migration status indicator
+            boolean legacyImported = getSharedPreferences("balancex_prefs", Context.MODE_PRIVATE)
+                    .getBoolean("legacy_json_imported", false);
+            File legacyJson = DatabaseMigrator.findJsonFile(this);
+            String legacyStatus;
+            if (legacyImported) {
+                legacyStatus = "Legacy Data: Imported";
+            } else if (legacyJson != null && legacyJson.exists()) {
+                legacyStatus = "Legacy JSON: Found (Pending Import)";
+            } else {
+                legacyStatus = "Legacy JSON: None found";
+            }
+            textStoragePath.setText("SQLCipher Encrypted DB (" + legacyStatus + ")");
+
+            TransactionRepository repo = new TransactionRepository(this);
+            repo.getAllTransactions(transactions -> runOnUiThread(() -> {
+                int count = transactions != null ? transactions.size() : 0;
+                textTransactionsCount.setText(count + (count == 1 ? " record" : " records"));
+            }));
         } catch (Exception e) {
             textTransactionsCount.setText("0 records");
             textFileSize.setText("0 KB");
