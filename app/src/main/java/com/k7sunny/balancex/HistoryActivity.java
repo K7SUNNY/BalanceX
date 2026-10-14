@@ -40,7 +40,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class HistoryActivity extends AppCompatActivity {
+public class HistoryActivity extends BaseSecureActivity {
     private static final String TAG = "HistoryActivity";
 
     // Data lists

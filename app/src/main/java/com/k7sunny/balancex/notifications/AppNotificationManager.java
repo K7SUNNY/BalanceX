@@ -304,6 +304,11 @@ public class AppNotificationManager {
         });
     }
 
+    public static String maskAmountsInText(String text) {
+        if (text == null) return "";
+        return text.replaceAll("[₹$€£¥A-Z]{1,3}\\s*[0-9,]+(\\.[0-9]+)?", "••••••");
+    }
+
     private static void triggerSystemNotification(Context context, String title, String message, int id) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(context,
@@ -333,12 +338,27 @@ public class AppNotificationManager {
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
+        boolean showAmounts = SettingsManager.isShowAmountsInNotifications(context);
+        String displayMessage = showAmounts ? message : maskAmountsInText(message);
+        String displayTitle = showAmounts ? title : maskAmountsInText(title);
+
+        NotificationCompat.Builder publicBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.balancex_white_logo)
+                .setContentTitle("BalanceX")
+                .setContentText("New financial notification")
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setColor(ContextCompat.getColor(context, R.color.color_primary))
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.balancex_white_logo)
-                .setContentTitle(title)
-                .setContentText(message)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
+                .setContentTitle(displayTitle)
+                .setContentText(displayMessage)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(displayMessage))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                .setPublicVersion(publicBuilder.build())
                 .setColor(ContextCompat.getColor(context, R.color.color_primary))
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent);

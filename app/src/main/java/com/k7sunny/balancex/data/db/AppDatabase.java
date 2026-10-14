@@ -85,9 +85,9 @@ public abstract class AppDatabase extends RoomDatabase {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
                 if (INSTANCE == null) {
-                    // Initialize SQLCipher factory with a passphrase
+                    // Initialize SQLCipher factory with Android Keystore backed key
                     System.loadLibrary("sqlcipher");
-                    final byte[] passphrase = "BalanceX_Secure_Passphrase_123!".getBytes(StandardCharsets.UTF_8);
+                    final byte[] passphrase = com.k7sunny.balancex.security.DatabaseKeyManager.getDatabaseKey(context);
                     final SupportOpenHelperFactory factory = new SupportOpenHelperFactory(passphrase);
 
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),

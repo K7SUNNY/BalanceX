@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class NotificationActivity extends AppCompatActivity implements NotificationAdapter.NotificationActionListener {
+public class NotificationActivity extends BaseSecureActivity implements NotificationAdapter.NotificationActionListener {
 
     private enum FilterMode {
         ALL, UNREAD, BILLS, BUDGETS, TRANSACTIONS

@@ -14,7 +14,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
 
-public class AboutActivity extends AppCompatActivity {
+public class AboutActivity extends BaseSecureActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -36,7 +36,9 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-public class SubscriptionsActivity extends AppCompatActivity {
+import com.k7sunny.balancex.BaseSecureActivity;
+
+public class SubscriptionsActivity extends BaseSecureActivity {
 
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 201;
 

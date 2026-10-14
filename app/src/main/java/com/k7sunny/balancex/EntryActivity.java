@@ -72,7 +72,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class EntryActivity extends AppCompatActivity {
+public class EntryActivity extends BaseSecureActivity {
 
     private static final int PICK_CONTACT_REQUEST = 1;
     private static final int CONTACT_PERMISSION_CODE = 101;
@@ -886,14 +886,11 @@ public class EntryActivity extends AppCompatActivity {
     // ==================== CONTACT PICKER ====================
 
     private void requestContactPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, CONTACT_PERMISSION_CODE);
-        } else {
-            openContactPicker();
-        }
+        openContactPicker();
     }
 
     private void openContactPicker() {
+        setLaunchingSystemPicker(true);
         Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
         startActivityForResult(intent, PICK_CONTACT_REQUEST);
     }
@@ -901,12 +898,7 @@ public class EntryActivity extends AppCompatActivity {
     // ==================== RECEIPT SCANNER & TESSERACT OCR ====================
 
     private void button_attach_receipt() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_CODE);
-            Toast.makeText(this, "Camera permission requested!", Toast.LENGTH_SHORT).show();
-        } else {
-            showImageSourceDialog();
-        }
+        showImageSourceDialog();
     }
 
     private void showImageSourceDialog() {
@@ -955,6 +947,7 @@ public class EntryActivity extends AppCompatActivity {
     }
 
     private void captureImageFromCamera() {
+        setLaunchingSystemPicker(true);
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
@@ -962,16 +955,11 @@ public class EntryActivity extends AppCompatActivity {
     }
 
     private void requestGalleryPermissionAndPick() {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
-                return;
-            }
-        }
         pickImageFromGallery();
     }
 
     private void pickImageFromGallery() {
+        setLaunchingSystemPicker(true);
         Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(pickIntent, REQUEST_IMAGE_PICK);
     }

@@ -7,10 +7,9 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-public class BalanceXApp extends Application {
+import com.k7sunny.balancex.security.AppLockManager;
 
-    private int startedActivityCount = 0;
-    private boolean isChangingConfig = false;
+public class BalanceXApp extends Application {
 
     @Override
     public void onCreate() {
@@ -18,6 +17,7 @@ public class BalanceXApp extends Application {
         try {
             System.loadLibrary("sqlcipher");
         } catch (Throwable ignored) {}
+
         // Restore user's preferred theme mode immediately upon application launch
         SettingsManager.applyTheme(this);
 
@@ -27,8 +27,7 @@ public class BalanceXApp extends Application {
 
             @Override
             public void onActivityStarted(@NonNull Activity activity) {
-                startedActivityCount++;
-                isChangingConfig = false;
+                AppLockManager.getInstance().onActivityStarted(activity);
             }
 
             @Override
@@ -39,16 +38,7 @@ public class BalanceXApp extends Application {
 
             @Override
             public void onActivityStopped(@NonNull Activity activity) {
-                if (activity.isChangingConfigurations()) {
-                    isChangingConfig = true;
-                }
-                startedActivityCount--;
-                if (startedActivityCount <= 0) {
-                    startedActivityCount = 0;
-                    if (!isChangingConfig) {
-                        MainActivity.resetSessionAuth();
-                    }
-                }
+                AppLockManager.getInstance().onActivityStopped(activity);
             }
 
             @Override

@@ -301,4 +301,54 @@ public class DatabaseMigrator {
             return false;
         }
     }
+
+    /**
+     * Securely shreds and deletes any plaintext transactions.json file on the device
+     * by overwriting its contents with zero bytes before deletion.
+     */
+    public static boolean securelyWipeLegacyJson(Context context) {
+        if (context == null) return false;
+        boolean deletedAny = false;
+        File[] candidatePaths = new File[] {
+                new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Accounting/transactions.json"),
+                new File("/storage/emulated/0/Documents/Accounting/transactions.json"),
+                new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Accounting/transacttions.json"),
+                new File("/storage/emulated/0/Documents/Accounting/transacttions.json"),
+                new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "transactions.json"),
+                new File("/storage/emulated/0/Documents/transactions.json"),
+                new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "transacttions.json"),
+                new File("/storage/emulated/0/Documents/transacttions.json"),
+                context.getExternalFilesDir(null) != null ? new File(context.getExternalFilesDir(null), "transactions.json") : null,
+                context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) != null ? new File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "transactions.json") : null,
+                new File(context.getFilesDir(), "transactions.json")
+        };
+
+        for (File file : candidatePaths) {
+            if (file != null && file.exists() && file.isFile()) {
+                try {
+                    long length = file.length();
+                    if (length > 0) {
+                        try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(file, "rws")) {
+                            byte[] zeroes = new byte[(int) Math.min(length, 4096)];
+                            long written = 0;
+                            while (written < length) {
+                                int toWrite = (int) Math.min(zeroes.length, length - written);
+                                raf.write(zeroes, 0, toWrite);
+                                written += toWrite;
+                            }
+                            raf.getFD().sync();
+                        }
+                    }
+                    if (file.delete()) {
+                        deletedAny = true;
+                    }
+                } catch (Exception e) {
+                    if (file.delete()) {
+                        deletedAny = true;
+                    }
+                }
+            }
+        }
+        return deletedAny;
+    }
 }

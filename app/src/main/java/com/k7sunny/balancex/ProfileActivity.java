@@ -40,7 +40,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-public class ProfileActivity extends AppCompatActivity {
+public class ProfileActivity extends BaseSecureActivity {
 
     private static final int PICK_IMAGE_REQUEST = 101;
     private static final String PREF_NAME = "UserProfile";
@@ -335,6 +335,7 @@ public class ProfileActivity extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setType("image/*");
         try {
+            setLaunchingSystemPicker(true);
             startActivityForResult(intent, PICK_IMAGE_REQUEST);
         } catch (Exception e) {
             Toast.makeText(this, "Could not open photo gallery", Toast.LENGTH_SHORT).show();
@@ -364,15 +365,8 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void backupLedgerData() {
-        TransactionRepository repo = new TransactionRepository(this);
-        repo.getAllTransactions(transactions -> {
-            if (transactions == null || transactions.isEmpty()) {
-                runOnUiThread(() -> Toast.makeText(ProfileActivity.this, "No transactions to backup.", Toast.LENGTH_SHORT).show());
-                return;
-            }
+        com.k7sunny.balancex.data.db.AppDatabase.databaseWriteExecutor.execute(() -> {
             try {
-                com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
-                String json = gson.toJson(transactions);
                 File backupDir = new File(getCacheDir(), "backups");
                 if (!backupDir.exists()) {
                     backupDir.mkdirs();
@@ -380,7 +374,7 @@ public class ProfileActivity extends AppCompatActivity {
                 String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(new Date());
                 File backupFile = new File(backupDir, "BalanceX_Backup_" + timeStamp + ".json");
                 try (FileOutputStream fos = new FileOutputStream(backupFile)) {
-                    fos.write(json.getBytes(StandardCharsets.UTF_8));
+                    com.k7sunny.balancex.security.BackupManager.exportBackup(ProfileActivity.this, fos, null);
                 }
 
                 Uri fileUri = FileProvider.getUriForFile(
@@ -392,12 +386,13 @@ public class ProfileActivity extends AppCompatActivity {
                 shareIntent.setType("application/json");
                 shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
                 shareIntent.putExtra(Intent.EXTRA_SUBJECT, "BalanceX Ledger Backup (" + timeStamp + ")");
-                shareIntent.putExtra(Intent.EXTRA_TEXT, "Here is the offline JSON ledger backup from BalanceX (" + transactions.size() + " records).");
+                shareIntent.putExtra(Intent.EXTRA_TEXT, "Here is the offline JSON ledger backup from BalanceX.");
                 shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
+                setLaunchingSystemPicker(true);
                 runOnUiThread(() -> startActivity(Intent.createChooser(shareIntent, "Share Ledger Backup")));
             } catch (Exception e) {
-                Log.e("ProfileActivity", "Error sharing backup", e);
+                com.k7sunny.balancex.util.AppLogger.e("ProfileActivity", "Error sharing backup", e);
                 runOnUiThread(() -> Toast.makeText(ProfileActivity.this, "Failed to create backup: " + e.getMessage(), Toast.LENGTH_SHORT).show());
             }
         });

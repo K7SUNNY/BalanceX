@@ -13,7 +13,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import android.view.WindowManager;
+
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -25,6 +26,7 @@ import com.k7sunny.balancex.data.db.DatabaseMigrator;
 import com.k7sunny.balancex.data.repository.BudgetGoalRepository;
 import com.k7sunny.balancex.data.repository.SubscriptionRepository;
 import com.k7sunny.balancex.data.repository.TransactionRepository;
+import com.k7sunny.balancex.security.BiometricLockHelper;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
@@ -39,7 +41,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
-public class SettingsActivity extends AppCompatActivity {
+public class SettingsActivity extends BaseSecureActivity {
 
     // Views
     private TextView textCurrentTheme;
@@ -52,6 +54,15 @@ public class SettingsActivity extends AppCompatActivity {
     private TextView textTransactionsCount;
     private TextView textFileSize;
     private TextView textVersionDisplay;
+
+    // Security & Privacy views
+    private MaterialSwitch switchBiometricLock;
+    private MaterialSwitch switchFlagSecure;
+    private TextView textCurrentGracePeriod;
+    private MaterialSwitch switchShowNotificationAmounts;
+    private View layoutLegacyFileWipe;
+    private TextView textLegacyFileStatus;
+    private TextView btnShredLegacy;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +112,15 @@ public class SettingsActivity extends AppCompatActivity {
         textFileSize = findViewById(R.id.textFileSize);
         textVersionDisplay = findViewById(R.id.textVersionDisplay);
 
+        // Security & Privacy views
+        switchBiometricLock = findViewById(R.id.switchBiometricLock);
+        switchFlagSecure = findViewById(R.id.switchFlagSecure);
+        textCurrentGracePeriod = findViewById(R.id.textCurrentGracePeriod);
+        switchShowNotificationAmounts = findViewById(R.id.switchShowNotificationAmounts);
+        layoutLegacyFileWipe = findViewById(R.id.layoutLegacyFileWipe);
+        textLegacyFileStatus = findViewById(R.id.textLegacyFileStatus);
+        btnShredLegacy = findViewById(R.id.btnShredLegacy);
+
         // Header back button
         ImageView btnBack = findViewById(R.id.btnBack);
         if (btnBack != null) {
@@ -124,7 +144,9 @@ public class SettingsActivity extends AppCompatActivity {
 
         // Haptics
         boolean hapticsEnabled = SettingsManager.isHapticsEnabled(this);
-        switchHaptics.setChecked(hapticsEnabled);
+        if (switchHaptics != null) {
+            switchHaptics.setChecked(hapticsEnabled);
+        }
 
         // Currency
         String savedCurrency = SettingsManager.getCurrencyFull(this);
@@ -141,6 +163,19 @@ public class SettingsActivity extends AppCompatActivity {
         String savedTxType = SettingsManager.getDefaultTransactionType(this);
         textCurrentTxType.setText(savedTxType);
 
+        // Security & Privacy
+        if (switchBiometricLock != null) {
+            switchBiometricLock.setChecked(SettingsManager.isBiometricLockEnabled(this));
+        }
+        if (switchFlagSecure != null) {
+            switchFlagSecure.setChecked(SettingsManager.isFlagSecureEnabled(this));
+        }
+        updateGracePeriodText();
+        if (switchShowNotificationAmounts != null) {
+            switchShowNotificationAmounts.setChecked(SettingsManager.isShowAmountsInNotifications(this));
+        }
+        updateLegacyFileUI();
+
         // Load Ledger & DB Stats
         loadLedgerStats();
 
@@ -153,12 +188,14 @@ public class SettingsActivity extends AppCompatActivity {
         findViewById(R.id.layoutThemeSetting).setOnClickListener(v -> showThemeDialog());
 
         // Haptics Switch
-        switchHaptics.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            SettingsManager.setHapticsEnabled(this, isChecked);
-            if (isChecked) {
-                SettingsManager.vibrate(this);
-            }
-        });
+        if (switchHaptics != null) {
+            switchHaptics.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                SettingsManager.setHapticsEnabled(this, isChecked);
+                if (isChecked) {
+                    SettingsManager.vibrate(this);
+                }
+            });
+        }
 
         // Currency Dialog
         findViewById(R.id.layoutCurrencySetting).setOnClickListener(v -> showCurrencyDialog());
@@ -178,6 +215,92 @@ public class SettingsActivity extends AppCompatActivity {
 
         // Clear Data (Danger Action)
         findViewById(R.id.layoutClearData).setOnClickListener(v -> showClearDataConfirmationDialog());
+
+        // Legacy Plaintext File Wipe
+        View.OnClickListener shredListener = v -> handleShredLegacyJson();
+        if (layoutLegacyFileWipe != null) {
+            layoutLegacyFileWipe.setOnClickListener(shredListener);
+        }
+        if (btnShredLegacy != null) {
+            btnShredLegacy.setOnClickListener(shredListener);
+        }
+
+        // Biometric App Lock
+        if (switchBiometricLock != null) {
+            switchBiometricLock.setOnClickListener(v -> {
+                boolean targetState = switchBiometricLock.isChecked();
+                // Revert visual toggle until confirmed
+                switchBiometricLock.setChecked(!targetState);
+                if (targetState) {
+                    if (!BiometricLockHelper.canAuthenticate(this)) {
+                        Toast.makeText(this, "Biometrics or device lock is not set up on this device.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    BiometricLockHelper.promptAuthentication(
+                            this,
+                            "Enable App Lock",
+                            "Authenticate to enable biometric protection",
+                            new BiometricLockHelper.AuthCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    SettingsManager.setBiometricLockEnabled(SettingsActivity.this, true);
+                                    switchBiometricLock.setChecked(true);
+                                    Toast.makeText(SettingsActivity.this, "App lock enabled", Toast.LENGTH_SHORT).show();
+                                }
+                                @Override
+                                public void onFailure(String errorMsg) {
+                                    Toast.makeText(SettingsActivity.this, "Authentication required to enable app lock", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                    );
+                } else {
+                    BiometricLockHelper.promptAuthentication(
+                            this,
+                            "Disable App Lock",
+                            "Authenticate to disable biometric protection",
+                            new BiometricLockHelper.AuthCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    SettingsManager.setBiometricLockEnabled(SettingsActivity.this, false);
+                                    switchBiometricLock.setChecked(false);
+                                    Toast.makeText(SettingsActivity.this, "App lock disabled", Toast.LENGTH_SHORT).show();
+                                }
+                                @Override
+                                public void onFailure(String errorMsg) {
+                                    Toast.makeText(SettingsActivity.this, "Authentication required to disable app lock", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                    );
+                }
+            });
+        }
+
+        // FLAG_SECURE (Hide in recent apps)
+        if (switchFlagSecure != null) {
+            switchFlagSecure.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                SettingsManager.setFlagSecureEnabled(this, isChecked);
+                if (isChecked) {
+                    getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+                } else {
+                    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+                }
+                vibrateDevice();
+            });
+        }
+
+        // Grace Period
+        View layoutGrace = findViewById(R.id.layoutGracePeriod);
+        if (layoutGrace != null) {
+            layoutGrace.setOnClickListener(v -> showGracePeriodDialog());
+        }
+
+        // Show Amounts in Notifications
+        if (switchShowNotificationAmounts != null) {
+            switchShowNotificationAmounts.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                SettingsManager.setShowAmountsInNotifications(this, isChecked);
+                vibrateDevice();
+            });
+        }
 
         // Notifications & Alerts
         View layoutNotif = findViewById(R.id.layoutNotificationSetting);
@@ -479,6 +602,95 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void vibrateDevice() {
         SettingsManager.vibrate(this);
+    }
+
+    private void updateGracePeriodText() {
+        if (textCurrentGracePeriod == null) return;
+        long grace = SettingsManager.getLockGracePeriodMillis(this);
+        if (grace == SettingsManager.GRACE_PERIOD_IMMEDIATE) {
+            textCurrentGracePeriod.setText("Immediately");
+        } else if (grace == SettingsManager.GRACE_PERIOD_1_MINUTE) {
+            textCurrentGracePeriod.setText("1 minute");
+        } else if (grace == SettingsManager.GRACE_PERIOD_5_MINUTES) {
+            textCurrentGracePeriod.setText("5 minutes");
+        } else {
+            textCurrentGracePeriod.setText("30 seconds");
+        }
+    }
+
+    private void showGracePeriodDialog() {
+        vibrateDevice();
+        final String[] options = {"Immediately", "30 seconds", "1 minute", "5 minutes"};
+        final long[] values = {
+                SettingsManager.GRACE_PERIOD_IMMEDIATE,
+                SettingsManager.GRACE_PERIOD_30_SECONDS,
+                SettingsManager.GRACE_PERIOD_1_MINUTE,
+                SettingsManager.GRACE_PERIOD_5_MINUTES
+        };
+
+        long current = SettingsManager.getLockGracePeriodMillis(this);
+        int selectedIndex = 1; // default 30s
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] == current) {
+                selectedIndex = i;
+                break;
+            }
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Lock Grace Period")
+                .setSingleChoiceItems(options, selectedIndex, (dialog, which) -> {
+                    dialog.dismiss();
+                    vibrateDevice();
+                    SettingsManager.setLockGracePeriodMillis(this, values[which]);
+                    updateGracePeriodText();
+                    Toast.makeText(this, "Grace period set to " + options[which], Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void updateLegacyFileUI() {
+        if (textLegacyFileStatus == null) return;
+        File legacy = DatabaseMigrator.findJsonFile(this);
+        if (legacy != null && legacy.exists()) {
+            textLegacyFileStatus.setText("Found: " + legacy.getName() + " (" + legacy.length() + " B). Tap to shred.");
+            if (btnShredLegacy != null) {
+                btnShredLegacy.setVisibility(View.VISIBLE);
+            }
+        } else {
+            textLegacyFileStatus.setText("No unencrypted legacy file found. Storage is secure.");
+            if (btnShredLegacy != null) {
+                btnShredLegacy.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private void handleShredLegacyJson() {
+        vibrateDevice();
+        File legacy = DatabaseMigrator.findJsonFile(this);
+        if (legacy == null || !legacy.exists()) {
+            Toast.makeText(this, "No plaintext legacy file found.", Toast.LENGTH_SHORT).show();
+            updateLegacyFileUI();
+            return;
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Shred Legacy Plaintext File?")
+                .setMessage("This will overwrite the plaintext transactions.json with zero bytes and permanently delete it from device storage.\n\nAll your ledger data remains fully intact inside the Keystore-encrypted database.")
+                .setPositiveButton("Shred Permanently", (dialog, which) -> {
+                    boolean success = DatabaseMigrator.securelyWipeLegacyJson(this);
+                    vibrateDevice();
+                    if (success) {
+                        Toast.makeText(this, "Legacy file securely shredded.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "Legacy file could not be removed.", Toast.LENGTH_SHORT).show();
+                    }
+                    updateLegacyFileUI();
+                    loadLedgerStats();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private String getAppVersion() {

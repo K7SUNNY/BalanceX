@@ -13,7 +13,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TransactionDetailsActivity extends AppCompatActivity {
+public class TransactionDetailsActivity extends BaseSecureActivity {
     private RecyclerView recyclerView;
     private LinearLayout emptyStateLayout;
     private TransactionDetailsAdapter adapter;

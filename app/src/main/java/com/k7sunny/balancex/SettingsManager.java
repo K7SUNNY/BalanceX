@@ -189,4 +189,38 @@ public class SettingsManager {
     public static void setBiometricLockEnabled(Context context, boolean enabled) {
         getPrefs(context).edit().putBoolean(KEY_BIOMETRIC_LOCK, enabled).apply();
     }
+
+    // ==================== SECURITY & PRIVACY ====================
+    public static final String KEY_FLAG_SECURE = "pref_flag_secure";
+    public static final String KEY_LOCK_GRACE_PERIOD = "pref_lock_grace_period_ms";
+    public static final String KEY_SHOW_AMOUNTS_IN_NOTIFICATIONS = "pref_show_amounts_in_notifications";
+
+    public static final long GRACE_PERIOD_IMMEDIATE = 0L;
+    public static final long GRACE_PERIOD_30_SECONDS = 30_000L;
+    public static final long GRACE_PERIOD_1_MINUTE = 60_000L;
+    public static final long GRACE_PERIOD_5_MINUTES = 300_000L;
+
+    public static boolean isFlagSecureEnabled(Context context) {
+        return getPrefs(context).getBoolean(KEY_FLAG_SECURE, true);
+    }
+
+    public static void setFlagSecureEnabled(Context context, boolean enabled) {
+        getPrefs(context).edit().putBoolean(KEY_FLAG_SECURE, enabled).apply();
+    }
+
+    public static long getLockGracePeriodMillis(Context context) {
+        return getPrefs(context).getLong(KEY_LOCK_GRACE_PERIOD, GRACE_PERIOD_30_SECONDS);
+    }
+
+    public static void setLockGracePeriodMillis(Context context, long millis) {
+        getPrefs(context).edit().putLong(KEY_LOCK_GRACE_PERIOD, millis).apply();
+    }
+
+    public static boolean isShowAmountsInNotifications(Context context) {
+        return getPrefs(context).getBoolean(KEY_SHOW_AMOUNTS_IN_NOTIFICATIONS, true);
+    }
+
+    public static void setShowAmountsInNotifications(Context context, boolean show) {
+        getPrefs(context).edit().putBoolean(KEY_SHOW_AMOUNTS_IN_NOTIFICATIONS, show).apply();
+    }
 }

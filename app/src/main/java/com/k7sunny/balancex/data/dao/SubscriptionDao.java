@@ -17,6 +17,9 @@ public interface SubscriptionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insertSubscription(SubscriptionEntity subscription);
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertAll(List<SubscriptionEntity> subscriptions);
+
     @Update
     void updateSubscription(SubscriptionEntity subscription);
 

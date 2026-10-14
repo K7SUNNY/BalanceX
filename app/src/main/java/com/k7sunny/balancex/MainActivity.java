@@ -27,9 +27,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
@@ -40,8 +41,11 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import androidx.compose.ui.platform.ComposeView;
+import com.k7sunny.balancex.data.db.AppDatabase;
+import com.k7sunny.balancex.security.BackupManager;
 import com.k7sunny.balancex.ui.compose.ModernChartBridge;
 import com.k7sunny.balancex.ui.compose.ModernPieChartBridge;
+import com.k7sunny.balancex.util.AppLogger;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
@@ -57,6 +61,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -69,7 +74,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseSecureActivity {
     private TextView textTotalBalance, textNetCredit, textNetDebit;
     private TextView textBalancePeriod;
     private View btnBalancePeriodFilter;
@@ -79,7 +84,6 @@ public class MainActivity extends AppCompatActivity {
     private com.k7sunny.balancex.data.repository.SubscriptionRepository subscriptionRepository;
     private com.k7sunny.balancex.data.repository.BudgetGoalRepository budgetGoalRepository;
     private com.k7sunny.balancex.data.repository.TransactionRepository transactionRepository;
-    private static boolean hasAuthenticatedThisSession = false;
     private String selectedTimeline = "M"; // Default to Months
     private String graphType = "line"; // Default to Line Chart
     private ModernChartBridge modernChartBridge;
@@ -88,6 +92,43 @@ public class MainActivity extends AppCompatActivity {
     private ImageView menuButton, notificationButton;
     // Back Press Handling
     private boolean backPressedOnce = false;
+
+    private String pendingBackupPassword = null;
+
+    private final ActivityResultLauncher<String> createBackupLauncher = registerForActivityResult(
+            new ActivityResultContracts.CreateDocument("application/json"),
+            uri -> {
+                if (uri != null) {
+                    final String pwd = pendingBackupPassword;
+                    pendingBackupPassword = null;
+                    AppDatabase.databaseWriteExecutor.execute(() -> {
+                        try (java.io.OutputStream os = getContentResolver().openOutputStream(uri)) {
+                            if (os != null) {
+                                BackupManager.exportBackup(MainActivity.this, os, pwd);
+                                runOnUiThread(() -> {
+                                    vibrateDevice();
+                                    Toast.makeText(MainActivity.this, "Backup saved to storage successfully!", Toast.LENGTH_LONG).show();
+                                });
+                            }
+                        } catch (Exception e) {
+                            AppLogger.e("MainActivity", "Error saving backup via SAF", e);
+                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to save backup: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                        }
+                    });
+                } else {
+                    pendingBackupPassword = null;
+                }
+            }
+    );
+
+    private final ActivityResultLauncher<String[]> openRestoreLauncher = registerForActivityResult(
+            new ActivityResultContracts.OpenDocument(),
+            uri -> {
+                if (uri != null) {
+                    handleRestoreUri(uri);
+                }
+            }
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,19 +185,6 @@ public class MainActivity extends AppCompatActivity {
         com.k7sunny.balancex.data.db.DatabaseMigrator.migrateJsonToRoomIfNeeded(this, repo, () -> {
             runOnUiThread(this::updateDrawerStats);
         });
-
-        // Prompt for any essential runtime permissions not yet granted
-        checkAndRequestAppPermissions();
-
-        // 3. Query the encrypted database to verify data is there
-        repo.getAllTransactions(transactions -> {
-            android.util.Log.d("RoomTest", "Total transactions in Room: " + transactions.size());
-            for (int i = 0; i < Math.min(transactions.size(), 3); i++) {
-                android.util.Log.d("RoomTest", "Transaction: " + transactions.get(i).description +
-                        " | Amount: " + transactions.get(i).amount);
-            }
-        });
-
 
         // Phase 3 Quick Actions Listeners
         View actionSub = findViewById(R.id.action_subscriptions);
@@ -289,14 +317,14 @@ public class MainActivity extends AppCompatActivity {
         if (btnUnlockVault != null) {
             btnUnlockVault.setOnClickListener(v -> {
                 vibrateDevice();
-                triggerBiometricUnlock();
+                checkSessionLock();
             });
         }
         View overlayLock = findViewById(R.id.layoutBiometricLockOverlay);
         if (overlayLock != null) {
             overlayLock.setOnClickListener(v -> {
                 vibrateDevice();
-                triggerBiometricUnlock();
+                checkSessionLock();
             });
         }
 
@@ -567,6 +595,37 @@ public class MainActivity extends AppCompatActivity {
         }));
     }
 
+    private interface PasswordChosenCallback {
+        void onPasswordChosen(@Nullable String password);
+    }
+
+    private void promptBackupPassword(PasswordChosenCallback callback) {
+        vibrateDevice();
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        input.setHint("Password (leave blank for unencrypted)");
+        int pad = (int) (20 * getResources().getDisplayMetrics().density);
+        android.widget.FrameLayout containerView = new android.widget.FrameLayout(this);
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.leftMargin = pad;
+        params.rightMargin = pad;
+        containerView.addView(input, params);
+
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle("Protect Backup? (Optional)")
+                .setMessage("Enter a password to encrypt this backup with AES-256-GCM. Or leave blank to create an unencrypted backup.")
+                .setView(containerView)
+                .setPositiveButton("Proceed", (dialog, which) -> {
+                    String pwd = input.getText().toString().trim();
+                    callback.onPasswordChosen(pwd.isEmpty() ? null : pwd);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
     private void showBackupBottomSheet() {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.bottom_sheet_backup, null);
@@ -594,11 +653,7 @@ public class MainActivity extends AppCompatActivity {
                 btnShare.setOnClickListener(v -> {
                     vibrateDevice();
                     dialog.dismiss();
-                    if (count == 0) {
-                        Toast.makeText(MainActivity.this, "No transactions to backup.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    shareBackupFile(transactions);
+                    promptBackupPassword(this::shareBackupFile);
                 });
             }
 
@@ -607,11 +662,7 @@ public class MainActivity extends AppCompatActivity {
                 btnSave.setOnClickListener(v -> {
                     vibrateDevice();
                     dialog.dismiss();
-                    if (count == 0) {
-                        Toast.makeText(MainActivity.this, "No transactions to backup.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    saveBackupToDevice(transactions);
+                    promptBackupPassword(this::startSaveBackupViaSaf);
                 });
             }
         });
@@ -619,69 +670,45 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void shareBackupFile(List<com.k7sunny.balancex.data.entity.TransactionEntity> transactions) {
-        try {
-            com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
-            String json = gson.toJson(transactions);
-            File backupDir = new File(getCacheDir(), "backups");
-            if (!backupDir.exists()) {
-                backupDir.mkdirs();
+    private void shareBackupFile(@Nullable String password) {
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            try {
+                File backupDir = new File(getCacheDir(), "backups");
+                if (!backupDir.exists()) {
+                    backupDir.mkdirs();
+                }
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(new Date());
+                File backupFile = new File(backupDir, "BalanceX_Backup_" + timeStamp + ".json");
+                try (FileOutputStream fos = new FileOutputStream(backupFile)) {
+                    BackupManager.exportBackup(MainActivity.this, fos, password);
+                }
+
+                Uri fileUri = FileProvider.getUriForFile(
+                        MainActivity.this,
+                        getPackageName() + ".provider",
+                        backupFile);
+
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("application/json");
+                shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, "BalanceX Ledger Backup (" + timeStamp + ")");
+                shareIntent.putExtra(Intent.EXTRA_TEXT, "Here is the offline JSON ledger backup from BalanceX.");
+                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                setLaunchingSystemPicker(true);
+                runOnUiThread(() -> startActivity(Intent.createChooser(shareIntent, "Share Ledger Backup")));
+            } catch (Exception e) {
+                AppLogger.e("MainActivity", "Error sharing backup", e);
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to share backup: " + e.getMessage(), Toast.LENGTH_SHORT).show());
             }
-            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(new Date());
-            File backupFile = new File(backupDir, "BalanceX_Backup_" + timeStamp + ".json");
-            try (FileOutputStream fos = new FileOutputStream(backupFile)) {
-                fos.write(json.getBytes(StandardCharsets.UTF_8));
-            }
-
-            Uri fileUri = FileProvider.getUriForFile(
-                    this,
-                    getPackageName() + ".provider",
-                    backupFile);
-
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("application/json");
-            shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
-            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "BalanceX Ledger Backup (" + timeStamp + ")");
-            shareIntent.putExtra(Intent.EXTRA_TEXT, "Here is the offline JSON ledger backup from BalanceX (" + transactions.size() + " records).");
-            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-            startActivity(Intent.createChooser(shareIntent, "Share Ledger Backup"));
-        } catch (Exception e) {
-            Log.e("Backup", "Error sharing backup", e);
-            Toast.makeText(this, "Failed to share backup: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+        });
     }
 
-    private void saveBackupToDevice(List<com.k7sunny.balancex.data.entity.TransactionEntity> transactions) {
-        try {
-            com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
-            String json = gson.toJson(transactions);
-
-            File targetDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Accounting/Backups");
-            if (!targetDir.exists()) {
-                targetDir.mkdirs();
-            }
-            if (!targetDir.canWrite()) {
-                targetDir = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "Backups");
-                if (!targetDir.exists()) {
-                    targetDir.mkdirs();
-                }
-            }
-
-            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-            String fileName = "BalanceX_Backup_" + timeStamp + ".json";
-            File backupFile = new File(targetDir, fileName);
-
-            try (FileOutputStream fos = new FileOutputStream(backupFile)) {
-                fos.write(json.getBytes(StandardCharsets.UTF_8));
-            }
-
-            vibrateDevice();
-            Toast.makeText(this, "Backup saved to Documents/Accounting/Backups/" + fileName, Toast.LENGTH_LONG).show();
-        } catch (Exception e) {
-            Log.e("Backup", "Error saving backup to device", e);
-            Toast.makeText(this, "Failed to save backup: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+    private void startSaveBackupViaSaf(@Nullable String password) {
+        pendingBackupPassword = password;
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(new Date());
+        setLaunchingSystemPicker(true);
+        createBackupLauncher.launch("BalanceX_Backup_" + timeStamp + ".json");
     }
 
     private void showCategoriesBottomSheet() {
@@ -807,110 +834,97 @@ public class MainActivity extends AppCompatActivity {
         startActivity(Intent.createChooser(shareIntent, "Share BalanceX"));
     }
 
-    private static final int RESTORE_FILE_REQUEST = 1001;
-
     private void openRestoreFilePicker() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("*/*");
-        String[] mimeTypes = {"application/json", "text/plain", "application/octet-stream"};
-        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+        setLaunchingSystemPicker(true);
         try {
-            startActivityForResult(intent, RESTORE_FILE_REQUEST);
+            openRestoreLauncher.launch(new String[]{"application/json", "application/octet-stream", "*/*"});
         } catch (Exception e) {
             Toast.makeText(this, "No document picker found to select backup file.", Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void importBackupFromUri(Uri uri) {
-        try (java.io.InputStream is = getContentResolver().openInputStream(uri);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-            }
-            String rawJson = sb.toString().trim();
-            if (rawJson.isEmpty() || (!rawJson.startsWith("[") && !rawJson.startsWith("{"))) {
-                Toast.makeText(this, "The selected file is not a valid JSON ledger file.", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            JSONArray array;
-            if (rawJson.startsWith("{")) {
-                JSONObject root = new JSONObject(rawJson);
-                if (root.has("transactions")) {
-                    array = root.getJSONArray("transactions");
-                } else {
-                    array = new JSONArray();
-                    array.put(root);
-                }
-            } else {
-                array = new JSONArray(rawJson);
-            }
-
-            List<com.k7sunny.balancex.data.entity.TransactionEntity> importedEntities = new ArrayList<>();
-            double totalInflow = 0;
-            double totalOutflow = 0;
-
-            for (int i = 0; i < array.length(); i++) {
-                JSONObject obj = array.getJSONObject(i);
-                com.k7sunny.balancex.data.entity.TransactionEntity entity = new com.k7sunny.balancex.data.entity.TransactionEntity();
-                entity.entryId = obj.optLong("entryId", i + 1);
-                entity.date = obj.optString("date", "");
-                entity.amount = obj.has("amount") ? String.valueOf(obj.get("amount")) : "0";
-                entity.receiver = obj.optString("receiver", obj.optString("receiverName", "Unknown"));
-                entity.description = obj.optString("description", "");
-                entity.utr = obj.optString("utr", "");
-                entity.transactionId = obj.optString("transactionId", obj.optString("transactionID", ""));
-                entity.comments = obj.optString("comments", "");
-                entity.category = obj.optString("category", "General");
-                entity.paymentMethod = obj.optString("paymentMethod", "Cash");
-                entity.textType = obj.optString("textType", obj.optString("transactionType", "Debit"));
-
-                double parsedAmt = 0;
-                try {
-                    parsedAmt = Double.parseDouble(entity.amount.replaceAll("[^0-9.]", ""));
-                } catch (Exception ignored) {}
-
-                if ("credit".equalsIgnoreCase(entity.textType)) {
-                    totalInflow += parsedAmt;
-                } else {
-                    totalOutflow += parsedAmt;
+    private void handleRestoreUri(Uri uri) {
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            try (InputStream is = getContentResolver().openInputStream(uri)) {
+                if (is == null) {
+                    runOnUiThread(() -> Toast.makeText(this, "Could not open selected file.", Toast.LENGTH_SHORT).show());
+                    return;
                 }
 
-                importedEntities.add(entity);
-            }
-
-            if (importedEntities.isEmpty()) {
-                Toast.makeText(this, "The selected file did not contain any valid transactions.", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // Extract file name
-            String fileName = "backup.json";
-            try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
-                if (cursor != null && cursor.moveToFirst()) {
-                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                    if (nameIndex >= 0) {
-                        String name = cursor.getString(nameIndex);
-                        if (name != null && !name.trim().isEmpty()) {
-                            fileName = name;
+                // Extract file name
+                String fileName = "backup.json";
+                try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+                    if (cursor != null && cursor.moveToFirst()) {
+                        int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                        if (nameIndex >= 0) {
+                            String name = cursor.getString(nameIndex);
+                            if (name != null && !name.trim().isEmpty()) {
+                                fileName = name;
+                            }
                         }
                     }
+                } catch (Exception ignored) {}
+
+                BackupManager.BackupContainer container = BackupManager.parseContainer(is);
+                final String finalFileName = fileName;
+
+                if (container.isEncrypted) {
+                    runOnUiThread(() -> promptRestorePassword(container, finalFileName));
+                } else {
+                    BackupManager.BackupPayload payload = BackupManager.extractPayload(container, null);
+                    runOnUiThread(() -> showRestoreBottomSheet(container, payload, null, finalFileName));
                 }
-            } catch (Exception ignored) {}
-
-            showRestoreBottomSheet(importedEntities, fileName, totalInflow, totalOutflow);
-
-        } catch (Exception e) {
-            Log.e("Restore", "Failed to parse backup", e);
-            Toast.makeText(this, "Failed to parse backup file: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
+            } catch (Exception e) {
+                AppLogger.e("MainActivity", "Failed to parse backup file", e);
+                runOnUiThread(() -> Toast.makeText(this, "Failed to parse backup: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            }
+        });
     }
 
-    private void showRestoreBottomSheet(List<com.k7sunny.balancex.data.entity.TransactionEntity> importedEntities,
-                                         String fileName, double totalInflow, double totalOutflow) {
+    private void promptRestorePassword(BackupManager.BackupContainer container, String fileName) {
+        vibrateDevice();
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        input.setHint("Enter backup password");
+        int pad = (int) (20 * getResources().getDisplayMetrics().density);
+        android.widget.FrameLayout containerView = new android.widget.FrameLayout(this);
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.leftMargin = pad;
+        params.rightMargin = pad;
+        containerView.addView(input, params);
+
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle("Encrypted Backup")
+                .setMessage("This backup file is encrypted with AES-256-GCM. Please enter your password to unlock it:")
+                .setView(containerView)
+                .setPositiveButton("Unlock", (dialog, which) -> {
+                    String password = input.getText().toString();
+                    AppDatabase.databaseWriteExecutor.execute(() -> {
+                        try {
+                            BackupManager.BackupPayload payload = BackupManager.extractPayload(container, password);
+                            runOnUiThread(() -> showRestoreBottomSheet(container, payload, password, fileName));
+                        } catch (BackupManager.InvalidPasswordException ipe) {
+                            runOnUiThread(() -> {
+                                Toast.makeText(MainActivity.this, "Incorrect password. Please try again.", Toast.LENGTH_SHORT).show();
+                                promptRestorePassword(container, fileName);
+                            });
+                        } catch (Exception e) {
+                            AppLogger.e("MainActivity", "Failed to decrypt backup", e);
+                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Decryption failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                        }
+                    });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showRestoreBottomSheet(BackupManager.BackupContainer container,
+                                         BackupManager.BackupPayload payload,
+                                         @Nullable String password,
+                                         String fileName) {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.bottom_sheet_restore, null);
         dialog.setContentView(view);
@@ -926,8 +940,33 @@ public class MainActivity extends AppCompatActivity {
         TextView textOutflow = view.findViewById(R.id.textRestoreOutflow);
 
         String symbol = SettingsManager.getCurrencySymbol(this);
+        int txCount = payload.transactions != null ? payload.transactions.size() : 0;
+        int subCount = payload.subscriptions != null ? payload.subscriptions.size() : 0;
+        int bgCount = payload.budgetGoals != null ? payload.budgetGoals.size() : 0;
+
+        double totalInflow = 0;
+        double totalOutflow = 0;
+        if (payload.transactions != null) {
+            for (com.k7sunny.balancex.data.entity.TransactionEntity entity : payload.transactions) {
+                double parsedAmt = 0;
+                try {
+                    parsedAmt = Double.parseDouble(entity.amount.replaceAll("[^0-9.]", ""));
+                } catch (Exception ignored) {}
+                if ("credit".equalsIgnoreCase(entity.textType)) {
+                    totalInflow += parsedAmt;
+                } else {
+                    totalOutflow += parsedAmt;
+                }
+            }
+        }
+
         if (textCount != null) {
-            textCount.setText(importedEntities.size() + (importedEntities.size() == 1 ? " Entry Ready to Import" : " Entries Ready to Import"));
+            String summaryText = txCount + (txCount == 1 ? " Entry" : " Entries");
+            if (subCount > 0 || bgCount > 0) {
+                summaryText += " (" + subCount + " subs, " + bgCount + " budgets)";
+            }
+            summaryText += " Ready to Import";
+            textCount.setText(summaryText);
         }
         if (textFile != null) {
             textFile.setText(fileName);
@@ -939,61 +978,32 @@ public class MainActivity extends AppCompatActivity {
             textOutflow.setText("-" + symbol + String.format(Locale.getDefault(), "%,.2f", totalOutflow));
         }
 
-        com.k7sunny.balancex.data.repository.TransactionRepository repo =
-                new com.k7sunny.balancex.data.repository.TransactionRepository(this);
-
         // Action 1: Merge
         View btnMerge = view.findViewById(R.id.btnRestoreMerge);
         if (btnMerge != null) {
             btnMerge.setOnClickListener(v -> {
                 dialog.dismiss();
-                repo.getAllTransactions(existingList -> {
-                    Set<String> existingSigs = new HashSet<>();
-                    long maxId = 0;
-                    if (existingList != null) {
-                        for (com.k7sunny.balancex.data.entity.TransactionEntity ex : existingList) {
-                            existingSigs.add(com.k7sunny.balancex.data.db.DatabaseMigrator.makeSignature(
-                                    ex.date, ex.amount, ex.receiver, ex.textType, ex.description));
-                            if (ex.entryId > maxId) {
-                                maxId = ex.entryId;
-                            }
-                        }
-                    }
-
-                    List<com.k7sunny.balancex.data.entity.TransactionEntity> toAdd = new ArrayList<>();
-                    for (com.k7sunny.balancex.data.entity.TransactionEntity imp : importedEntities) {
-                        String sig = com.k7sunny.balancex.data.db.DatabaseMigrator.makeSignature(
-                                imp.date, imp.amount, imp.receiver, imp.textType, imp.description);
-                        if (!existingSigs.contains(sig)) {
-                            maxId++;
-                            imp.entryId = maxId;
-                            toAdd.add(imp);
-                            existingSigs.add(sig);
-                        }
-                    }
-
-                    if (toAdd.isEmpty()) {
-                        runOnUiThread(() -> Toast.makeText(MainActivity.this, 
-                                "All " + importedEntities.size() + " records in this snapshot are already in your vault.", 
-                                Toast.LENGTH_SHORT).show());
-                        return;
-                    }
-
-                    repo.insertAll(toAdd, () -> {
-                        repo.getAllTransactions(fullList -> {
-                            com.k7sunny.balancex.data.db.DatabaseMigrator.saveEntitiesToJson(MainActivity.this, fullList);
-                        });
+                AppDatabase.databaseWriteExecutor.execute(() -> {
+                    try {
+                        BackupManager.RestoreResult res = BackupManager.restoreContainer(
+                                MainActivity.this, container, password, BackupManager.RestoreMode.MERGE
+                        );
                         runOnUiThread(() -> {
                             vibrateDevice();
                             Toast.makeText(MainActivity.this, 
-                                    "Successfully merged " + toAdd.size() + " new entries into your vault!", 
+                                    "Successfully merged " + res.transactionsRestored + " transactions, " 
+                                    + res.subscriptionsRestored + " subscriptions, " 
+                                    + res.budgetGoalsRestored + " budgets!", 
                                     Toast.LENGTH_LONG).show();
                             updateDrawerStats();
                             loadBalanceData();
                             loadSnapshotCards();
                             setupPieChart();
                         });
-                    });
+                    } catch (Exception e) {
+                        AppLogger.e("MainActivity", "Merge restore failed", e);
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Restore failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                    }
                 });
             });
         }
@@ -1002,25 +1012,32 @@ public class MainActivity extends AppCompatActivity {
         View btnReplace = view.findViewById(R.id.btnRestoreReplace);
         if (btnReplace != null) {
             btnReplace.setOnClickListener(v -> {
-                new androidx.appcompat.app.AlertDialog.Builder(MainActivity.this)
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(MainActivity.this)
                         .setTitle("Replace Vault?")
-                        .setMessage("This will replace all your current records with the " + importedEntities.size() + " records from " + fileName + ". This cannot be undone.")
+                        .setMessage("This will replace all your current records, budgets, and subscriptions with this backup (" + txCount + " transactions). An automatic pre-restore backup will be created in app storage before replacing.")
                         .setPositiveButton("Replace", (d, w) -> {
                             dialog.dismiss();
-                            repo.deleteAll(() -> {
-                                repo.insertAll(importedEntities, () -> {
-                                    com.k7sunny.balancex.data.db.DatabaseMigrator.saveEntitiesToJson(MainActivity.this, importedEntities);
+                            AppDatabase.databaseWriteExecutor.execute(() -> {
+                                try {
+                                    BackupManager.RestoreResult res = BackupManager.restoreContainer(
+                                            MainActivity.this, container, password, BackupManager.RestoreMode.REPLACE
+                                    );
                                     runOnUiThread(() -> {
                                         vibrateDevice();
                                         Toast.makeText(MainActivity.this, 
-                                                "Vault replaced with " + importedEntities.size() + " transactions!", 
+                                                "Vault replaced successfully! Loaded " + res.transactionsRestored + " transactions, " 
+                                                + res.subscriptionsRestored + " subscriptions, " 
+                                                + res.budgetGoalsRestored + " budgets.", 
                                                 Toast.LENGTH_LONG).show();
                                         updateDrawerStats();
                                         loadBalanceData();
                                         loadSnapshotCards();
                                         setupPieChart();
                                     });
-                                });
+                                } catch (Exception e) {
+                                    AppLogger.e("MainActivity", "Replace restore failed", e);
+                                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Restore failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                                }
                             });
                         })
                         .setNegativeButton("Cancel", null)
@@ -1167,14 +1184,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == RESTORE_FILE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            importBackupFromUri(data.getData());
-        }
-    }
-
-    @Override
     public void onBackPressed() {
         if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START);
@@ -1182,7 +1191,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (backPressedOnce) {
-            hasAuthenticatedThisSession = false;
             super.onBackPressed(); // Close the app
             return;
         }
@@ -1706,7 +1714,7 @@ public class MainActivity extends AppCompatActivity {
                                     @Override
                                     public void onSuccess() {
                                         SettingsManager.setBiometricLockEnabled(MainActivity.this, true);
-                                        hasAuthenticatedThisSession = true;
+                                        com.k7sunny.balancex.security.AppLockManager.getInstance().setSessionAuthenticated(true);
                                         Toast.makeText(MainActivity.this, "App lock enabled!", Toast.LENGTH_SHORT).show();
                                     }
 
@@ -1730,7 +1738,7 @@ public class MainActivity extends AppCompatActivity {
                                 @Override
                                 public void onSuccess() {
                                     SettingsManager.setBiometricLockEnabled(MainActivity.this, false);
-                                    hasAuthenticatedThisSession = true;
+                                    com.k7sunny.balancex.security.AppLockManager.getInstance().setSessionAuthenticated(true);
                                     unlockDashboard();
                                     loadUnlockedDashboardData();
                                     Toast.makeText(MainActivity.this, "App lock disabled", Toast.LENGTH_SHORT).show();
@@ -1805,76 +1813,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void triggerBiometricUnlock() {
-        if (!SettingsManager.isBiometricLockEnabled(this)) {
-            unlockDashboard();
-            loadUnlockedDashboardData();
-            return;
-        }
-
-        if (!com.k7sunny.balancex.security.BiometricLockHelper.canAuthenticate(this)) {
-            showBiometricUnavailableRecoveryDialog();
-            return;
-        }
-
-        com.k7sunny.balancex.security.BiometricLockHelper.promptAuthentication(
-                this,
-                "Unlock BalanceX",
-                "Scan fingerprint or confirm lock screen PIN",
-                new com.k7sunny.balancex.security.BiometricLockHelper.AuthCallback() {
-                    @Override
-                    public void onSuccess() {
-                        hasAuthenticatedThisSession = true;
-                        unlockDashboard();
-                        loadUnlockedDashboardData();
-                    }
-
-                    @Override
-                    public void onFailure(String errorMsg) {
-                        if (!com.k7sunny.balancex.security.BiometricLockHelper.canAuthenticate(MainActivity.this)) {
-                            showBiometricUnavailableRecoveryDialog();
-                        } else {
-                            lockDashboardForBiometrics();
-                        }
-                    }
-                }
-        );
-    }
-
-    private void showBiometricUnavailableRecoveryDialog() {
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Device Security Not Available")
-                .setMessage("Biometric or screen lock credentials (PIN/Pattern/Password) are not configured on this device.\n\nYou cannot authenticate to unlock BalanceX. You can open Device Settings to set up screen security, or disable App Lock.")
-                .setPositiveButton("Disable App Lock", (dialog, which) -> {
-                    SettingsManager.setBiometricLockEnabled(MainActivity.this, false);
-                    hasAuthenticatedThisSession = true;
-                    unlockDashboard();
-                    loadUnlockedDashboardData();
-                    Toast.makeText(MainActivity.this, "App lock disabled", Toast.LENGTH_SHORT).show();
-                })
-                .setNeutralButton("Device Settings", (dialog, which) -> {
-                    try {
-                        startActivity(new Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS));
-                    } catch (Exception e) {
-                        try {
-                            startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
-                        } catch (Exception ignored) {}
-                    }
-                })
-                .setNegativeButton("Cancel", (dialog, which) -> {
-                    lockDashboardForBiometrics();
-                })
-                .setCancelable(false)
-                .show();
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
         SettingsManager.applyTheme(this);
-        if (SettingsManager.isBiometricLockEnabled(this) && !hasAuthenticatedThisSession) {
+        if (SettingsManager.isBiometricLockEnabled(this) && com.k7sunny.balancex.security.AppLockManager.getInstance().isLockRequired(this)) {
             lockDashboardForBiometrics();
-            triggerBiometricUnlock();
         } else {
             unlockDashboard();
             loadUnlockedDashboardData();
@@ -1887,7 +1831,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static void resetSessionAuth() {
-        hasAuthenticatedThisSession = false;
+        com.k7sunny.balancex.security.AppLockManager.getInstance().resetSession();
     }
 
     private void loadUnlockedDashboardData() {
@@ -1941,62 +1885,5 @@ public class MainActivity extends AppCompatActivity {
 
     public void vibrateDevice() {
         SettingsManager.vibrate(this);
-    }
-
-    // ==================== RUNTIME PERMISSION MANAGEMENT ====================
-
-    private static final int REQUEST_CODE_APP_PERMISSIONS = 9001;
-
-    private void checkAndRequestAppPermissions() {
-        List<String> permissionsToRequest = new ArrayList<>();
-
-        // 1. Notification permission (Android 13+ / API 33+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED) {
-                permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS);
-            }
-        }
-
-        // 2. Contact permission (for payee suggestion/contact picker in Entry)
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
-                != PackageManager.PERMISSION_GRANTED) {
-            permissionsToRequest.add(Manifest.permission.READ_CONTACTS);
-        }
-
-        // 3. Camera permission (for receipt scanner in Entry)
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-            permissionsToRequest.add(Manifest.permission.CAMERA);
-        }
-
-        // 4. Storage permissions (for Android 12 and below)
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-            }
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            }
-        }
-
-        if (!permissionsToRequest.isEmpty()) {
-            ActivityCompat.requestPermissions(
-                    this,
-                    permissionsToRequest.toArray(new String[0]),
-                    REQUEST_CODE_APP_PERMISSIONS
-            );
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE_APP_PERMISSIONS) {
-            // Re-schedule daily bill reminders if notifications were granted
-            com.k7sunny.balancex.worker.SubscriptionWorker.scheduleDailyCheck(this);
-        }
     }
 }

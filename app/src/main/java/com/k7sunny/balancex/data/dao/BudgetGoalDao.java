@@ -17,6 +17,9 @@ public interface BudgetGoalDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insertBudgetGoal(BudgetGoalEntity budgetGoal);
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertAll(List<BudgetGoalEntity> budgetGoals);
+
     @Update
     void updateBudgetGoal(BudgetGoalEntity budgetGoal);
 

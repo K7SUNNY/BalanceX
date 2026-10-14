@@ -39,7 +39,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-public class GoalsBudgetsActivity extends AppCompatActivity {
+import com.k7sunny.balancex.BaseSecureActivity;
+
+public class GoalsBudgetsActivity extends BaseSecureActivity {
 
     private BudgetGoalRepository repository;
     private TransactionRepository transactionRepository;
