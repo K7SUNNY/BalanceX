@@ -65,17 +65,16 @@
             android:layout_height="wrap_content"
             android:baselineAligned="false"
             android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="4dp">
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="3dp"
+            android:layout_marginBottom="6dp">
 
             <!-- Total Income / Inflow Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardTotalIncome"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="5dp"
+                android:layout_weight="10"
                 app:cardBackgroundColor="@color/surface_card"
                 app:cardCornerRadius="14dp"
                 app:cardElevation="1dp"
@@ -147,14 +146,16 @@
                         android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
             <!-- Total Expenses / Outflow Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardTotalExpense"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="5dp"
+                android:layout_weight="10"
                 app:cardBackgroundColor="@color/surface_card"
                 app:cardCornerRadius="14dp"
                 app:cardElevation="1dp"
@@ -596,7 +597,6 @@
                         android:layout_height="48dp"
                         app:cardBackgroundColor="@color/nav_fab_bg"
                         app:cardCornerRadius="24dp"
-                        app:cardElevation="6dp"
                         app:strokeWidth="0dp"
                         android:clickable="false">
 
