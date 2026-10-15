@@ -266,35 +266,8 @@ public class AppNotificationManager {
                     db.notificationDao().insertNotification(w1);
                 }
 
-                // Check active subscriptions due soon
-                List<SubscriptionEntity> subs = db.subscriptionDao().getActiveSubscriptions();
-                if (subs != null) {
-                    SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                    Calendar today = Calendar.getInstance();
-                    today.set(Calendar.HOUR_OF_DAY, 0);
-                    today.set(Calendar.MINUTE, 0);
-                    today.set(Calendar.SECOND, 0);
-                    today.set(Calendar.MILLISECOND, 0);
-
-                    for (SubscriptionEntity s : subs) {
-                        if (s.nextDueDate == null || s.nextDueDate.trim().isEmpty())
-                            continue;
-                        try {
-                            Date dDate = fmt.parse(s.nextDueDate.trim());
-                            if (dDate == null)
-                                continue;
-                            long diff = dDate.getTime() - today.getTimeInMillis();
-                            int days = (int) (diff / (1000L * 60 * 60 * 24));
-
-                            String billKey = "bill_notif_" + s.id + "_" + s.nextDueDate;
-                            if (days <= s.reminderDaysBefore && !prefs.getBoolean(billKey, false)) {
-                                postBillReminder(appContext, s.name, s.amount, days, s.autoAddTransaction);
-                                prefs.edit().putBoolean(billKey, true).apply();
-                            }
-                        } catch (Exception ignored) {
-                        }
-                    }
-                }
+                // Check active subscriptions due soon using unified ReminderPlanner
+                ReminderPlanner.processSubscriptions(appContext);
             } catch (Exception e) {
                 Log.e(TAG, "Error syncing active alerts", e);
             } finally {

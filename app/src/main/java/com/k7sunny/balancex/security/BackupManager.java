@@ -270,6 +270,17 @@ public class BackupManager {
                 }
 
                 if (payload.subscriptions != null && !payload.subscriptions.isEmpty()) {
+                    for (SubscriptionEntity s : payload.subscriptions) {
+                        if (s.amountMinor == 0 && s.amount > 0) {
+                            s.amountMinor = Math.round(s.amount * 100.0);
+                        }
+                        if (s.anchorDate == null || s.anchorDate.isEmpty()) {
+                            s.anchorDate = s.nextDueDate;
+                        }
+                        if (s.paymentMethod == null) {
+                            s.paymentMethod = "UPI";
+                        }
+                    }
                     db.subscriptionDao().insertAll(payload.subscriptions);
                     result.subscriptionsRestored = payload.subscriptions.size();
                 }
@@ -331,6 +342,15 @@ public class BackupManager {
                         String key = (s.name != null ? s.name.trim().toLowerCase() : "") + "|" + s.billingCycle;
                         if (!subKeys.contains(key)) {
                             s.id = 0; // auto-generate new id
+                            if (s.amountMinor == 0 && s.amount > 0) {
+                                s.amountMinor = Math.round(s.amount * 100.0);
+                            }
+                            if (s.anchorDate == null || s.anchorDate.isEmpty()) {
+                                s.anchorDate = s.nextDueDate;
+                            }
+                            if (s.paymentMethod == null) {
+                                s.paymentMethod = "UPI";
+                            }
                             subKeys.add(key);
                             toInsertSubs.add(s);
                         }

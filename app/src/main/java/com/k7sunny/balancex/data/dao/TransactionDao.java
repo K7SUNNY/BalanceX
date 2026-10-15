@@ -95,6 +95,15 @@ public interface TransactionDao {
     @Query("SELECT DISTINCT receiver FROM transactions WHERE receiver IS NOT NULL AND receiver != '' AND receiver != 'Unknown' AND receiver != 'N/A' LIMIT :limit")
     List<String> getRecentPayees(int limit);
 
+    @Query("SELECT * FROM transactions WHERE subscriptionId = :subscriptionId AND occurrenceDate = :occurrenceDate LIMIT 1")
+    TransactionEntity getTransactionForSubscriptionOccurrence(long subscriptionId, String occurrenceDate);
+
+    @Query("SELECT EXISTS(SELECT 1 FROM transactions WHERE subscriptionId = :subscriptionId AND occurrenceDate = :occurrenceDate LIMIT 1)")
+    boolean hasSubscriptionOccurrence(long subscriptionId, String occurrenceDate);
+
+    @Query("UPDATE transactions SET subscriptionId = NULL WHERE subscriptionId = :subscriptionId")
+    void clearSubscriptionLinks(long subscriptionId);
+
     @Update
     void update(TransactionEntity transaction);
 

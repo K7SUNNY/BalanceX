@@ -41,6 +41,15 @@ public interface SubscriptionDao {
     @Query("SELECT * FROM subscriptions WHERE isActive = 1 AND nextDueDate <= :maxDueDate ORDER BY nextDueDate ASC")
     List<SubscriptionEntity> getUpcomingActiveSubscriptions(String maxDueDate);
 
+    @Query("SELECT * FROM subscriptions WHERE id = :id")
+    SubscriptionEntity getSubscriptionById(long id);
+
+    @Query("UPDATE subscriptions SET nextDueDate = :nextDueDate, lastPaidDate = :lastPaidDate WHERE id = :id")
+    void updateNextDueDateAndLastPaid(long id, String nextDueDate, String lastPaidDate);
+
+    @Query("UPDATE subscriptions SET pausedUntil = :pausedUntil WHERE id = :id")
+    void updatePausedUntil(long id, String pausedUntil);
+
     @Query("SELECT COUNT(*) FROM subscriptions")
     int getSubscriptionCount();
 }

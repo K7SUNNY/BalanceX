@@ -1,9 +1,15 @@
 package com.k7sunny.balancex.data.entity;
 
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "transactions")
+@Entity(
+    tableName = "transactions",
+    indices = {
+        @Index(value = {"subscriptionId", "occurrenceDate"}, unique = true)
+    }
+)
 public class TransactionEntity {
     @PrimaryKey(autoGenerate = true)
     public long entryId;
@@ -21,4 +27,8 @@ public class TransactionEntity {
     public String category;
     public String paymentMethod;
     public String textType;
+
+    // Phase 3: Idempotent recurring transaction linking
+    public Long subscriptionId;
+    public String occurrenceDate;
 }

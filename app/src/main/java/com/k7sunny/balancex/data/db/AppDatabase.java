@@ -11,20 +11,34 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.k7sunny.balancex.data.dao.BudgetGoalDao;
 import com.k7sunny.balancex.data.dao.NotificationDao;
+import com.k7sunny.balancex.data.dao.ReminderLogDao;
 import com.k7sunny.balancex.data.dao.SubscriptionDao;
+import com.k7sunny.balancex.data.dao.SubscriptionPriceHistoryDao;
 import com.k7sunny.balancex.data.dao.TransactionDao;
 import com.k7sunny.balancex.data.entity.BudgetGoalEntity;
 import com.k7sunny.balancex.data.entity.NotificationEntity;
+import com.k7sunny.balancex.data.entity.ReminderLogEntity;
 import com.k7sunny.balancex.data.entity.SubscriptionEntity;
+import com.k7sunny.balancex.data.entity.SubscriptionPriceHistoryEntity;
 import com.k7sunny.balancex.data.entity.TransactionEntity;
 
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Database(entities = {TransactionEntity.class, SubscriptionEntity.class, BudgetGoalEntity.class, NotificationEntity.class}, version = 4, exportSchema = true)
+@Database(
+        entities = {
+                TransactionEntity.class,
+                SubscriptionEntity.class,
+                BudgetGoalEntity.class,
+                NotificationEntity.class,
+                SubscriptionPriceHistoryEntity.class,
+                ReminderLogEntity.class
+        },
+        version = 5,
+        exportSchema = true
+)
 public abstract class AppDatabase extends RoomDatabase {
 
     private static volatile AppDatabase INSTANCE;
@@ -36,6 +50,8 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract SubscriptionDao subscriptionDao();
     public abstract BudgetGoalDao budgetGoalDao();
     public abstract NotificationDao notificationDao();
+    public abstract SubscriptionPriceHistoryDao subscriptionPriceHistoryDao();
+    public abstract ReminderLogDao reminderLogDao();
 
     public static final Migration MIGRATION_1_2 = new Migration(1, 2) {
         @Override
@@ -81,6 +97,50 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    public static final Migration MIGRATION_4_5 = new Migration(4, 5) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            // 1. Subscriptions table additions
+            database.execSQL("ALTER TABLE `subscriptions` ADD COLUMN `amountMinor` INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE `subscriptions` ADD COLUMN `customInterval` INTEGER NOT NULL DEFAULT 1");
+            database.execSQL("ALTER TABLE `subscriptions` ADD COLUMN `anchorDate` TEXT DEFAULT NULL");
+            database.execSQL("ALTER TABLE `subscriptions` ADD COLUMN `lastPaidDate` TEXT DEFAULT NULL");
+            database.execSQL("ALTER TABLE `subscriptions` ADD COLUMN `endDate` TEXT DEFAULT NULL");
+            database.execSQL("ALTER TABLE `subscriptions` ADD COLUMN `pausedUntil` TEXT DEFAULT NULL");
+            database.execSQL("ALTER TABLE `subscriptions` ADD COLUMN `trialEndsOn` TEXT DEFAULT NULL");
+            database.execSQL("ALTER TABLE `subscriptions` ADD COLUMN `paymentMethod` TEXT DEFAULT NULL");
+
+            // Backfill subscriptions
+            database.execSQL("UPDATE `subscriptions` SET `amountMinor` = CAST(ROUND(`amount` * 100) AS INTEGER) WHERE `amountMinor` = 0");
+            database.execSQL("UPDATE `subscriptions` SET `anchorDate` = `nextDueDate` WHERE `anchorDate` IS NULL");
+            database.execSQL("UPDATE `subscriptions` SET `paymentMethod` = 'UPI' WHERE `paymentMethod` IS NULL");
+
+            // 2. Transactions table additions
+            database.execSQL("ALTER TABLE `transactions` ADD COLUMN `subscriptionId` INTEGER DEFAULT NULL");
+            database.execSQL("ALTER TABLE `transactions` ADD COLUMN `occurrenceDate` TEXT DEFAULT NULL");
+            database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_transactions_subscriptionId_occurrenceDate` ON `transactions` (`subscriptionId`, `occurrenceDate`)");
+
+            // 3. New table: subscription_price_history
+            database.execSQL("CREATE TABLE IF NOT EXISTS `subscription_price_history` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`subscriptionId` INTEGER NOT NULL, " +
+                    "`effectiveDate` TEXT, " +
+                    "`amountMinor` INTEGER NOT NULL, " +
+                    "`amount` REAL NOT NULL, " +
+                    "`createdAt` INTEGER NOT NULL)");
+            database.execSQL("CREATE INDEX IF NOT EXISTS `index_subscription_price_history_subscriptionId` ON `subscription_price_history` (`subscriptionId`)");
+
+            // 4. New table: reminder_log
+            database.execSQL("CREATE TABLE IF NOT EXISTS `reminder_log` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`subscriptionId` INTEGER NOT NULL, " +
+                    "`occurrenceDate` TEXT, " +
+                    "`kind` TEXT, " +
+                    "`loggedAt` INTEGER NOT NULL)");
+            database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_reminder_log_subscriptionId_occurrenceDate_kind` ON `reminder_log` (`subscriptionId`, `occurrenceDate`, `kind`)");
+        }
+    };
+
     public static AppDatabase getDatabase(final Context context) {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
@@ -93,7 +153,7 @@ public abstract class AppDatabase extends RoomDatabase {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                             AppDatabase.class, "balancex_encrypted_database.db")
                             .openHelperFactory(factory)
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                             .build();
                 }
             }

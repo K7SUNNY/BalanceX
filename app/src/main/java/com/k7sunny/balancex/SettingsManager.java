@@ -223,4 +223,23 @@ public class SettingsManager {
     public static void setShowAmountsInNotifications(Context context, boolean show) {
         getPrefs(context).edit().putBoolean(KEY_SHOW_AMOUNTS_IN_NOTIFICATIONS, show).apply();
     }
+
+    // ==================== BILL REMINDERS ====================
+    public static final String KEY_BILL_REMINDER_HOUR = "pref_bill_reminder_hour";
+    public static final String KEY_BILL_REMINDER_MINUTE = "pref_bill_reminder_minute";
+
+    public static int getBillReminderHour(Context context) {
+        return getPrefs(context).getInt(KEY_BILL_REMINDER_HOUR, 9); // Default 9:00 AM
+    }
+
+    public static int getBillReminderMinute(Context context) {
+        return getPrefs(context).getInt(KEY_BILL_REMINDER_MINUTE, 0);
+    }
+
+    public static void setBillReminderTime(Context context, int hour, int minute) {
+        getPrefs(context).edit()
+                .putInt(KEY_BILL_REMINDER_HOUR, hour)
+                .putInt(KEY_BILL_REMINDER_MINUTE, minute)
+                .apply();
+    }
 }
