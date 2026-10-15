@@ -68,7 +68,7 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="24dp"
-                app:cardElevation="6dp"
+                app:cardElevation="0dp"
                 app:strokeWidth="0dp">
 
                 <LinearLayout
@@ -183,7 +183,7 @@
                 android:layout_marginBottom="24dp"
                 app:cardBackgroundColor="@color/surface_card"
                 app:cardCornerRadius="24dp"
-                app:cardElevation="2dp"
+                app:cardElevation="0dp"
                 app:strokeColor="@color/border_subtle"
                 app:strokeWidth="1dp">
 
@@ -192,7 +192,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp" />
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="6dp" />
             </com.google.android.material.card.MaterialCardView>
 
             <!-- WorkManager Automation Info Card -->

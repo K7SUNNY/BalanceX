@@ -5,38 +5,40 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingVertical="12dp">
+    android:paddingVertical="10dp">
 
+    <!-- Top Section: Icon, Name/Cycle Info, and Amount -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <!-- Icon -->
+        <!-- Category / Service Icon -->
         <com.google.android.material.card.MaterialCardView
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             app:cardBackgroundColor="@color/action_sub_bg"
-            app:cardCornerRadius="24dp"
+            app:cardCornerRadius="22dp"
             app:cardElevation="0dp"
             app:strokeWidth="0dp">
 
             <ImageView
                 android:id="@+id/imgSubManageIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:layout_gravity="center"
                 android:contentDescription="Subscription icon"
                 app:srcCompat="@drawable/ic_subscriptions"
                 app:tint="@color/action_sub_tint" />
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Details -->
+        <!-- Service Name & Detailed Subtitle -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -44,56 +46,26 @@
                 android:id="@+id/textSubManageName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="Netflix Premium"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="YouTube Premium" />
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/textSubManageCycle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/textSubManageDue"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_tag_subtle"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="2dp"
-                    tools:text="Due 15 Oct"
-                    android:textColor="@color/finance_expense"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/textSubManageStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:background="@drawable/bg_tag_subtle"
-                    android:paddingHorizontal="6dp"
-                    android:paddingVertical="2dp"
-                    android:text="Paused"
-                    android:textColor="@color/text_tertiary"
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:id="@+id/textSubManageCycle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="• Monthly"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp" />
-            </LinearLayout>
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                tools:text="Monthly • UPI • 2d alert" />
         </LinearLayout>
 
-        <!-- Amount & Delete -->
+        <!-- Amount & Cycle Suffix -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -104,50 +76,124 @@
                 android:id="@+id/textSubManageAmount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="₹649.00"
                 android:textColor="@color/text_primary"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textSize="17sp"
+                android:textStyle="bold"
+                tools:text="₹89.00" />
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/textSubManageCycleSuffix"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_marginTop="2dp"
+                android:textColor="@color/text_tertiary"
+                android:textSize="11sp"
+                tools:text="/ mo" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Bottom Section: Status Badges (Left) & Action Buttons (Right) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- Status Badges -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textSubManageDue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_tag_subtle"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:textColor="@color/finance_expense"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:text="Due 04 Nov" />
+
+            <TextView
+                android:id="@+id/textSubManageStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_tag_subtle"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:text="Auto-Pay" />
+        </LinearLayout>
+
+        <!-- Actions: Mark Paid, Edit, Delete with generous touch targets -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical|end"
+            android:orientation="horizontal">
+
+            <!-- Mark Paid -->
+            <FrameLayout
+                android:id="@+id/containerMarkPaid"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless">
 
                 <ImageView
                     android:id="@+id/btnMarkPaidSubscription"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:layout_gravity="center"
                     android:contentDescription="Mark subscription as paid"
                     android:padding="4dp"
                     app:srcCompat="@drawable/ic_payment"
                     app:tint="@color/finance_income" />
+            </FrameLayout>
+
+            <!-- Edit -->
+            <FrameLayout
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless">
 
                 <ImageView
                     android:id="@+id/btnEditSubscription"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
-                    android:layout_marginStart="6dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:layout_gravity="center"
                     android:contentDescription="Edit subscription"
                     android:padding="4dp"
                     app:srcCompat="@drawable/ic_edit_pencil"
                     app:tint="@color/text_tertiary" />
+            </FrameLayout>
+
+            <!-- Delete -->
+            <FrameLayout
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless">
 
                 <ImageView
                     android:id="@+id/btnDeleteSubscription"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
-                    android:layout_marginStart="6dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:layout_gravity="center"
                     android:contentDescription="Delete subscription"
                     android:padding="4dp"
                     app:srcCompat="@drawable/ic_delete"
                     app:tint="@color/text_tertiary" />
-            </LinearLayout>
+            </FrameLayout>
         </LinearLayout>
     </LinearLayout>
 

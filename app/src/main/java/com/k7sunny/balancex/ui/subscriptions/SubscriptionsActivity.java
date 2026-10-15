@@ -200,8 +200,10 @@ public class SubscriptionsActivity extends BaseSecureActivity {
                 }
 
                 View itemView = getLayoutInflater().inflate(R.layout.item_subscription_manage, containerItems, false);
+                ImageView imgIcon = itemView.findViewById(R.id.imgSubManageIcon);
                 TextView textName = itemView.findViewById(R.id.textSubManageName);
                 TextView textAmount = itemView.findViewById(R.id.textSubManageAmount);
+                TextView textCycleSuffix = itemView.findViewById(R.id.textSubManageCycleSuffix);
                 TextView textDue = itemView.findViewById(R.id.textSubManageDue);
                 TextView textStatus = itemView.findViewById(R.id.textSubManageStatus);
                 TextView textCycle = itemView.findViewById(R.id.textSubManageCycle);
@@ -210,9 +212,39 @@ public class SubscriptionsActivity extends BaseSecureActivity {
                 ImageView btnDelete = itemView.findViewById(R.id.btnDeleteSubscription);
                 View divider = itemView.findViewById(R.id.dividerSubManage);
 
+                if (imgIcon != null) {
+                    imgIcon.setImageResource(getSubscriptionIcon(sub));
+                }
+
                 if (textName != null) textName.setText(sub.name);
                 if (textAmount != null) {
                     textAmount.setText(symbol + String.format(Locale.getDefault(), "%,.2f", sub.amount));
+                }
+
+                if (textCycleSuffix != null) {
+                    String cycleUpper = sub.billingCycle != null ? sub.billingCycle.trim().toUpperCase(Locale.ROOT) : "";
+                    if (cycleUpper.contains("YEAR") || cycleUpper.contains("ANNUAL")) {
+                        textCycleSuffix.setText("/ yr");
+                    } else if (cycleUpper.contains("WEEK")) {
+                        textCycleSuffix.setText("/ week");
+                    } else if (cycleUpper.contains("QUART")) {
+                        textCycleSuffix.setText("/ qtr");
+                    } else {
+                        textCycleSuffix.setText("/ mo");
+                    }
+                }
+
+                if (textCycle != null) {
+                    String cycleText = sub.billingCycle != null ? sub.billingCycle : "Monthly";
+                    if (sub.paymentMethod != null && !sub.paymentMethod.trim().isEmpty()) {
+                        cycleText += " • " + sub.paymentMethod.trim();
+                    }
+                    if (sub.reminderDaysBefore == 0) {
+                        cycleText += " • Same day alert";
+                    } else {
+                        cycleText += " • " + sub.reminderDaysBefore + "d alert";
+                    }
+                    textCycle.setText(cycleText);
                 }
 
                 // Render Relative Due Status Badge
@@ -239,33 +271,20 @@ public class SubscriptionsActivity extends BaseSecureActivity {
                     }
                 }
 
-                // Status tag (Inactive, Auto-Pay)
+                // Status tag (Inactive, Auto-Debit)
                 if (textStatus != null) {
                     if (!sub.isActive) {
                         textStatus.setVisibility(View.VISIBLE);
                         textStatus.setText("Inactive");
                     } else if (sub.autoAddTransaction) {
                         textStatus.setVisibility(View.VISIBLE);
-                        textStatus.setText("Auto-Pay");
+                        textStatus.setText("Auto-Debit");
                     } else {
                         textStatus.setVisibility(View.GONE);
                     }
                 }
 
                 itemView.setAlpha((sub.isActive && !isPaused && !isEnded) ? 1.0f : 0.6f);
-
-                if (textCycle != null) {
-                    String cycleText = "• " + sub.billingCycle;
-                    if (sub.paymentMethod != null && !sub.paymentMethod.isEmpty()) {
-                        cycleText += " (" + sub.paymentMethod + ")";
-                    }
-                    if (sub.reminderDaysBefore == 0) {
-                        cycleText += " • Same day alert";
-                    } else {
-                        cycleText += " • " + sub.reminderDaysBefore + "d alert";
-                    }
-                    textCycle.setText(cycleText);
-                }
 
                 if (divider != null && i == subscriptions.size() - 1) {
                     divider.setVisibility(View.GONE);
@@ -365,7 +384,7 @@ public class SubscriptionsActivity extends BaseSecureActivity {
             textTotalCommitment.setText(symbol + String.format(Locale.getDefault(), "%,.2f", totalMonthly) + " / mo");
         }
         if (textActiveCount != null) {
-            String activeStr = activeCount + " Active Subscriptions";
+            String activeStr = activeCount + " Active " + (activeCount == 1 ? "Subscription" : "Subscriptions");
             if (next30Days > 0) {
                 activeStr += " • Next 30d: " + symbol + String.format(Locale.getDefault(), "%,.2f", next30Days);
             }
@@ -374,6 +393,34 @@ public class SubscriptionsActivity extends BaseSecureActivity {
         if (textDueThisWeek != null) {
             textDueThisWeek.setText(dueThisWeek + " Due This Week");
         }
+    }
+
+    private int getSubscriptionIcon(SubscriptionEntity sub) {
+        if (sub == null) return R.drawable.ic_subscriptions;
+        String cat = (sub.category != null ? sub.category.toLowerCase(Locale.ROOT) : "");
+        String name = (sub.name != null ? sub.name.toLowerCase(Locale.ROOT) : "");
+
+        if (cat.contains("entertainment") || name.contains("youtube") || name.contains("netflix")
+                || name.contains("spotify") || name.contains("prime") || name.contains("disney")
+                || name.contains("apple") || name.contains("hulu") || name.contains("music")
+                || name.contains("hotstar") || name.contains("sony")) {
+            return R.drawable.ic_cat_entertainment;
+        } else if (cat.contains("utilit") || cat.contains("bill") || name.contains("electric")
+                || name.contains("water") || name.contains("gas") || name.contains("power")) {
+            return R.drawable.ic_cat_bills;
+        } else if (cat.contains("fitness") || cat.contains("health") || name.contains("gym")
+                || name.contains("cult")) {
+            return R.drawable.ic_cat_health;
+        } else if (cat.contains("rent") || name.contains("rent") || name.contains("house")) {
+            return R.drawable.ic_home;
+        } else if (cat.contains("food") || cat.contains("grocer") || name.contains("zomato")
+                || name.contains("swiggy") || name.contains("blinkit") || name.contains("zepto")) {
+            return R.drawable.ic_cat_food;
+        } else if (name.contains("wifi") || name.contains("internet") || name.contains("broadband")
+                || name.contains("jio") || name.contains("airtel")) {
+            return R.drawable.ic_pulse;
+        }
+        return R.drawable.ic_subscriptions;
     }
 
     private void confirmMarkAsPaid(SubscriptionEntity sub) {
