@@ -67,6 +67,16 @@ public class GoalsBudgetsActivity extends BaseSecureActivity {
 
         findViewById(R.id.btnBackGoals).setOnClickListener(v -> finish());
 
+        if (getIntent() != null && getIntent().hasExtra("extra_tab")) {
+            String tab = getIntent().getStringExtra("extra_tab");
+            if ("goals".equalsIgnoreCase(tab)) {
+                isBudgetsTab = false;
+            } else if ("budgets".equalsIgnoreCase(tab)) {
+                isBudgetsTab = true;
+            }
+        }
+        updateTabState();
+
         tabBudgets.setOnClickListener(v -> {
             if (!isBudgetsTab) {
                 isBudgetsTab = true;
@@ -364,7 +374,9 @@ public class GoalsBudgetsActivity extends BaseSecureActivity {
         View btnSave = view.findViewById(R.id.btnSaveBudgetGoal);
 
         boolean isEditing = existing != null;
-        boolean initialIsGoal = isEditing && BudgetGoalEntity.TYPE_GOAL.equalsIgnoreCase(existing.type);
+        boolean initialIsGoal = isEditing
+                ? BudgetGoalEntity.TYPE_GOAL.equalsIgnoreCase(existing.type)
+                : !isBudgetsTab;
         final boolean[] isGoalSelected = { initialIsGoal };
 
         Runnable updateTypeUI = () -> {
@@ -380,6 +392,15 @@ public class GoalsBudgetsActivity extends BaseSecureActivity {
             if (tabTypeGoal != null) {
                 tabTypeGoal.setBackgroundResource(isGoal ? activeBg : android.R.color.transparent);
                 tabTypeGoal.setTextColor(isGoal ? activeText : inactiveText);
+            }
+
+            if (!isEditing) {
+                if (textSheetTitle != null) {
+                    textSheetTitle.setText(isGoal ? "Set Savings Goal" : "Set Category Budget");
+                }
+                if (btnSave instanceof TextView) {
+                    ((TextView) btnSave).setText(isGoal ? "Save Goal" : "Save Budget");
+                }
             }
 
             if (layoutInitial != null) {

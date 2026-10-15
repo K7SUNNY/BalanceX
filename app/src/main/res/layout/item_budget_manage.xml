@@ -65,7 +65,7 @@
         android:layout_marginTop="10dp"
         tools:progress="70"
         app:indicatorColor="@color/color_tertiary"
-        app:trackColor="@color/surface_input"
+        app:trackColor="@color/white"
         app:trackCornerRadius="4dp"
         app:trackThickness="8dp" />
 
